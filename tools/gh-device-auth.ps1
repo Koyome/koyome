@@ -1,4 +1,4 @@
-# gh-device-auth.ps1 — GitHub OAuth device flow for pushing to Koyome/koyome.
+# gh-device-auth.ps1 — GitHub OAuth device flow for pushing to Koyome/koyome.github.io.
 # Usage: powershell -ExecutionPolicy Bypass -File tools\gh-device-auth.ps1 [-Scope 'repo admin:public_key']
 # Prints a user code; user opens https://github.com/login/device and enters it.
 # On success writes the token to tools\gh-token.txt (gitignored). Token is never printed.

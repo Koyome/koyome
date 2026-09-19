@@ -21,8 +21,8 @@
 
 **Koyome.me** —— 一个双语（English / 繁體中文）极简个人网站，无框架、无构建步骤、零 npm 依赖。
 
-- **线上地址（GitHub Pages）**：https://koyome.github.io/koyome/
-- **仓库**：https://github.com/Koyome/koyome （public，Pages 从 `main` 分支 `/docs` 目录发布）
+- **线上地址（GitHub Pages）**：https://koyome.github.io/ （2026-09-20 仓库改名为 `koyome.github.io`，从项目页升级为用户主页，原 `/koyome` 路径 GitHub 会自动跳转）
+- **仓库**：https://github.com/Koyome/koyome.github.io （public，Pages 从 `main` 分支 `/docs` 目录发布）
 - **本机地址**：http://Koyome.me （本地 Node 服务，端口 80；需 hosts 映射，已配置好）
 - **管理页**：`/admin.html`（本机版可真正写入数据；线上版改动只存访客自己的 localStorage）
 
@@ -213,10 +213,10 @@ Pages 从 `main` 分支 `/docs` 自动重建（push 后约 1 分钟），无构�
 - 推送命令模板：
 ```bash
 GIT_SSH_COMMAND='"<PortableGit>/usr/bin/ssh.exe" -i "C:\Users\Public\koyome-site\tools\deploy-key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
-git push git@github.com:Koyome/koyome.git main:main
+git push git@github.com:Koyome/koyome.github.io.git main:main
 ```
 - 2026-09-20 曾用 `--force-with-lease` 覆盖远端 `0b52fbd`（历史遗留的 API 分叉提交），之后本地/远端历史完全一致，普通 push 即可。
-- **坑：`origin` remote 是 HTTPS 地址，而本机 PortableGit 精简版没有 remote-https helper**，`git push origin main` 会报 `'remote-https' is not a git command`——必须像上面模板那样显式写 SSH 地址 `git@github.com:Koyome/koyome.git`。
+- **坑：`origin` remote 是 HTTPS 地址，而本机 PortableGit 精简版没有 remote-https helper**，`git push origin main` 会报 `'remote-https' is not a git command`——必须像上面模板那样显式写 SSH 地址 `git@github.com:Koyome/koyome.github.io.git`。
 - 手机版适配已完成（2026-09-20，提交 `6d03695`）：页头 sticky + z-index 100（修三点菜单被图片遮挡）；`deco.js` 不再对 ≤720px 直接 return，改渲染 2 个缩小图形；Q 版装饰层手机端缩小显示；验证方式见工作区 `mobile-verify.js` 思路（Edge headless + CDP，`Emulation.setDeviceMetricsOverride` 375×812 + `elementFromPoint` 命中测试）。
 - 备用 token（REST 用）：`tools/gh-token.txt`（gitignore，scope=repo）。撤销入口：GitHub Settings → Applications → Authorized OAuth Apps。
 
@@ -239,11 +239,11 @@ node tools/push-via-api.js
 - **token 绝不写进 git 历史/remote URL**；泄露即删文件 + 提醒用户去 GitHub Settings → Applications 撤销。
 
 ### 9.3 如果 REST 也不通（兜底）
-GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome/contents/<path>`，base64，branch=main，单文件 <1MB）。会产生大量碎 commit 且哈希分叉，仅应急。
+GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome.github.io/contents/<path>`，base64，branch=main，单文件 <1MB）。会产生大量碎 commit 且哈希分叉，仅应急。
 
 ### 9.4 推送后验证
-1. `git ls-remote git@github.com:Koyome/koyome.git main` = 本地 HEAD。
-2. 轮询 https://koyome.github.io/koyome/ 直到出现新内容（约 1 分钟）。
+1. `git ls-remote git@github.com:Koyome/koyome.github.io.git main` = 本地 HEAD。
+2. 轮询 https://koyome.github.io/ 直到出现新内容（约 1 分钟）。
 3. 抽查关键资源 200：`hobbies.html`、`js/hobbies.js`、`data/hobbies.json`、大文件素材各一。
 
 ## 10. 当前状态快照（2026-09-20 凌晨，部署完成）

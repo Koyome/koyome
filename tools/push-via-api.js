@@ -20,7 +20,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const TOKEN_FILE = path.join(ROOT, 'tools', 'gh-token.txt');
 const STATE_FILE = path.join(ROOT, 'tools', 'push-state.json');
-const REPO = 'Koyome/koyome';
+const REPO = 'Koyome/koyome.github.io';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
 
@@ -305,7 +305,7 @@ async function ensureTree(rootTreeSha, remoteBlobShas, stats) {
   }
 
   console.log(`DONE. uploaded ${stats.blobs} blobs, ${stats.trees} trees.`);
-  console.log('Pages rebuilds in ~1 min: https://koyome.github.io/koyome/');
+  console.log('Pages rebuilds in ~1 min: https://koyome.github.io/');
 })().catch((e) => {
   if (e.message.startsWith('LARGE_BLOBS_PENDING')) {
     console.error('PAUSED: ' + e.message);
