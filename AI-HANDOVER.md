@@ -2,7 +2,7 @@
 
 > 这份文档写给下一个接管本项目的 AI（或人类开发者）。
 > 读完这一份，你就拥有了继续开发的全部上下文。
-> 最后更新：2026-09-20（第六轮：交接整合 + 部署工具链；**线上推送待完成，见 §9**）
+> 最后更新：2026-09-20（第六轮：交接整合 + **部署已完成，本地与线上已同步**）
 
 ---
 
@@ -12,7 +12,7 @@
 请阅读我项目根目录下的 AI-HANDOVER.md（路径 C:\Users\Public\koyome-site\AI-HANDOVER.md），
 它是完整的项目交接文档。读完后再开始改动。硬规则：不要删除或覆盖 docs/assets/ 里
 任何已存在的素材文件，不要重置 docs/data/ 下的 json —— 那是我手动上传的真实内容。
-另外：本地有尚未推送到 GitHub 的提交，请先按文档 §9 完成推送，再开始新任务。
+改完想上线的话按文档 §9.0 用 SSH 推送（密钥在 tools/deploy-key）。
 ```
 
 ---
@@ -207,45 +207,54 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 
 Pages 从 `main` 分支 `/docs` 自动重建（push 后约 1 分钟），无构建步骤。
 
+### 9.0 首选：SSH 原生推送（2026-09-20 已打通，最可靠）
+- 本机 `github.com:22` 与 `ssh.github.com:443` 的 SSH 均可直连（git smart-HTTP 反而被丢包）。
+- 密钥：`tools/deploy-key` + `tools/deploy-key.pub`（均已 gitignore），公钥已登记在用户 GitHub 账号（Settings → SSH keys，标题 koyome-deploy 或 koyome-deploy-20260920）。**私钥绝不外发、绝不入库。**
+- 推送命令模板：
+```bash
+GIT_SSH_COMMAND='"<PortableGit>/usr/bin/ssh.exe" -i "C:\Users\Public\koyome-site\tools\deploy-key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
+git push git@github.com:Koyome/koyome.git main:main
+```
+- 2026-09-20 曾用 `--force-with-lease` 覆盖远端 `0b52fbd`（历史遗留的 API 分叉提交），之后本地/远端历史完全一致，普通 push 即可。
+- 备用 token（REST 用）：`tools/gh-token.txt`（gitignore，scope=repo）。撤销入口：GitHub Settings → Applications → Authorized OAuth Apps。
+
 ### 9.1 本机网络现状（2026-09-20 实测，重要）
-- **`github.com` 的 git smart-HTTP 基本不可用**：TCP  SYN 约九成被丢包（`Failed to connect after 21s` / 偶发 `expected flush after ref listing`），重试 10 次全部失败；push 大 payload 不要指望它。
-- **`api.github.com` 畅通**：node fetch 与 PowerShell Invoke-RestMethod 均稳定 200。**推送正路 = REST API（tools/push-via-api.js）**。
+- **`github.com` 的 git smart-HTTP 基本不可用**：TCP SYN 约九成被丢包（`Failed to connect after 21s` / 偶发 `expected flush after ref listing`），重试 10 次全部失败；但 **SSH(22/443) 畅通**，推送一律走 §9.0。
+- **`api.github.com` 畅通**：node fetch 与 PowerShell Invoke-RestMethod 均稳定 200。REST 推送（§9.2）可作 SSH 失效时的备胎，但 **blob API 实测上限约 37MB 原始文件**（37.1MB 成功 / 46.8MB 返回 422 too large，即 base64 后 ~50MB 封顶）。
 - 跑任何网络脚本前清空全部代理环境变量：`http_proxy https_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY all_proxy`（本机残留过已死的 `127.0.0.1:61928`，git 会静默走它报 502；`ALL_PROXY` 是最隐蔽的元凶）。
-- `github.com` 网页/登录端点偶发可达（设备授权码一次成功一次 40 次重试），所以授权脚本要带重试。
+- `github.com` 网页/登录端点偶发可达（设备授权码一次成功一次 40 次重试），授权脚本要带重试。
+- 可达性备忘：`uploads.github.com`、`objects.githubusercontent.com`、`raw.githubusercontent.com`、`codeload.github.com` 均可达。
 
-### 9.2 标准推送流程（两步）
+### 9.2 备选：REST API 推送（SSH 失效时）
 ```powershell
-# 1) 授权（只需一次；生成 tools/gh-token.txt，已 gitignore）
+# 1) 授权（如 tools/gh-token.txt 已存在可跳过；生成它的脚本带重试）
 powershell -ExecutionPolicy Bypass -File tools\gh-device-auth.ps1
-#    按提示在浏览器打开 https://github.com/login/device 输入验证码并 Authorize
-
-# 2) 推送（走 REST Git Data API，幂等，已推的提交自动跳过）
+# 2) 推送（走 REST Git Data API，幂等 + 断点续传，进度存 tools/push-state.json）
 node tools/push-via-api.js
 ```
-- `push-via-api.js` 会把本地 `main` 上远端缺失的每个提交**原样重放**（blob→tree→commit，保留 message/author/committer），然后更新 `refs/heads/main`；最后在本机用 `git commit-tree` 重建同样的对象让本地/远端 SHA 对齐（有校验，非假设）。上传前会校验 blob/tree 的 SHA 与本地一致。
-- node 用 `C:\Users\Public\koyome-node\node.exe` 或任意系统 node（零依赖，fetch 需 node 18+）。
+- `push-via-api.js` 把本地 `main` 上远端缺失的提交**原样重放**（blob→tree→commit，保留 message/author/committer），更新 `refs/heads/main`，并用 `git commit-tree` 在本机重建相同对象对齐 SHA（有校验）。
+- **blob >37MB 会被 GitHub 拒（422 too large）**，脚本会跳过并记入 `push-state.json` 的 `tooLarge`，这些文件只能走 SSH（§9.0）。
 - **token 绝不写进 git 历史/remote URL**；泄露即删文件 + 提醒用户去 GitHub Settings → Applications 撤销。
 
 ### 9.3 如果 REST 也不通（兜底）
-GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome/contents/<path>`，base64，branch=main）。会产生大量碎 commit 且本地/远端哈希分叉，下次先按 §9.2 对齐。仅应急。
+GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome/contents/<path>`，base64，branch=main，单文件 <1MB）。会产生大量碎 commit 且哈希分叉，仅应急。
 
 ### 9.4 推送后验证
-1. `GET https://api.github.com/repos/Koyome/koyome/git/ref/heads/main` 的 sha = 本地 HEAD（push 脚本已自带校验）。
-2. 轮询 https://koyome.github.io/koyome/ 直到出现新内容（看爱好页是否在导航出现）。
-3. 抽查关键资源 200：`hobbies.html`、`js/hobbies.js`、`data/hobbies.json`、若干 assets 文件。
+1. `git ls-remote git@github.com:Koyome/koyome.git main` = 本地 HEAD。
+2. 轮询 https://koyome.github.io/koyome/ 直到出现新内容（约 1 分钟）。
+3. 抽查关键资源 200：`hobbies.html`、`js/hobbies.js`、`data/hobbies.json`、大文件素材各一。
 
-## 10. 当前状态快照（2026-09-20 凌晨，交接打包时）
+## 10. 当前状态快照（2026-09-20 凌晨，部署完成）
 
 ### Git / 部署
-- **本地 main 已提交到 `50eee70`+**（「Visitor read-only mode, hobbies page, media captions, new uploads」，47 文件），其上是交接文档与部署工具的文档提交。**全部尚未 push**；远端 main 停在 `0b52fbd`（线上站还是旧版）。
-- 历史小分叉：远端 `0b52fbd` 与本地 `a5cba9a` 都是「Add .nojekyll」（内容相同、哈希不同，API 上传所致）——push-via-api.js 会把远端 tip 当基座重放，自动跳过同 tree 的空提交，无需手工处理。
-- **待办第一件事**：按 §9.2 完成授权 + 推送（若本会话的 tools/gh-token.txt 已存在可直接跑第 2 步）。
-- 推送完成后线上即拥有全部新功能与用户的真实内容。
+- **✅ 部署已完成**：本地 main 与 GitHub `origin/main` 均在 `35fe384`（内容完全一致，SHA 相同）；GitHub Pages 新构建已上线（hobbies/catalog/详情页/全部素材抽查 200 通过）。
+- 历史分叉已用 `--force-with-lease` 一次性抹平（远端 `0b52fbd` 被覆盖）；此后普通 `git push`（SSH，§9.0）即可。
+- 推送通道：SSH 密钥 `tools/deploy-key`（公钥已登记用户账号）；备用 REST token `tools/gh-token.txt`。两者均 gitignore。
 
 ### 用户内容（全部真实数据，红线勿动）
 - `t1 電台`：6 首 MP3 全带封面（Reynard Silva、mixed matches、kuudere existence、palefire Not on ur way、Kanye Only One、Come to Life）。
 - `i1 旅行紀錄`：8 图，其中 5 张东京行照片**已填描绘**（东京塔/东京大学/你的名字取景地/新宿/涩谷十字路口，目前只填了中文）。
-- `t2 關於`、`v1 私人剪輯`（4 视频）。
+- `t2 關於`、`v1 私人剪輯`（4 视频，最大 46.8MB 已经 SSH 推送上线）。
 - 爱好页：5 部动漫（Clannad/物语系列/命运石之门/Re:0/无职转生）+ 4 个角色（爱蜜莉亚/泉此方/艾莉丝/夏娜），图+文已填；3 个 Q版装饰槽仍空。
 - 首页：头像已换 `1789835827804_avatar.png`，intro 双语为用户亲笔。
 - assets 里 `1789830681xxx` 与 `1789830788xxx` 是同一首歌的两次上传（重复）——是否清理由用户决定，不要自行删。
@@ -257,8 +266,10 @@ GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome/contents/<path>`�
 
 ### 环境备忘（本机）
 - PowerShell 工具 stdout 偶发不回显——关键输出写文件再 Read。
-- git 用 PortableGit：`C:\Users\杨坤\.workbuddy\binaries\PortableGit\versions\1.2.0\mingw64\bin\git.exe`（cmd/git.exe 缺 https helper，仅本地操作用哪个都行）。
+- git 用 PortableGit：`C:\Users\杨坤\.workbuddy\binaries\PortableGit\versions\1.2.0\mingw64\bin\git.exe`；SSH 工具在同包 `usr\bin\ssh.exe` / `ssh-keygen.exe`。
+- `ssh -T git@github.com` 报 "Could not create directory '/c/Users/...'“ 无害（中文用户名路径），看到 `Hi Koyome!` 即认证成功。
 - jsdom 在 `C:\Users\杨坤\.workbuddy\binaries\node\workspace\node_modules`（NODE_PATH 指过去跑测试）。
+- 已知小毛病：本仓库 `git fetch` 后 `refs/remotes/origin/main` 偶不持久化（junction 路径所致），用 `git update-ref` 手动补即可（纯美观问题）。
 
 ## 11. 测试
 
