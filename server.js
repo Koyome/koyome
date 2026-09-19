@@ -103,6 +103,9 @@ function saveDataUrl(dataUrl, originalName) {
     'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif',
     'image/webp': '.webp', 'image/avif': '.avif', 'image/svg+xml': '.svg',
     'video/mp4': '.mp4', 'video/webm': '.webm', 'video/quicktime': '.mov',
+    'audio/mpeg': '.mp3', 'audio/mp3': '.mp3', 'audio/wav': '.wav',
+    'audio/x-wav': '.wav', 'audio/ogg': '.ogg', 'audio/flac': '.flac',
+    'audio/x-flac': '.flac', 'audio/mp4': '.m4a', 'audio/x-m4a': '.m4a',
   };
   const ext = extMap[m[1]] || path.extname(originalName || '').toLowerCase() || '.bin';
   const safe = String(originalName || 'file')
@@ -117,7 +120,9 @@ function saveDataUrl(dataUrl, originalName) {
 
 /** media type from a dataURL mime prefix */
 function mediaTypeOf(dataUrl) {
-  return /^data:video\//.test(dataUrl || '') ? 'video' : 'image';
+  if (/^data:video\//.test(dataUrl || '')) return 'video';
+  if (/^data:audio\//.test(dataUrl || '')) return 'audio';
+  return 'image';
 }
 
 /** normalize an entry: always carry a media array */
@@ -203,15 +208,14 @@ const server = http.createServer(async (req, res) => {
       if (body.featured != null) entry.featured = !!body.featured;
       if (body.desc != null) entry.desc = str(body.desc, 300);
       if (body.descZh != null) entry.descZh = str(body.descZh, 300);
-      if (entry.type === 'text') {
-        const nextBody = body.body != null ? str(body.body, 200000) : entry.body;
-        const nextBodyZh = body.bodyZh != null ? str(body.bodyZh, 200000) : entry.bodyZh;
-        if (!String(nextBody || '').trim() && !String(nextBodyZh || '').trim()) {
-          return send(res, 400, { error: 'Body text cannot be empty' });
-        }
-        entry.body = nextBody;
-        entry.bodyZh = nextBodyZh;
+      /* body text is editable for every entry type — required only for text entries */
+      const nextBody = body.body != null ? str(body.body, 200000) : entry.body;
+      const nextBodyZh = body.bodyZh != null ? str(body.bodyZh, 200000) : entry.bodyZh;
+      if (entry.type === 'text' && !String(nextBody || '').trim() && !String(nextBodyZh || '').trim()) {
+        return send(res, 400, { error: 'Body text cannot be empty' });
       }
+      entry.body = nextBody;
+      entry.bodyZh = nextBodyZh;
 
       saveContent(list);
       return send(res, 200, { ok: true, entry: normalizeEntry(entry) });
@@ -237,7 +241,17 @@ const server = http.createServer(async (req, res) => {
       if (Array.isArray(body.files)) {
         body.files.forEach((f) => {
           const src = saveDataUrl(f.file, f.filename);
-          if (src) entry.media.push({ type: mediaTypeOf(f.file), src });
+          if (!src) return;
+          const item = { type: mediaTypeOf(f.file), src };
+          if (item.type === 'audio') {
+            /* tracks may carry a title and a cover image */
+            if (f.title) item.title = str(f.title, 120);
+            if (f.coverFile) {
+              const cover = saveDataUrl(f.coverFile, (f.filename || 'track') + '.cover');
+              if (cover) item.cover = cover;
+            }
+          }
+          entry.media.push(item);
         });
       }
       if (body.src) {

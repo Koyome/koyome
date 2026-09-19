@@ -93,10 +93,15 @@
   const fType = $('fType');
   function syncTypeUI() {
     const isText = fType.value === 'text';
-    $('fBodyWrap').style.display = isText ? '' : 'none';
+    /* body text is available for every type — required for text
+       entries, an optional accompanying note for media entries */
+    $('fBodyWrap').style.display = '';
+    $('fBodyZh').style.display = '';
+    const lbl = $('fBodyLabel');
+    lbl.removeAttribute('data-i18n');
+    lbl.textContent = isText ? t('f_body') : t('f_body_media');
     $('fFileWrap').style.display = isText ? 'none' : '';
     $('fSrcWrap').style.display = isText ? 'none' : '';
-    $('fBodyZh').style.display = isText ? '' : 'none';
   }
   fType.addEventListener('change', syncTypeUI);
   syncTypeUI();
@@ -122,9 +127,11 @@
 
     const editing = editingId ? library.find((it) => it.id === editingId) : null;
 
+    /* body text is collected for every type; only text entries require it */
+    entry.body = $('fBody').value;
+    entry.bodyZh = $('fBodyZh').value;
+
     if (entry.type === 'text') {
-      entry.body = $('fBody').value;
-      entry.bodyZh = $('fBodyZh').value;
       if (!entry.body.trim() && !entry.bodyZh.trim()) {
         msg.textContent = t('msg_body_empty');
         return;

@@ -19,12 +19,13 @@
 
     <div class="owner-tools" id="ownerTools">
       <div class="ot-head" data-i18n="owner_tools">OWNER TOOLS</div>
-      <p class="gb-intro" data-i18n="add_media">Add media to this entry — images and videos, as many as you like.</p>
+      <p class="gb-intro" data-i18n="add_media">Add media to this entry — images, videos or MP3 tracks, as many as you like.</p>
       <div class="ot-row">
-        <input type="file" id="mediaFiles" multiple accept="image/*,video/*" />
+        <input type="file" id="mediaFiles" multiple accept="image/*,video/*,audio/*,.mp3" />
         <button type="button" class="btn" id="mediaUpload" data-i18n="upload">UPLOAD</button>
         <span class="form-msg" id="mediaMsg"></span>
       </div>
+      <div class="cover-rows" id="coverRows"></div>
     </div>
   </section>
 

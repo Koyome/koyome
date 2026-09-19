@@ -198,7 +198,7 @@
 
   /* localized type label */
   function typeLabel(type) {
-    const key = { text: 'type_text', image: 'type_image', video: 'type_video' }[type];
+    const key = { text: 'type_text', image: 'type_image', video: 'type_video', audio: 'type_audio' }[type];
     return global.I18N ? global.I18N.t(key || 'type_entry') : type;
   }
 
