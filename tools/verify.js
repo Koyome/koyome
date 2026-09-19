@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const PUB = path.join(__dirname, '..', 'public');
+const PUB = path.join(__dirname, '..', 'docs');
 const pages = ['index.html', 'catalog.html', 'entry.html', 'guestbook.html', 'admin.html'];
 const js = ['js/i18n.js', 'js/header.js', 'js/data.js', 'js/main.js', 'js/catalog.js', 'js/admin.js', 'js/entry.js', 'js/guestbook.js'];
 

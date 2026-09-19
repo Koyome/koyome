@@ -16,7 +16,7 @@
   const LS_GB = 'koyome_guestbook';
   const LS_PROFILE = 'koyome_profile';
 
-  /* Built-in seed (kept in sync with public/data/content.json) */
+  /* Built-in seed (kept in sync with docs/data/content.json) */
   const SEED = [
     {
       id: 't1', type: 'text', title: 'Night Radio', category: 'Essays', date: '2026-09-12',

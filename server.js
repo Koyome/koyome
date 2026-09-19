@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = __dirname;
-const PUBLIC_DIR = path.join(ROOT, 'public');
+const PUBLIC_DIR = path.join(ROOT, 'docs'); /* 'docs' so GitHub Pages can serve the same tree */
 const DATA_DIR = path.join(PUBLIC_DIR, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'content.json');
 const GUESTBOOK_FILE = path.join(DATA_DIR, 'guestbook.json');
