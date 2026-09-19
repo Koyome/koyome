@@ -61,7 +61,7 @@ server.listen(8899, async () => {
       check(`catalog ${lang} entries`, rows.length >= 4, rows.length + ' links');
       const catText = d.body.textContent;
       check(`catalog ${lang} categories localized`,
-        lang === 'en' ? catText.includes('Essays') : catText.includes('隨筆'));
+        lang === 'en' ? catText.includes('Music') : catText.includes('音乐'));
       dom.window.close();
 
       /* entry detail */
@@ -69,8 +69,8 @@ server.listen(8899, async () => {
       await new Promise((r) => setTimeout(r, 1500));
       d = dom.window.document;
       const h1 = d.querySelector('h1');
-      check(`entry ${lang} title`, h1 && (lang === 'en' ? h1.textContent === 'Night Radio' : h1.textContent === '深夜電台'), h1 && h1.textContent);
-      check(`entry ${lang} body`, d.body.textContent.includes(lang === 'en' ? 'lighthouse' : '燈塔'));
+      check(`entry ${lang} title`, h1 && (lang === 'en' ? h1.textContent === 'Night Radio' : h1.textContent === '電台'), h1 && h1.textContent);
+      check(`entry ${lang} body`, d.body.textContent.includes(lang === 'en' ? 'playlist' : '歌單'));
       dom.window.close();
 
       /* image entry: relative asset path must resolve */

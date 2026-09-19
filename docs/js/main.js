@@ -6,7 +6,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  const { loadProfile, loc, escapeHtml } = window.Koyome;
+  const { loadProfile, loadContent, loc, escapeHtml, typeLabel } = window.Koyome;
   const { t } = window.I18N;
   const esc = escapeHtml;
 
@@ -63,5 +63,38 @@
     document.title = name + t('home_title_suffix');
   }
 
+  /* ---------- Catalog preview on the home page ---------- */
+  async function renderCatalog() {
+    const listEl = document.getElementById('homeCatList');
+    if (!listEl) return;
+    const items = await loadContent();
+    document.getElementById('homeCatCount').textContent =
+      String(items.length).padStart(2, '0') + ' ' + t('items');
+    listEl.innerHTML = items.map((it, i) => `
+      <a class="entry-row reveal-row" style="--d:${(0.05 + i * 0.08).toFixed(2)}s" href="entry.html?id=${encodeURIComponent(it.id)}">
+        <span class="idx">${String(i + 1).padStart(2, '0')}</span>
+        <span class="t">${esc(loc(it, 'title') || t('untitled'))}</span>
+        <span class="d">${esc(typeLabel(it.type))}${it.date ? ' · ' + esc(it.date) : ''}</span>
+      </a>`).join('');
+
+    /* gentle staggered fade-in as the rows enter the viewport */
+    const rows = [...listEl.querySelectorAll('.reveal-row')];
+    const rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (rm || !('IntersectionObserver' in window)) {
+      rows.forEach((r) => r.classList.add('in-view', 'settled'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in-view');
+        io.unobserve(en.target);
+        setTimeout(() => en.target.classList.add('settled'), 1600);
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -5% 0px' });
+    rows.forEach((r) => io.observe(r));
+  }
+
   render();
+  renderCatalog();
 })();

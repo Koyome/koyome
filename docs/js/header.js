@@ -11,9 +11,12 @@
   const PAGES = [
     { key: 'home', href: 'index.html', label: 'nav_home' },
     { key: 'catalog', href: 'catalog.html', label: 'nav_catalog' },
+    { key: 'hobbies', href: 'hobbies.html', label: 'nav_hobbies' },
     { key: 'guestbook', href: 'guestbook.html', label: 'nav_guestbook' },
-    { key: 'admin', href: 'admin.html', label: 'nav_admin' },
   ];
+  /* admin entry is owner-only — injected later by maybeRevealAdmin()
+     once the API check proves this is the management machine */
+  const ADMIN_PAGE = { key: 'admin', href: 'admin.html', label: 'nav_admin' };
 
   const host = document.getElementById('siteHeader');
   if (!host) return;
@@ -69,4 +72,28 @@
     window.I18N.applyStatic();
     window.I18N.bind();
   }
+
+  /* ---------- owner-only admin entry ----------
+     data.js loads after this script, so poll briefly for Koyome,
+     then ask the API: only the management machine gets the link. */
+  (async function maybeRevealAdmin() {
+    const panel = document.getElementById('menuPanel');
+    if (!panel) return;
+    let K = window.Koyome;
+    for (let i = 0; i < 50 && !K; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      K = window.Koyome;
+    }
+    if (!K || !K.apiAvailable) return;
+    let owner = false;
+    try { owner = await K.apiAvailable(); } catch (_) { owner = false; }
+    if (!owner) return;
+    const a = document.createElement('a');
+    a.href = ADMIN_PAGE.href;
+    a.dataset.page = ADMIN_PAGE.key;
+    if (ADMIN_PAGE.key === current) a.className = 'active';
+    a.innerHTML = `<span class="no">${String(PAGES.length + 1).padStart(2, '0')}</span><span data-i18n="${ADMIN_PAGE.label}">${ADMIN_PAGE.key}</span>`;
+    panel.appendChild(a);
+    if (window.I18N) window.I18N.applyStatic();
+  })();
 })();

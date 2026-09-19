@@ -15,6 +15,7 @@
   const LS_KEY = 'koyome_content_override';
   const LS_GB = 'koyome_guestbook';
   const LS_PROFILE = 'koyome_profile';
+  const LS_HOBBIES = 'koyome_hobbies';
 
   /* Built-in seed (kept in sync with docs/data/content.json) */
   const SEED = [
@@ -168,6 +169,55 @@
     try { localStorage.setItem(LS_GB, JSON.stringify(list)); } catch (_) { /* ignore */ }
   }
 
+  /* ---------- hobbies page ----------
+     Two fixed sections (anime / characters), each a free-form list
+     of image + text items, plus chibi decoration slots (deco). */
+  const HOBBIES_SEED = {
+    intro: 'Anime I love, and the characters who stayed with me.',
+    introZh: '喜歡的動漫，和那些留在我心裡的角色。',
+    sections: [
+      { id: 'anime', items: [] },
+      { id: 'chars', items: [] },
+    ],
+    deco: [
+      { id: 'd1', src: '' },
+      { id: 'd2', src: '' },
+      { id: 'd3', src: '' },
+    ],
+  };
+
+  function normalizeHobbies(doc) {
+    const out = (doc && typeof doc === 'object') ? doc : {};
+    if (!Array.isArray(out.sections)) out.sections = [];
+    ['anime', 'chars'].forEach((sid) => {
+      if (!out.sections.some((s) => s && s.id === sid)) out.sections.push({ id: sid, items: [] });
+    });
+    out.sections.forEach((s) => { if (!Array.isArray(s.items)) s.items = []; });
+    if (!Array.isArray(out.deco)) out.deco = [];
+    while (out.deco.length < 3) out.deco.push({ id: 'd' + (out.deco.length + 1), src: '' });
+    return out;
+  }
+
+  async function loadHobbies() {
+    const ok = (d) => d && Array.isArray(d.sections);
+    if (hasAPI) {
+      const viaApi = await tryApi('api/hobbies');
+      if (ok(viaApi)) return normalizeHobbies(viaApi);
+      const local = readLS(LS_HOBBIES);
+      if (ok(local)) return normalizeHobbies(local);
+      const baked = await fetchJson('data/hobbies.json');
+      if (ok(baked)) return normalizeHobbies(baked);
+      return normalizeHobbies(JSON.parse(JSON.stringify(HOBBIES_SEED)));
+    }
+    const local = readLS(LS_HOBBIES);
+    if (ok(local)) return normalizeHobbies(local);
+    return normalizeHobbies(JSON.parse(JSON.stringify(HOBBIES_SEED)));
+  }
+
+  function saveHobbiesOverride(doc) {
+    try { localStorage.setItem(LS_HOBBIES, JSON.stringify(doc)); } catch (_) { /* ignore */ }
+  }
+
   /* ---------- helpers ---------- */
   function normalize(item) {
     if (!Array.isArray(item.media)) {
@@ -212,6 +262,7 @@
     loc, loadContent, saveOverride, normalize, normalizeAll, firstMedia,
     loadProfile, saveProfileOverride,
     loadGuestbook, saveGuestbookOverride,
+    loadHobbies, saveHobbiesOverride,
     escapeHtml, typeLabel, excerpt, hasAPI, apiAvailable,
     PROFILE_SEED,
   };

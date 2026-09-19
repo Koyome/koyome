@@ -3,31 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="title_catalog">Catalog · Koyome</title>
+  <title data-i18n="title_hobbies">Hobbies · Koyome</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body data-page="catalog" data-title-key="title_catalog">
+<body data-page="hobbies" data-title-key="title_hobbies">
 
   <!-- page transition veil: hexagram sigil, same language as the home loader -->
 
   <header class="site-header" id="siteHeader"></header>
 
-  <section class="section">
+  <section class="hob-wrap">
     <div class="section-head" data-reveal>
-      <span class="zh" data-i18n="sec_catalog">Catalog</span>
-      <span class="en" data-i18n="sec_catalog_en">INDEX</span>
-      <span class="count" id="totalCount"></span>
+      <span class="zh" data-i18n="hob_title">Hobbies</span>
+      <span class="en" data-i18n="hob_en">THINGS I LOVE</span>
+      <span class="count" id="hobCount"></span>
     </div>
 
-    <p class="section-intro" data-reveal style="--d:0.06s" data-i18n="catalog_intro">Everything I have kept so far, grouped by category. Click any title to open its own page.</p>
+    <p class="section-intro hob-intro" id="hobIntro" data-reveal style="--d:0.08s"></p>
+    <p class="edit-hint" id="hobEditHint" hidden></p>
 
-    <p class="edit-hint" id="editHint" hidden></p>
+    <!-- sections (anime / characters) rendered here -->
+    <div id="hobSections"></div>
+    <p class="hob-msg" id="hobMsg"></p>
 
-    <div class="cat-index" id="catIndex"></div>
-
-    <div id="catGroups"></div>
+    <!-- chibi decoration layer: free slots around the content,
+         never overlapping the main flow -->
+    <div class="hdeco-layer" id="hdecoLayer" aria-hidden="true"></div>
   </section>
+
+  <input type="file" id="hobFile" accept="image/*" hidden />
 
   <footer class="site-footer">
     <span data-i18n="footer">© 2026 KOYOME. ALL RIGHTS RESERVED.</span> &nbsp;·&nbsp; <span class="addr">KOYOME.ME</span>
@@ -37,6 +42,6 @@
   <script src="js/header.js"></script>
   <script src="js/data.js"></script>
   <script src="js/deco.js"></script>
-  <script src="js/catalog.js"></script>
+  <script src="js/hobbies.js"></script>
 </body>
 </html>

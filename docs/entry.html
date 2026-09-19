@@ -9,15 +9,18 @@
 </head>
 <body data-page="catalog" data-title-key="title_entry">
 
+  <!-- page transition veil: hexagram sigil, same language as the home loader -->
+
   <header class="site-header" id="siteHeader"></header>
 
   <section class="entry-wrap">
     <a class="back-link" href="catalog.html" data-i18n="back">← Catalog</a>
     <div id="entryHead"></div>
     <div id="entryBody"></div>
+    <div class="geo-rule" aria-hidden="true"><i></i><b></b><i></i></div>
     <div class="media-stack" id="entryMedia"></div>
 
-    <div class="owner-tools" id="ownerTools">
+    <div class="owner-tools" id="ownerTools" hidden>
       <div class="ot-head" data-i18n="owner_tools">OWNER TOOLS</div>
       <p class="gb-intro" data-i18n="add_media">Add media to this entry — images, videos or MP3 tracks, as many as you like.</p>
       <div class="ot-row">
@@ -36,6 +39,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/header.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/deco.js"></script>
   <script src="js/entry.js"></script>
 </body>
 </html>

@@ -9,10 +9,12 @@
 </head>
 <body data-page="admin" data-title-key="title_admin">
 
+  <!-- page transition veil: hexagram sigil, same language as the home loader -->
+
   <header class="site-header" id="siteHeader"></header>
 
   <!-- ============ Homepage profile ============ -->
-  <section class="admin-wrap">
+  <section class="admin-wrap" hidden>
     <div class="section-head">
       <span class="zh" data-i18n="prof_title">Homepage</span>
       <span class="en" data-i18n="prof_en">PROFILE</span>
@@ -57,7 +59,7 @@
   </section>
 
   <!-- ============ Content library ============ -->
-  <section class="admin-wrap">
+  <section class="admin-wrap" hidden>
     <div class="section-head">
       <span class="zh" data-i18n="admin_title">Content Manager</span>
       <span class="en" data-i18n="admin_import">IMPORT &amp; MANAGE</span>
@@ -152,6 +154,7 @@
   <script src="js/i18n.js"></script>
   <script src="js/header.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/deco.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

@@ -1,0 +1,102 @@
+{
+  "intro": "Anime I love, and the characters who stayed with me.",
+  "introZh": "喜歡的動漫，和那些留在我心裡的角色。",
+  "sections": [
+    {
+      "id": "anime",
+      "items": [
+        {
+          "id": "hmu8qhhcwqdi",
+          "name": "",
+          "nameZh": "Clannad",
+          "text": "",
+          "textZh": "這就是人生吧…影響我最深的動漫 無論如何都不要後悔和我相遇",
+          "src": "assets/1789843392335_332ACC9CBA10C6D0B99B083EF7949B92.jpg"
+        },
+        {
+          "id": "hmu8qhk0p4v2",
+          "name": "",
+          "nameZh": "物语系列",
+          "text": "",
+          "textZh": "是未曾有過的青春，是已經發生的遺憾。心中完美作品之一",
+          "src": "assets/1789843707863_9872F74D79A5A2221BD1BCD09702740C.jpg"
+        },
+        {
+          "id": "hmu8qsngnhqr",
+          "name": "",
+          "nameZh": "命运石之门",
+          "text": "",
+          "textZh": "最令我震撼的作品，完美的助手和偉大的科學狂人。一切都是命運石之門的選擇！El psy congroo！",
+          "src": "assets/1789843915115_ACDB16410472A449E0560F9AC36E40BB.jpg"
+        },
+        {
+          "id": "hmu8qzao5ikv",
+          "name": "",
+          "nameZh": "從零開始的異世界生活",
+          "text": "",
+          "textZh": "個人心目中最好看的異世界，喜歡昴這份無論如何都要拯救心愛之人的勇氣",
+          "src": "assets/1789844131615_E7DB0438AA958B0139E4745CD557AA80.jpg"
+        },
+        {
+          "id": "hmu8r1plw339",
+          "name": "",
+          "nameZh": "無職轉生；到了異世界就拿出真本事",
+          "text": "",
+          "textZh": "前兩季封神，宏大的世界觀完美的敘事和角色塑造，個人最愛魔大陸篇。",
+          "src": "assets/1789844309616_0E6C811F1B9DB585DECEE54D453A5865.jpg"
+        }
+      ]
+    },
+    {
+      "id": "chars",
+      "items": [
+        {
+          "id": "hmu8r6pgc8ih",
+          "name": "",
+          "nameZh": "爱蜜莉亚（Emilia）",
+          "text": "",
+          "textZh": "一見鍾情，喜歡了10年，雖然沒能力買你的手辦（太貴且做得不好看）以後也會一直喜歡下去",
+          "src": "assets/1789844526876_A083285DF1F446337DDC6146301476CB.jpg"
+        },
+        {
+          "id": "hmu8r6r7lth2",
+          "name": "",
+          "nameZh": "泉此方",
+          "text": "",
+          "textZh": "簡直就是我本人，總之就是非常可愛",
+          "src": "assets/1789845203912_5CB1DC1A07C4C07C0897C1DD17C03B6D.jpg"
+        },
+        {
+          "id": "hmu8r6s3cva2",
+          "name": "",
+          "nameZh": "艾莉丝",
+          "text": "",
+          "textZh": "永遠都是熱誠真摯的大小姐，喜歡你的傲嬌。以及那份真誠善良的愛",
+          "src": "assets/1789844779452_E829915531DEF09989428C4FAFDA7EBD.jpg"
+        },
+        {
+          "id": "hmu8r6u5y7cu",
+          "name": "",
+          "nameZh": "夏娜",
+          "text": "",
+          "textZh": "釘宮四萌我都喜歡，對傲嬌沒有抵抗力。",
+          "src": "assets/1789845420857_3B5B6278A73155DD3628B5503A64B055.jpg"
+        }
+      ]
+    }
+  ],
+  "deco": [
+    {
+      "id": "d1",
+      "src": ""
+    },
+    {
+      "id": "d2",
+      "src": ""
+    },
+    {
+      "id": "d3",
+      "src": ""
+    }
+  ]
+}

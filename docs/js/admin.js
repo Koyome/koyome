@@ -20,6 +20,20 @@
   let library = [];
   let editingId = null; /* when set, the form edits this entry instead of adding */
 
+  /* ================= access gate =================
+     This page is owner-only. Visitors (static hosting / no local
+     API) are redirected home and never see the forms — the two
+     .admin-wrap sections stay `hidden` until the check passes. */
+  (async function gate() {
+    let owner = false;
+    try { owner = await apiAvailable(); } catch (_) { owner = false; }
+    if (!owner) {
+      location.replace('index.html');
+      return;
+    }
+    document.querySelectorAll('.admin-wrap').forEach((s) => { s.hidden = false; });
+  })();
+
   /* ================= 1. Homepage profile ================= */
   let avatarData = null; /* a freshly picked file, as a dataURL */
 

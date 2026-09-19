@@ -3,15 +3,15 @@
     "id": "t1",
     "type": "text",
     "title": "Night Radio",
-    "titleZh": "深夜電台",
-    "category": "Essays",
-    "categoryZh": "隨筆",
+    "titleZh": "電台",
+    "category": "Music",
+    "categoryZh": "音乐",
     "date": "2026-09-12",
     "featured": true,
     "desc": "A few lines written late at night.",
     "descZh": "寫在深夜的幾行字。",
-    "body": "The radio crackles in the small hours, like someone gently knocking on a door far away.\n\nI think everyone carries a lighthouse inside — dark most days, lighting up only on certain nights, for whoever happens to be passing.\n\n(This is a sample text entry. Open the Admin page to replace it with your own words.)",
-    "bodyZh": "凌晨的電台沙沙作響，像有人在很遠的地方輕輕敲門。\n\n我想每個人心裡都有一座燈塔——大部分日子是暗的，只在某些夜晚亮起來，給剛好路過的人看。\n\n（這是一則範例文字。到管理頁把它換成你自己的話吧。）",
+    "body": "Some songs in my playlist are for personal listening and may not suit everyone's taste; they are only for display and sharing. \n",
+    "bodyZh": "一些我歌單裡自己聽的歌，並不適合所有人的品味，只用於展示和分享",
     "media": [
       {
         "type": "audio",
@@ -24,6 +24,30 @@
         "src": "assets/1789830796992_mixed_matches_-_Dark.mp3",
         "title": "mixed matches - Dark",
         "cover": "assets/1789830796999_mixed_matches_-_Dark.mp3.jpg"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789845577073_kuudere_utumiyqcom_-_existence_feat._utu.mp3",
+        "title": "kuudere,utumiyqcom - existence (feat. utumiyqcom)",
+        "cover": "assets/1789845577081_kuudere_utumiyqcom_-_existence_feat._utu.jpg"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789845620790_palefire_ilypvc_-_Not_on_ur_way.mp3",
+        "title": "palefire,ilypvc - Not on ur way",
+        "cover": "assets/1789845620797_palefire_ilypvc_-_Not_on_ur_way.mp3.jpg"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789845682526_Kanye_West_Paul_McCartney_-_Only_One.mp3",
+        "title": "Kanye West,Paul McCartney - Only One",
+        "cover": "assets/1789845682535_Kanye_West_Paul_McCartney_-_Only_One.mp3.jpg"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789845919184_Kanye_West_-_Come_to_Life.mp3",
+        "title": "Kanye West - Come to Life",
+        "cover": "assets/1789845919197_Kanye_West_-_Come_to_Life.mp3.jpg"
       }
     ],
     "src": "assets/1789830788692_Reynard_Silva_-_The_Way_I_Still_Love_You.mp3"
@@ -39,12 +63,8 @@
     "featured": true,
     "desc": "Travel Photo.",
     "descZh": "精選照片",
-    "src": "assets/seed-01.svg",
+    "src": "assets/1789827413545_C22FA9D2AC86DC60465FB447FBE77D74.png",
     "media": [
-      {
-        "type": "image",
-        "src": "assets/seed-01.svg"
-      },
       {
         "type": "image",
         "src": "assets/1789827413545_C22FA9D2AC86DC60465FB447FBE77D74.png"
@@ -56,8 +76,35 @@
       {
         "type": "image",
         "src": "assets/1789827463648_7948611B08EF56A717495E7FF2E3FEAA.png"
+      },
+      {
+        "type": "image",
+        "src": "assets/1789845981608_A6FAE8EEE363B42BCA57F63EAC694A6F.png",
+        "captionZh": "东京塔"
+      },
+      {
+        "type": "image",
+        "src": "assets/1789845987418_70F78868918BDE2F04F794E9D55A562E.png",
+        "captionZh": "东京大学"
+      },
+      {
+        "type": "image",
+        "src": "assets/1789846000022_B02D028EF710618756716BD55EF99D45.png",
+        "captionZh": "你的名字"
+      },
+      {
+        "type": "image",
+        "src": "assets/1789846010722_807A125E79E15FE0162B22FC48C7AC4C.png",
+        "captionZh": "新宿"
+      },
+      {
+        "type": "image",
+        "src": "assets/1789846017533_BDF0294A58CC3F78A62AA38255BDD0E8.png",
+        "captionZh": "涩谷十字路口"
       }
-    ]
+    ],
+    "body": "",
+    "bodyZh": "下次旅行目的地为：北海道"
   },
   {
     "id": "t2",
@@ -70,8 +117,8 @@
     "featured": false,
     "desc": "What this little site is for.",
     "descZh": "這個小站是為了什麼。",
-    "body": "Koyome (koyome.me) is a small plot of internet to call my own:\n\n· keeping the words worth keeping\n· storing the pictures worth revisiting\n· archiving the videos worth watching again\n\nNo chasing trends — only collecting signals.",
-    "bodyZh": "Koyome（koyome.me）是我在網路上的一小塊地：\n\n· 留下值得留下的字\n· 存放值得回頭看的圖\n· 收藏值得再看一次的影像\n\n不追什麼潮流——只是收集訊號。",
+    "body": "This can be considered a summary of my 20-year-old self. Over these years, I have experienced many things—partings, joys, and pains.But I still appreciate everything that has happened, whether good or bad—I find it all meaningful.\nHere, I would like to express my gratitude to my closest friends. Perhaps I have unilaterally deemed them as such, but I am deeply thankful for your companionship and the support you have given me! This comes from the heart. So, who are my closest friends? I won't say much more. The most representative example is someone named Bo Bo (pseudonym). We've had a continuous interaction on Douyin for nearly 800 days. He is an exceptionally capable and kind person who always offers guidance and companionship when I'm troubled or feeling down. Meeting him truly has been a wonderful experience in life! Of course, there are many good friends like Hyl, with whom I play sports together; WZR, with whom I chat occasionally; and XY, a great brother in GTA... and so on. In short, this is essentially all of my life. So I want to say it again: meeting you all has truly been the best thing in my life!\nThose who have hurt me in the past—whatever they did—can be considered part of the past now. If you can see this, I don't mind at all. Your presence is also the meaning in my life.So, it's no big deal.\nIn short, this is all I have. For the road ahead, I must bring my true capabilities to bear and keep moving forward! ",
+    "bodyZh": "算是對我20歲的一個總結吧，這些年來我經歷了很多，有離別有開心有痛苦。但我仍然感謝發生的一切，無論是好還是壞，我都覺得很有意義。\n在這我要跟我的摯友道謝，也許是我擅自認為的摯友，但我非常感謝你們的陪伴和給我的支持！這是發自內心的，那麼摯友有哪些呢？我就不多說了，最有代表的是一個叫波波（化名）的吧，抖音跟他快800多天的火花了，他是一個很厲害也很善良的人，總在我困擾的時候難過的時候提點我陪著我，能遇到他真是人生的一件美事！當然還有很多好朋友像一起打球的hyl，偶爾聊天的wzr，Gta裡的好哥哥xy..等等，總之這大概就是我生活的全部了，所以我想再說一次：遇見你們真是我人生中最好的事！\n以前傷害過我的人，怎麼說都也算是過去了吧，如果你們能看到這，我也無所謂了，你們的出現也是我人生中的意義。所以也沒什麼大不了的。\n 總之這就是我的全部了，接下來的路也要拿出真本事走下去！",
     "media": []
   },
   {

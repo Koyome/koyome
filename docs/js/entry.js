@@ -17,6 +17,28 @@
   const params = new URLSearchParams(location.search);
   const entryId = params.get('id');
   let entry = null;
+  let canEdit = false; /* owner mode — inline title / desc / caption editing */
+
+  const RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* reveal-on-scroll for media blocks (same language as the catalog) */
+  function observeReveals(scope) {
+    const els = [...scope.querySelectorAll('.reveal-row')];
+    if (RM || !('IntersectionObserver' in window)) {
+      els.forEach((el) => el.classList.add('in-view', 'settled'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in-view');
+        io.unobserve(en.target);
+        const d = parseFloat(getComputedStyle(en.target).getPropertyValue('--d')) || 0;
+        setTimeout(() => en.target.classList.add('settled'), d * 1000 + 1200);
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -4% 0px' });
+    els.forEach((el) => io.observe(el));
+  }
 
   async function init() {
     const list = await loadContent();
@@ -27,6 +49,9 @@
       return;
     }
     normalize(entry);
+    try { canEdit = await apiAvailable(); } catch (_) { canEdit = false; }
+    /* owner-only: reveal the upload tools once the API check passes */
+    if (canEdit) $('ownerTools').hidden = false;
     const title = loc(entry, 'title') || t('untitled');
     document.title = `${title} · Koyome`;
     renderHead(title);
@@ -35,6 +60,7 @@
   }
 
   function renderHead(title) {
+    const desc = loc(entry, 'desc');
     $('entryHead').innerHTML = `
       <div class="card-meta">
         <span class="tag accent">${esc(typeLabel(entry.type))}</span>
@@ -42,8 +68,88 @@
         <span>${esc(entry.date || '')}</span>
         ${entry.featured ? '<span>★</span>' : ''}
       </div>
-      <h1>${esc(title)}</h1>
-      ${loc(entry, 'desc') ? `<p class="desc">${esc(loc(entry, 'desc'))}</p>` : ''}`;
+      <h1 data-etitle>${esc(title)}</h1>
+      ${desc ? `<p class="desc" data-edesc>${esc(desc)}</p>` : (canEdit ? `<p class="desc desc-empty" data-edesc></p>` : '')}
+      ${canEdit ? `<p class="edit-hint entry-edit-hint">${esc(t('caption_edit_hint'))}</p>` : ''}`;
+
+    if (!canEdit) return;
+
+    /* double-click the title or the description to edit in place */
+    const h1 = $('entryHead').querySelector('[data-etitle]');
+    bindInlineText(h1, () => loc(entry, 'title') || '', async (v) => {
+      const field = window.I18N.lang === 'zh' ? 'titleZh' : 'title';
+      await putContent({ [field]: v });
+      entry[field] = v;
+      document.title = `${v} · Koyome`;
+      return v;
+    }, false);
+
+    const dp = $('entryHead').querySelector('[data-edesc]');
+    if (dp) bindInlineText(dp, () => loc(entry, 'desc') || '', async (v) => {
+      const field = window.I18N.lang === 'zh' ? 'descZh' : 'desc';
+      await putContent({ [field]: v });
+      entry[field] = v;
+      return v;
+    }, true);
+  }
+
+  async function putContent(fields) {
+    const r = await fetch('api/content?id=' + encodeURIComponent(entry.id), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    });
+    if (!r.ok) throw new Error('fail');
+  }
+
+  /* generic double-click inline editor for a single field
+     (single-line input or multiline textarea) */
+  function bindInlineText(el, getter, saver, multiline, allowEmpty) {
+    if (!el) return;
+    el.classList.add('editable');
+    el.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      if (el.classList.contains('editing')) return;
+      el.classList.add('editing');
+      const current = getter();
+      const input = document.createElement(multiline ? 'textarea' : 'input');
+      if (!multiline) input.type = 'text';
+      input.className = multiline ? 'cap-edit' : 't-edit';
+      input.value = current;
+      el.textContent = '';
+      el.appendChild(input);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = (save) => {
+        if (done) return;
+        done = true;
+        el.classList.remove('editing');
+        const v = input.value.trim();
+        if (!save || v === current || (!v && !allowEmpty)) { el.textContent = current || (allowEmpty ? t('caption_empty') : ''); return; }
+        el.textContent = '…';
+        saver(v).then((shown) => {
+          el.textContent = shown;
+          flashStatus(t('cat_edit_saved'));
+        }).catch(() => {
+          el.textContent = current;
+          flashStatus(t('cat_edit_fail'));
+        });
+      };
+      input.addEventListener('keydown', (ev) => {
+        if (!multiline && ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+        if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+      });
+      input.addEventListener('blur', () => finish(true));
+    });
+  }
+
+  function flashStatus(msg) {
+    let s = document.querySelector('.entry-edit-hint');
+    if (!s) return;
+    const prev = s.textContent;
+    s.textContent = msg;
+    setTimeout(() => { s.textContent = prev; }, 2400);
   }
 
   /* Body text: the main prose for text entries; a designed note
@@ -72,9 +178,23 @@
     return fn || `${t('media_track')} ${String(i + 1).padStart(2, '0')}`;
   }
 
+  /* layout rhythm for the media grid — breaks the single column into
+     wide / offset / half blocks. Audio tracks always span full width. */
+  const LAY_CYCLE = ['lay-a', 'lay-b', 'lay-wide', 'lay-c', 'lay-d'];
+  function layoutClasses() {
+    const visual = entry.media.filter((m) => m.type !== 'audio').length;
+    let vi = 0;
+    return entry.media.map((m) => {
+      if (m.type === 'audio') return 'lay-track';
+      if (visual === 1) { vi++; return 'lay-wide'; }
+      return LAY_CYCLE[(vi++) % LAY_CYCLE.length];
+    });
+  }
+
   function renderMedia() {
     const wrap = $('entryMedia');
     if (!entry.media || !entry.media.length) { wrap.innerHTML = ''; return; }
+    const lays = layoutClasses();
     wrap.innerHTML = entry.media.map((m, i) => {
       const label = m.type === 'audio'
         ? `${esc(t('media_track'))} ${String(i + 1).padStart(2, '0')}`
@@ -94,11 +214,21 @@
       } else {
         inner = `<img src="${esc(m.src)}" alt="${esc(loc(entry, 'title'))} ${i + 1}" loading="lazy">`;
       }
+      const cap = loc(m, 'caption');
+      const d = Math.min(0.05 + i * 0.1, 0.5).toFixed(2) + 's';
       return `
-      <div class="media-item${m.type === 'audio' ? ' is-track' : ''}">
-        <span class="media-label">${label}</span>
-        ${inner}
-        <button class="media-del" data-index="${i}" title="${esc(t('del'))}">${esc(t('del'))} ✕</button>
+      <div class="media-block ${lays[i]} reveal-row" style="--d:${d}">
+        <div class="media-item${m.type === 'audio' ? ' is-track' : ''}">
+          <span class="media-label">${label}</span>
+          ${inner}
+          ${canEdit ? `<button class="media-del" data-index="${i}" title="${esc(t('del'))}">${esc(t('del'))} ✕</button>` : ''}
+        </div>
+        ${(cap || canEdit) ? `
+        <div class="media-cap" data-cap="${i}">
+          <span class="cap-label">${esc(t('caption_label'))}</span>
+          <div class="cap-text${cap ? '' : ' is-empty'}" data-captext>${cap ? esc(cap) : esc(t('caption_empty'))}</div>
+          <span class="cap-status" data-capstatus></span>
+        </div>` : ''}
       </div>`;
     }).join('');
 
@@ -120,6 +250,28 @@
         renderMedia();
       });
     });
+
+    /* caption editing — double-click the caption area */
+    if (canEdit) {
+      wrap.querySelectorAll('[data-captext]').forEach((el) => {
+        const index = parseInt(el.closest('[data-cap]').dataset.cap, 10);
+        bindInlineText(el, () => loc(entry.media[index], 'caption') || '', async (v) => {
+          const field = window.I18N.lang === 'zh' ? 'captionZh' : 'caption';
+          const r = await fetch(
+            `api/media?id=${encodeURIComponent(entry.id)}&index=${index}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ [field]: v }),
+            });
+          if (!r.ok) throw new Error('fail');
+          entry.media[index][field] = v;
+          el.classList.toggle('is-empty', !v);
+          return v || t('caption_empty');
+        }, true, true);
+      });
+    }
+
+    observeReveals(wrap);
   }
 
   /* ================= owner tools: upload ================= */

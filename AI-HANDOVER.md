@@ -2,7 +2,7 @@
 
 > 这份文档写给下一个接管本项目的 AI（或人类开发者）。
 > 读完这一份，你就拥有了继续开发的全部上下文。
-> 最后更新：2026-09-19
+> 最后更新：2026-09-20（第五轮：游客/管理员条件渲染；第四轮过渡动画已拆除）
 
 ---
 
@@ -104,7 +104,8 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
                                //   有内容时在前端渲染为素材旁的「手記/NOTE」设计区块
   src: 'assets/xxx',           // = media[0].src，冗余缓存，删 media 时服务端会重算
   media: [                     // 素材数组（图/视频/音频混排）
-    { type: 'image', src: 'assets/xx.png' },
+    { type: 'image', src: 'assets/xx.png',
+      caption, captionZh },    // ★ 2026-09-20 新增：素材描绘（双语，详情页素材旁可双击编辑）
     { type: 'video', src: 'assets/xx.mp4' },
     { type: 'audio', src: 'assets/xx.mp3',
       title: '歌名',           // 音频专有：曲名
@@ -115,6 +116,9 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 
 ### Profile（profile.json）
 `name, nameZh, tagline, taglineZh, intro, introZh, avatar`
+
+### 爱好（hobbies.json，2026-09-20 新增）
+`{ intro, introZh, items: [{ id, name, nameZh, text, textZh }] }`——爱好页整页数据，初始为占位种子，用户可改。
 
 ### 留言（guestbook.json）
 `{ id, name, text, date }`
@@ -128,8 +132,10 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 | PUT | `/api/content?id=` | 改文本字段（body 对所有类型开放；text 类型 body 不能清空） |
 | DELETE | `/api/content?id=` | 删条目（**不删 assets 文件**） |
 | POST | `/api/media` | 给条目加素材：`{id, files:[{file,filename,title?,coverFile?}]}`，音频支持 title+coverFile |
+| PUT | `/api/media?id=&index=` | 改第 index 个素材的 `caption/captionZh`（音频还可改 `title`） |
 | DELETE | `/api/media?id=&index=` | 删条目里第 index 个素材 |
 | GET/POST | `/api/profile` | 读/改首页信息（POST 支持 `avatarFile` dataURL） |
+| GET/POST | `/api/hobbies` | 读/整页覆写爱好页数据 `{intro,introZh,items[]}`（POST 会做字段裁剪） |
 | GET/POST/DELETE | `/api/guestbook` | 留言增删查 |
 
 - 上传一律用 **dataURL base64**，`saveDataUrl()` 落盘到 `assets/时间戳_文件名.ext`，BODY_LIMIT 200MB。
@@ -143,6 +149,29 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 - 详情页音频渲染为 `.track-card`（封面 + 曲名 + `<audio controls>`）；无封面时用内联 SVG 兜底。
 - 图片/视频条目的 body 渲染为 `.entry-note`（NOTE/手記 标签 + 正文），与素材相辅相成——这是用户明确要求的设计，改动时保持这个调性。
 - 设计语言参考：浅纸色底、衬线标题、等宽小标签、红色 accent（`--accent: #9e2b25`），参考 1uvng.me 的安静极简风。
+
+### 2026-09-20 第二轮新增（本机已验证，未 push）
+- **目录页 kinetic title index**（catalog.js）：逐字模糊上浮入场、行级 IntersectionObserver reveal、悬停渐变扫光+下划线绘制+箭头、ghost 序号滚动视差；站长模式（API 存活时）**双击标题内联改名**（PUT 仅传当前语言字段）。
+- **详情页素材描绘**（entry.js）：每个素材旁 `.media-cap`（CAPTION/描繪 标签 + 双语 caption），站长模式双击编辑（PUT /api/media）；条目标题/简介同样双击即改。
+- **素材多样布局**：`.media-stack` 改 12 列网格，lay-a/b/c/d/wide/track 类循环指派（错落、偏移、宽窄混搭），音频恒通栏；素材框加红色角标 tick。
+- **爱好页** `hobbies.html` + `hobbies.js` + `data/hobbies.json` + `/api/hobbies`：错落卡片 + 循环几何 SVG 图腾，全字段双击编辑、可增删；导航菜单已接入（header.js PAGES，nav_hobbies 词条）。
+- **动态装饰** `deco.js`（全站挂载）：8 种不规则线框几何形按页面预置 2–3 个，正弦漂移 + 慢旋转 + 鼠标反向视差；`pointer-events:none`、内容 z-index 之上层叠为 1、移动端/减少动态偏好自动关闭。
+- reveal/入场统一缓动 `cubic-bezier(.22,.8,.3,1)`（借鉴 1uvng.me 的 .reveal/signal-in）；所有 reveal 元素完成后加 `.settled` 清零 transition-delay 保证悬停即时响应。
+
+### 2026-09-20 第五轮：游客/管理员条件渲染（游客纯只读）
+- 角色判定沿用既有机制：本地 API 存活 = 管理员（站长机），静态托管（GitHub Pages）= 游客。
+- **header.js**：菜单不再静态渲染「管理」链接；`maybeRevealAdmin()` 轮询等 Koyome 就绪 → `apiAvailable()` 为真才追加 admin 链接（编号 05），游客永远没有该入口。
+- **admin.html/admin.js**：两个 `.admin-wrap` 默认 `hidden`；admin.js 顶部 `gate()` 非管理员 `location.replace('index.html')`，通过才揭开。
+- **entry.html/entry.js**：`#ownerTools` 默认 `hidden`（之前对游客可见！），canEdit 才显示；`.media-del` 删除按钮仅 canEdit 渲染；无 caption 的素材游客不再渲染 `.media-cap` 空块。
+- **guestbook.js**：`.gb-del` 仅 canEdit 渲染（之前所有访客可见删除按钮）。
+- **hobbies.js**：空图框的 "+" 路径仅 canEdit 渲染（游客只看圆圈）；空分区文案分角色——游客 `hob_empty_guest`（"Nothing here yet."），管理员仍是添加引导。
+- 验证：test 双视角 34 项全过（游客 6 页零编辑痕迹 + 管理员全功能）；静态回归 22 项全过（期望值已同步用户当前真实内容：t1 分类 Music/音乐、zh 标题「電台」、body 含 playlist/歌單）。
+- 注意：静态模式下 admin 页 gate 会触发 jsdom "Not implemented: navigation" 噪音——预期行为（游客被重定向）。
+
+### 2026-09-20 第四轮：页面过渡动画 —— 已应用户要求全部拆除
+- 曾两版实现（v1 淡入淡出被反馈"卡、不完整"；v2 几何薄纱+缓冲进度条+百分比修好后用户仍决定**不要任何页面间过渡**），现已全部移除：无 `.pt-*/.pv-*` markup/CSS、无 `js/transitions.js`、无相关 i18n 词条，grep 零残留；6 页冒烟 + 22 项静态回归全过。
+- 全站唯一加载动画 = 首页原始 `.loader`，保持原样勿动。
+- 教训存档：① infinite CSS 动画只挂可见态选择器，否则隐藏时仍耗合成；② 出场动画时长必须 < 跳转延迟；③ jsdom fromURL 在 deferred 脚本执行前 resolve，断言要等 DOMContentLoaded。
 
 ## 8. 本机运行
 
@@ -164,10 +193,12 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 
 **本机网络坑**：系统代理会让 git push 报 502。对策：重试几次，或清空 `http_proxy/https_proxy` 环境变量再推；实在不行用 GitHub Contents API 直接 PUT 文件兜底（会造成本地与远端 commit 哈希分叉，下次 push 前 `git fetch && git reset --hard origin/main` 对齐）。
 
-## 10. 当前状态快照（2026-09-19）
+## 10. 当前状态快照（2026-09-20）
 
-- **本地领先线上**：音频功能（MP3+封面）、媒体条目手记区块、用户上传的全部素材（3 张 PNG、4 个 MP4、3 个 MP3、3 张封面）已 commit 到本地，**尚未 push**（等重新授权）。线上站目前还是旧版。
+- **本地领先线上 2 大块**：① 第一轮 c66428d（音频+封面+手记区块+素材）② 第二轮未 commit（目录动效+素材描绘+爱好页+deco 装饰+API 扩展）。**全部尚未 push**（等重新授权）。线上站目前还是旧版。
 - content.json 里 `t1 深夜電台` 已挂 2 首 MP3（Reynard Silva、mixed matches），带封面。
+- 素材 caption 字段已上线（API + 前端），用户尚未填写——4 个条目的素材目前都是空描绘，等用户双击填写。
+- hobbies.json 第三轮已重构为动漫主题空模板（anime/chars 两分区 + 3 个Q版装饰槽），等用户填入自己的内容。
 - assets 里有一组重复文件（`1789830681xxx` 与 `1789830788xxx` 是同一首歌的两次上传）——是否清理由用户决定，不要自行删。
 - 已知小分叉：`.nojekyll` 那个 commit 本地与 GitHub 哈希不同（API 上传所致），下次 push 前按 §9 对齐。
 

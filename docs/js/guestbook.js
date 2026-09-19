@@ -10,6 +10,7 @@
   const $ = (id) => document.getElementById(id);
 
   let messages = [];
+  let canEdit = false; /* owner mode — deleting notes is an admin operation */
 
   function render() {
     $('gbCount').textContent = String(messages.length).padStart(2, '0') + ' ' + t('items');
@@ -22,7 +23,7 @@
               <span class="gb-date">${esc(m.date || '')}</span>
             </div>
             <div class="gb-text">${esc(m.text)}</div>
-            <button class="gb-del" data-id="${esc(m.id)}" title="${esc(t('del'))}">${esc(t('del'))}</button>
+            ${canEdit ? `<button class="gb-del" data-id="${esc(m.id)}" title="${esc(t('del'))}">${esc(t('del'))}</button>` : ''}
           </div>`).join('')
       : `<div class="empty">${esc(t('gb_empty'))}</div>`;
 
@@ -42,6 +43,7 @@
 
   async function refresh() {
     messages = await loadGuestbook();
+    try { canEdit = await apiAvailable(); } catch (_) { canEdit = false; }
     render();
   }
 

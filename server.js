@@ -14,6 +14,7 @@ const DATA_DIR = path.join(PUBLIC_DIR, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'content.json');
 const GUESTBOOK_FILE = path.join(DATA_DIR, 'guestbook.json');
 const PROFILE_FILE = path.join(DATA_DIR, 'profile.json');
+const HOBBIES_FILE = path.join(DATA_DIR, 'hobbies.json');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 const PORT = process.env.PORT || 80;
 const BODY_LIMIT = 200 * 1024 * 1024; // 200MB (base64 upload limit)
@@ -92,6 +93,8 @@ const loadGuestbook = () => {
 const saveGuestbook = (list) => writeJson(GUESTBOOK_FILE, list);
 const loadProfile = () => ({ ...DEFAULT_PROFILE, ...readJson(PROFILE_FILE, {}) });
 const saveProfile = (p) => writeJson(PROFILE_FILE, p);
+const loadHobbies = () => readJson(HOBBIES_FILE, { intro: '', introZh: '', items: [] });
+const saveHobbies = (h) => writeJson(HOBBIES_FILE, h);
 
 const str = (v, n) => String(v == null ? '' : v).slice(0, n);
 
@@ -267,6 +270,30 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  /* update one media item's editable text — the caption that
+     describes the piece (bilingual like every text field) */
+  if (url.pathname === '/api/media' && req.method === 'PUT') {
+    try {
+      const id = url.searchParams.get('id');
+      const index = parseInt(url.searchParams.get('index'), 10);
+      const body = JSON.parse((await readBody(req, BODY_LIMIT)).toString('utf8'));
+      const list = loadContent();
+      const entry = list.find((it) => it.id === id);
+      if (!entry || Number.isNaN(index) || !entry.media || !entry.media[index]) {
+        return send(res, 404, { error: 'Media not found' });
+      }
+      if (body.caption != null) entry.media[index].caption = str(body.caption, 2000);
+      if (body.captionZh != null) entry.media[index].captionZh = str(body.captionZh, 2000);
+      if (body.title != null && entry.media[index].type === 'audio') {
+        entry.media[index].title = str(body.title, 120);
+      }
+      saveContent(list);
+      return send(res, 200, { ok: true, media: entry.media });
+    } catch (e) {
+      return send(res, e.message === 'payload too large' ? 413 : 400, { error: e.message });
+    }
+  }
+
   if (url.pathname === '/api/media' && req.method === 'DELETE') {
     const id = url.searchParams.get('id');
     const index = parseInt(url.searchParams.get('index'), 10);
@@ -308,6 +335,59 @@ const server = http.createServer(async (req, res) => {
       }
       saveProfile(next);
       return send(res, 200, { ok: true, profile: next });
+    } catch (e) {
+      return send(res, e.message === 'payload too large' ? 413 : 400, { error: e.message });
+    }
+  }
+
+  /* ================= Hobbies API ================= */
+  if (url.pathname === '/api/hobbies' && req.method === 'GET') {
+    res.writeHead(200, MIME['.json']);
+    return res.end(JSON.stringify(loadHobbies()));
+  }
+
+  if (url.pathname === '/api/hobbies' && req.method === 'POST') {
+    try {
+      const body = JSON.parse((await readBody(req, 4 * 1024 * 1024)).toString('utf8'));
+      const doc = {
+        intro: str(body.intro, 5000),
+        introZh: str(body.introZh, 5000),
+        /* two fixed sections — anime & characters — each holding
+           free-form image + text items */
+        sections: (Array.isArray(body.sections) ? body.sections : []).slice(0, 4).map((sec) => ({
+          id: str(sec.id, 40) || 'sec' + Date.now().toString(36),
+          items: (Array.isArray(sec.items) ? sec.items : []).slice(0, 40).map((it) => ({
+            id: str(it.id, 40) || 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+            name: str(it.name, 120),
+            nameZh: str(it.nameZh, 120),
+            text: str(it.text, 3000),
+            textZh: str(it.textZh, 3000),
+            src: /^assets\/[\w.\-\u4e00-\u9fa5]+$/i.test(String(it.src || '')) ? String(it.src) : '',
+          })),
+        })),
+        /* chibi decoration slots scattered around the page */
+        deco: (Array.isArray(body.deco) ? body.deco : []).slice(0, 6).map((d) => ({
+          id: str(d.id, 40) || 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+          src: /^assets\/[\w.\-\u4e00-\u9fa5]+$/i.test(String(d.src || '')) ? String(d.src) : '',
+        })),
+      };
+      saveHobbies(doc);
+      return send(res, 200, { ok: true, hobbies: doc });
+    } catch (e) {
+      return send(res, e.message === 'payload too large' ? 413 : 400, { error: e.message });
+    }
+  }
+
+  /* upload one image for a hobbies item or a chibi deco slot —
+     saves into docs/assets and returns its src */
+  if (url.pathname === '/api/hobbies/upload' && req.method === 'POST') {
+    try {
+      const body = JSON.parse((await readBody(req, BODY_LIMIT)).toString('utf8'));
+      const src = saveDataUrl(body.file, body.filename);
+      if (!src || !/^data:image\//.test(String(body.file || ''))) {
+        return send(res, 400, { error: 'image file required' });
+      }
+      return send(res, 200, { ok: true, src });
     } catch (e) {
       return send(res, e.message === 'payload too large' ? 413 : 400, { error: e.message });
     }
