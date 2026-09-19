@@ -216,6 +216,8 @@ GIT_SSH_COMMAND='"<PortableGit>/usr/bin/ssh.exe" -i "C:\Users\Public\koyome-site
 git push git@github.com:Koyome/koyome.git main:main
 ```
 - 2026-09-20 曾用 `--force-with-lease` 覆盖远端 `0b52fbd`（历史遗留的 API 分叉提交），之后本地/远端历史完全一致，普通 push 即可。
+- **坑：`origin` remote 是 HTTPS 地址，而本机 PortableGit 精简版没有 remote-https helper**，`git push origin main` 会报 `'remote-https' is not a git command`——必须像上面模板那样显式写 SSH 地址 `git@github.com:Koyome/koyome.git`。
+- 手机版适配已完成（2026-09-20，提交 `6d03695`）：页头 sticky + z-index 100（修三点菜单被图片遮挡）；`deco.js` 不再对 ≤720px 直接 return，改渲染 2 个缩小图形；Q 版装饰层手机端缩小显示；验证方式见工作区 `mobile-verify.js` 思路（Edge headless + CDP，`Emulation.setDeviceMetricsOverride` 375×812 + `elementFromPoint` 命中测试）。
 - 备用 token（REST 用）：`tools/gh-token.txt`（gitignore，scope=repo）。撤销入口：GitHub Settings → Applications → Authorized OAuth Apps。
 
 ### 9.1 本机网络现状（2026-09-20 实测，重要）
