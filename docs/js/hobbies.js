@@ -20,8 +20,14 @@
     anime: { zh: 'hob_sec_anime', en: 'hob_sec_anime_en' },
     chars: { zh: 'hob_sec_chars', en: 'hob_sec_chars_en' },
   };
-  /* where each chibi slot sits — kept clear of the text flow */
-  const DECO_POS = [
+  /* where each chibi slot sits — kept clear of the text flow.
+     On phones the slots hug the corners instead of the wide margins. */
+  const MOBILE = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
+  const DECO_POS = MOBILE ? [
+    { top: '52px', right: '6px' },      /* beside the page intro */
+    { top: '44%', left: '0' },          /* between the two rivers */
+    { bottom: '16px', right: '12px' },  /* waving near the footer */
+  ] : [
     { top: '64px', right: '6px' },      /* beside the page intro */
     { top: '47%', left: '-14px' },      /* between the two rivers */
     { bottom: '26px', right: '34px' },  /* waving near the footer */

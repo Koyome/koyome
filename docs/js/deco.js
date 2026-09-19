@@ -8,7 +8,11 @@
    ============================================================ */
 (function () {
   'use strict';
-  if (window.matchMedia && window.matchMedia('(max-width: 720px)').matches) return;
+
+  /* phones get the design too — just fewer, smaller, calmer shapes,
+     and no cursor-lean (there is no cursor) */
+  const MOBILE = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
+  const TOUCH = !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
 
   const RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const page = (document.body && document.body.dataset.page) || 'home';
@@ -63,8 +67,17 @@
   };
   const spots = PLACE[page] || PLACE.home;
 
+  /* mobile variant: two shapes max, ~55% size, gentler drift, no mouse depth,
+     and nudged inward so nothing is cropped off the narrow screen */
+  const effective = MOBILE
+    ? spots.slice(0, 2).map(([si, x, y, size, tint, amp, spin]) => [
+        si, Math.min(Math.max(x, 8), 78), y, Math.round(size * 0.55),
+        tint, Math.max(amp * 0.5, 6), spin, 0,
+      ])
+    : spots;
+
   const COLORS = { line: '#b4b2a9', accent: '#9e2b25' };
-  const shapes = spots.map(([si, x, y, size, tint, amp, spin, depth], i) => {
+  const shapes = effective.map(([si, x, y, size, tint, amp, spin, depth], i) => {
     const el = document.createElement('div');
     el.className = 'deco-shape';
     el.setAttribute('aria-hidden', 'true');
@@ -85,12 +98,14 @@
 
   if (RM) return; /* static shapes only */
 
-  /* cursor lean — shapes drift slightly away from the pointer */
-  window.addEventListener('mousemove', (e) => {
-    const cx = (e.clientX / window.innerWidth - 0.5) * 2;
-    const cy = (e.clientY / window.innerHeight - 0.5) * 2;
-    shapes.forEach((s) => { s.tx = -cx * s.depth * 220; s.ty = -cy * s.depth * 220; });
-  }, { passive: true });
+  /* cursor lean — shapes drift slightly away from the pointer (desktop only) */
+  if (!TOUCH) {
+    window.addEventListener('mousemove', (e) => {
+      const cx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const cy = (e.clientY / window.innerHeight - 0.5) * 2;
+      shapes.forEach((s) => { s.tx = -cx * s.depth * 220; s.ty = -cy * s.depth * 220; });
+    }, { passive: true });
+  }
 
   let visible = !document.hidden;
   document.addEventListener('visibilitychange', () => { visible = !document.hidden; });

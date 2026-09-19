@@ -17,9 +17,9 @@
   --shadow: 0 14px 40px rgba(60, 58, 54, 0.10);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: clip; }
 
 body {
   background: var(--bg);
@@ -29,6 +29,7 @@ body {
   line-height: 1.9;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: clip; /* tilted figures & ghost digits must not cause h-scroll */
 }
 
 a { color: inherit; text-decoration: none; }
@@ -61,9 +62,14 @@ img { max-width: 100%; display: block; }
 }
 
 /* ---------- Site header ---------- */
+/* sticky + high z-index: the "⋯" button and its panel must always sit
+   above page media (images stack at z-index 1 — same layer used to
+   swallow the menu before). */
 .site-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 22px 40px;
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg);
 }
 .header-left { display: flex; align-items: baseline; gap: 20px; }
 .brand {
@@ -748,22 +754,66 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 720px) {
-  .site-header { padding: 18px 22px; }
+  .site-header { padding: 14px 18px; }
+  .brand { font-size: 19px; }
+  .header-left { gap: 12px; }
+  .lang-switch { gap: 6px; }
+  .lang-switch button { font-size: 9.5px; padding: 4px 2px; }
+
+  /* menu drops as a full-width sheet under the sticky header —
+     generous tap targets, always above every image on the page */
+  .menu-panel {
+    position: fixed; top: 76px; left: 16px; right: 16px;
+    min-width: 0; z-index: 120;
+    padding: 6px 0;
+  }
+  .menu-panel a { padding: 14px 18px; font-size: 12px; letter-spacing: 0.2em; }
+  .menu-panel a:hover { padding-left: 20px; } /* hover indent is a desktop treat */
+
   .section, .admin-wrap, .entry-wrap, .gb-wrap { padding-left: 22px; padding-right: 22px; }
+  .section-head { flex-wrap: wrap; gap: 8px 14px; row-gap: 6px; }
+  .section-head .count { margin-left: 0; width: 100%; }
   .home { padding-left: 22px; padding-right: 22px; padding-bottom: 60px; }
   .home-sigil { padding-left: 22px; padding-right: 22px; padding-bottom: 60px; }
   .form-grid { grid-template-columns: 1fr; }
   .entry-row .d { display: none; }
-  .entry-row { gap: 12px; padding: 14px 4px; }
+  .entry-row { gap: 12px; padding: 15px 6px; }
   .entry-row .t { font-size: 19px; }
   .entry-row .ghost { font-size: 2.1rem; right: 4px; opacity: 0.25; }
   .entry-row .arrow { display: none; }
   .t-edit { width: 100%; }
-  .header-left { gap: 12px; }
   .track-card { gap: 12px; padding: 12px; }
   .track-cover { flex-basis: 60px; width: 60px; height: 60px; }
   .entry-note { padding-left: 16px; max-width: none; }
-  .menu-panel { min-width: 190px; }
+
+  /* iOS stops auto-zooming when fields are ≥16px */
+  .gb-form .field input[type="text"], .gb-form .field textarea,
+  .field input[type="text"], .field input[type="date"], .field select, .field textarea {
+    font-size: 16px;
+  }
+  .cat-index a { padding: 15px 16px; }
+  .home-links { gap: 22px; }
+  .home-links a { padding: 10px 0; }
+  .home-tagline { font-size: 15.5px; }
+  .portrait { margin: 0 auto; }
+  .site-footer { font-size: 9px; letter-spacing: 0.2em; }
+}
+
+/* touch devices: instant tap feedback instead of hover states */
+@media (hover: none) {
+  .entry-row:active { background: var(--accent-soft); }
+  .card:active { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .menu-panel a:active { color: var(--accent); background: var(--accent-soft); }
+  .home-links a:active { color: var(--accent); border-color: var(--accent); }
+}
+
+@media (max-width: 480px) {
+  .home-name { font-size: clamp(34px, 11vw, 44px); }
+  .portrait { max-width: 250px; }
+  .track-cover { flex-basis: 52px; width: 52px; height: 52px; }
+  .track-title { font-size: 14.5px; }
+  .entry-head h1 { font-size: clamp(24px, 7.4vw, 30px); }
+  .sigil-name { font-size: clamp(34px, 12vw, 48px); }
 }
 
 /* ============================================================
@@ -957,7 +1007,7 @@ img { max-width: 100%; display: block; }
   position: fixed; pointer-events: none; z-index: 0;
   will-change: transform;
 }
-.site-header, .section, .home, .home-sigil, .home-catalog, .entry-wrap,
+.section, .home, .home-sigil, .home-catalog, .entry-wrap,
 .gb-wrap, .admin-wrap, .hob-wrap, .site-footer { position: relative; z-index: 1; }
 
 /* responsive: the river straightens into a single stream */
@@ -973,14 +1023,26 @@ img { max-width: 100%; display: block; }
 }
 @media (max-width: 720px) {
   .hob-wrap { padding-left: 22px; padding-right: 22px; }
-  .hflow-item { flex-wrap: wrap; }
-  .hflow-fig { flex-basis: 100%; max-width: 260px; }
-  .hdeco-layer { display: none; }
+  .hflow { padding-top: 30px; gap: 44px; }
+  .hflow-item { flex-wrap: wrap; gap: 18px; }
+  .hflow-fig { flex-basis: 100%; max-width: 240px; }
+  .hflow-text { max-width: none; }
+
+  /* chibi characters stay on phones too — just pocket-sized.
+     deco.js likewise renders a smaller set of drifting shapes
+     instead of none at all (the design follows you to mobile). */
+  .hdeco-slot.filled { width: 62px; }
+  .hdeco-slot.empty { width: 54px; height: 54px; font-size: 7.5px; }
+
   .media-stack { grid-template-columns: 1fr; gap: 30px; }
   .media-block.lay-a, .media-block.lay-b, .media-block.lay-c, .media-block.lay-d { grid-column: 1 / -1; margin-top: 0; }
-  .media-block.lay-wide { flex-direction: column; align-items: stretch; }
+  .media-block.lay-wide { flex-direction: column; align-items: stretch; gap: 18px; }
   .lay-wide .media-cap { flex-basis: auto; }
-  .deco-shape { display: none; }
+}
+@media (max-width: 480px) {
+  .hflow-fig { max-width: 200px; }
+  .hflow-name { font-size: 18px; }
+  .hdeco-slot.filled { width: 52px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hdeco-img { animation: none; }
