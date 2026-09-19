@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title_guestbook">Guestbook · Koyome</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="guestbook" data-title-key="title_guestbook">
+
+  <header class="site-header" id="siteHeader"></header>
+
+  <section class="gb-wrap">
+    <div class="section-head">
+      <span class="zh" data-i18n="gb_title">Guestbook</span>
+      <span class="en" data-i18n="gb_en">LEAVE A NOTE</span>
+      <span class="count" id="gbCount"></span>
+    </div>
+
+    <p class="gb-intro" data-i18n="gb_intro">Say something — every note is visible to everyone, me included.</p>
+
+    <form class="gb-form" id="gbForm">
+      <div class="field">
+        <label for="gbName" data-i18n="gb_name">NAME</label>
+        <input type="text" id="gbName" data-i18n-ph="ph_name" placeholder="your name" maxlength="40" required />
+      </div>
+      <div class="field">
+        <label for="gbText" data-i18n="gb_msg">MESSAGE</label>
+        <textarea id="gbText" data-i18n-ph="ph_msg" placeholder="write something…" maxlength="2000" required></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn" data-i18n="gb_send">SEND</button>
+        <span class="form-msg" id="gbMsg"></span>
+      </div>
+    </form>
+
+    <div class="gb-list" id="gbList"></div>
+  </section>
+
+  <footer class="site-footer">
+    <span data-i18n="footer">© 2026 KOYOME. ALL RIGHTS RESERVED.</span> &nbsp;·&nbsp; <span class="addr">KOYOME.ME</span>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/guestbook.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+[
+  {
+    "id": "t1",
+    "type": "text",
+    "title": "Night Radio",
+    "titleZh": "深夜電台",
+    "category": "Essays",
+    "categoryZh": "隨筆",
+    "date": "2026-09-12",
+    "featured": true,
+    "desc": "A few lines written late at night.",
+    "descZh": "寫在深夜的幾行字。",
+    "body": "The radio crackles in the small hours, like someone gently knocking on a door far away.\n\nI think everyone carries a lighthouse inside — dark most days, lighting up only on certain nights, for whoever happens to be passing.\n\n(This is a sample text entry. Open the Admin page to replace it with your own words.)",
+    "bodyZh": "凌晨的電台沙沙作響，像有人在很遠的地方輕輕敲門。\n\n我想每個人心裡都有一座燈塔——大部分日子是暗的，只在某些夜晚亮起來，給剛好路過的人看。\n\n（這是一則範例文字。到管理頁把它換成你自己的話吧。）",
+    "media": [],
+    "src": ""
+  },
+  {
+    "id": "i1",
+    "type": "image",
+    "title": "Bloom · Line Study",
+    "titleZh": "綻放 · 線條練習",
+    "category": "Sketches",
+    "categoryZh": "繪畫",
+    "date": "2026-09-10",
+    "featured": true,
+    "desc": "A geometric line illustration.",
+    "descZh": "一張幾何線稿。",
+    "src": "assets/seed-01.svg",
+    "media": [
+      {
+        "type": "image",
+        "src": "assets/seed-01.svg"
+      }
+    ]
+  },
+  {
+    "id": "t2",
+    "type": "text",
+    "title": "About Koyome",
+    "titleZh": "關於 Koyome",
+    "category": "About",
+    "categoryZh": "關於",
+    "date": "2026-09-01",
+    "featured": false,
+    "desc": "What this little site is for.",
+    "descZh": "這個小站是為了什麼。",
+    "body": "Koyome (koyome.me) is a small plot of internet to call my own:\n\n· keeping the words worth keeping\n· storing the pictures worth revisiting\n· archiving the videos worth watching again\n\nNo chasing trends — only collecting signals.",
+    "bodyZh": "Koyome（koyome.me）是我在網路上的一小塊地：\n\n· 留下值得留下的字\n· 存放值得回頭看的圖\n· 收藏值得再看一次的影像\n\n不追什麼潮流——只是收集訊號。",
+    "media": []
+  },
+  {
+    "id": "v1",
+    "type": "video",
+    "title": "Sample Video (replace me)",
+    "titleZh": "範例影片（請替換我）",
+    "category": "Film",
+    "categoryZh": "影像",
+    "date": "2026-09-08",
+    "featured": true,
+    "desc": "A demo of how video entries are displayed and played.",
+    "descZh": "示範影片內容如何呈現與播放。",
+    "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    "media": [
+      {
+        "type": "video",
+        "src": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+      }
+    ]
+  }
+]

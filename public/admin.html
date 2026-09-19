@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title_admin">Admin · Koyome</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="admin" data-title-key="title_admin">
+
+  <header class="site-header" id="siteHeader"></header>
+
+  <!-- ============ Homepage profile ============ -->
+  <section class="admin-wrap">
+    <div class="section-head">
+      <span class="zh" data-i18n="prof_title">Homepage</span>
+      <span class="en" data-i18n="prof_en">PROFILE</span>
+    </div>
+
+    <div class="admin-note" data-i18n-html="prof_note"></div>
+
+    <form id="profileForm">
+      <div class="form-grid">
+        <div class="field">
+          <label data-i18n="f_avatar">PORTRAIT IMAGE</label>
+          <div class="avatar-pick">
+            <img id="avatarPreview" src="assets/avatar.jpg" alt="portrait preview" />
+            <input type="file" id="pAvatar" accept="image/*" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="pName" data-i18n="f_name">NAME</label>
+          <input type="text" id="pName" data-i18n-ph="ph_name_prof" placeholder="Koyome" />
+          <label class="sub-label" for="pNameZh" data-i18n="f_zh">繁體中文</label>
+          <input type="text" id="pNameZh" />
+        </div>
+        <div class="field full">
+          <label for="pTagline" data-i18n="f_tagline">WELCOME LINE</label>
+          <input type="text" id="pTagline" data-i18n-ph="ph_tagline" placeholder="welcome — make yourself at home." />
+          <label class="sub-label" for="pTaglineZh" data-i18n="f_zh">繁體中文</label>
+          <input type="text" id="pTaglineZh" data-i18n-ph="ph_tagline_zh" />
+        </div>
+        <div class="field full">
+          <label data-i18n="f_intro">SELF INTRODUCTION</label>
+          <div class="pair">
+            <textarea id="pIntro" data-i18n-ph="ph_intro" placeholder="Tell visitors who you are…"></textarea>
+            <textarea id="pIntroZh" data-i18n-ph="ph_intro_zh"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn" data-i18n="btn_save_prof">SAVE PROFILE</button>
+        <span class="form-msg" id="profMsg"></span>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ Content library ============ -->
+  <section class="admin-wrap">
+    <div class="section-head">
+      <span class="zh" data-i18n="admin_title">Content Manager</span>
+      <span class="en" data-i18n="admin_import">IMPORT &amp; MANAGE</span>
+    </div>
+
+    <div class="admin-note" id="adminNote"></div>
+
+    <div class="editing-banner" id="editBanner" style="display:none"></div>
+
+    <form id="entryForm">
+      <div class="form-grid">
+        <div class="field">
+          <label for="fType" data-i18n="f_type">TYPE</label>
+          <select id="fType">
+            <option value="text" data-i18n="type_text">Text</option>
+            <option value="image" data-i18n="type_image">Image</option>
+            <option value="video" data-i18n="type_video">Video</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fTitle" data-i18n="f_title">TITLE</label>
+          <input type="text" id="fTitle" data-i18n-ph="ph_title" placeholder="Name this entry" required />
+        </div>
+        <div class="field">
+          <label for="fCategory" data-i18n="f_category">CATEGORY</label>
+          <input type="text" id="fCategory" list="catList" data-i18n-ph="ph_category" placeholder="e.g. Essays / Sketches / Film" required />
+          <datalist id="catList"></datalist>
+        </div>
+        <div class="field">
+          <label for="fDate" data-i18n="f_date">DATE</label>
+          <input type="date" id="fDate" />
+        </div>
+
+        <!-- text -->
+        <div class="field full" id="fBodyWrap">
+          <label for="fBody" data-i18n="f_body">BODY</label>
+          <textarea id="fBody" data-i18n-ph="ph_body" placeholder="Write or paste the text you want to keep…"></textarea>
+        </div>
+
+        <!-- image / video -->
+        <div class="field file-field full" id="fFileWrap" style="display:none">
+          <label for="fFile" data-i18n="f_files">UPLOAD FILES</label>
+          <input type="file" id="fFile" multiple accept="image/*,video/*" />
+        </div>
+        <div class="field full" id="fSrcWrap" style="display:none">
+          <label for="fSrc" data-i18n="f_src">OR SOURCE URL (OPTIONAL)</label>
+          <input type="text" id="fSrc" data-i18n-ph="ph_src" placeholder="assets/xxx.jpg or https://..." />
+        </div>
+        <div class="field full">
+          <label for="fDesc" data-i18n="f_desc">DESCRIPTION (OPTIONAL, SHOWN ON CARDS)</label>
+          <input type="text" id="fDesc" data-i18n-ph="ph_desc" placeholder="One line about this entry" />
+        </div>
+
+        <!-- 繁體中文 twins -->
+        <div class="field full zh-block">
+          <label data-i18n="f_zh">繁體中文 (OPTIONAL)</label>
+          <p class="hint" data-i18n="f_src_zh_note"></p>
+          <input type="text" id="fTitleZh" data-i18n-ph="ph_title_zh" />
+          <input type="text" id="fCategoryZh" data-i18n-ph="ph_category_zh" />
+          <input type="text" id="fDescZh" data-i18n-ph="ph_desc_zh" />
+          <textarea id="fBodyZh" data-i18n-ph="ph_body_zh"></textarea>
+        </div>
+
+        <div class="field check-field full">
+          <input type="checkbox" id="fFeatured" />
+          <span data-i18n="f_featured">Mark as featured (shows a ★ on the entry page)</span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn" id="btnSubmit" data-i18n="btn_add">ADD ENTRY</button>
+        <button type="button" class="btn ghost" id="btnCancelEdit" style="display:none" data-i18n="btn_cancel_edit">CANCEL</button>
+        <button type="reset" class="btn ghost" data-i18n="btn_reset">RESET</button>
+        <span class="form-msg" id="formMsg"></span>
+      </div>
+    </form>
+
+    <div class="admin-list">
+      <div class="section-head">
+        <span class="zh" data-i18n="lib_title">Library</span>
+        <span class="en" data-i18n="lib_en">COLLECTED</span>
+        <span class="count" id="libCount"></span>
+      </div>
+      <div id="libList"></div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <span data-i18n="footer">© 2026 KOYOME. ALL RIGHTS RESERVED.</span> &nbsp;·&nbsp; <span class="addr">KOYOME.ME</span>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

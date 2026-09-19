@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#dcdad6"/>
+  <g fill="none" stroke="#9a9894" stroke-width="1.4">
+    <circle cx="400" cy="300" r="170" stroke-dasharray="2 7"/>
+    <polygon points="400,140 537,380 263,380"/>
+    <polygon points="400,460 263,220 537,220"/>
+    <line x1="400" y1="140" x2="400" y2="460"/>
+    <line x1="263" y1="220" x2="537" y2="380"/>
+    <line x1="537" y1="220" x2="263" y2="380"/>
+  </g>
+  <g fill="#9a9894">
+    <circle cx="400" cy="140" r="4"/><circle cx="537" cy="380" r="4"/><circle cx="263" cy="380" r="4"/>
+    <circle cx="400" cy="460" r="4"/><circle cx="263" cy="220" r="4"/><circle cx="537" cy="220" r="4"/>
+  </g>
+  <circle cx="400" cy="300" r="7" fill="#9e2b25"/>
+  <circle cx="400" cy="300" r="14" fill="none" stroke="#9e2b25" stroke-width="1.2"/>
+  <text x="400" y="530" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="26" fill="#7c7a76">koyome — seed illustration</text>
+</svg>

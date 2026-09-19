@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title_entry">Entry · Koyome</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="catalog" data-title-key="title_entry">
+
+  <header class="site-header" id="siteHeader"></header>
+
+  <section class="entry-wrap">
+    <a class="back-link" href="catalog.html" data-i18n="back">← Catalog</a>
+    <div id="entryHead"></div>
+    <div id="entryBody"></div>
+    <div class="media-stack" id="entryMedia"></div>
+
+    <div class="owner-tools" id="ownerTools">
+      <div class="ot-head" data-i18n="owner_tools">OWNER TOOLS</div>
+      <p class="gb-intro" data-i18n="add_media">Add media to this entry — images and videos, as many as you like.</p>
+      <div class="ot-row">
+        <input type="file" id="mediaFiles" multiple accept="image/*,video/*" />
+        <button type="button" class="btn" id="mediaUpload" data-i18n="upload">UPLOAD</button>
+        <span class="form-msg" id="mediaMsg"></span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <span data-i18n="footer">© 2026 KOYOME. ALL RIGHTS RESERVED.</span> &nbsp;·&nbsp; <span class="addr">KOYOME.ME</span>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/entry.js"></script>
+</body>
+</html>
