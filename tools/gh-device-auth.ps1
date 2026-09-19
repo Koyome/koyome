@@ -1,7 +1,8 @@
 # gh-device-auth.ps1 — GitHub OAuth device flow for pushing to Koyome/koyome.
-# Usage: powershell -ExecutionPolicy Bypass -File tools\gh-device-auth.ps1
+# Usage: powershell -ExecutionPolicy Bypass -File tools\gh-device-auth.ps1 [-Scope 'repo admin:public_key']
 # Prints a user code; user opens https://github.com/login/device and enters it.
 # On success writes the token to tools\gh-token.txt (gitignored). Token is never printed.
+param([string]$Scope = 'repo')
 $ErrorActionPreference = 'Continue'
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $tokenFile = Join-Path $root 'tools\gh-token.txt'
@@ -22,7 +23,7 @@ function Post-Json($url, $obj, $tries = 40) {
 }
 
 Write-Host 'Requesting device code from GitHub...'
-$dc = Post-Json 'https://github.com/login/device/code' @{ client_id = $clientId; scope = 'repo' }
+$dc = Post-Json 'https://github.com/login/device/code' @{ client_id = $clientId; scope = $Scope }
 Write-Host ''
 Write-Host '============================================================'
 Write-Host ('  1. Open in your browser:  {0}' -f $dc.verification_uri)

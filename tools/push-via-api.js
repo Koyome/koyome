@@ -19,9 +19,17 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const TOKEN_FILE = path.join(ROOT, 'tools', 'gh-token.txt');
+const STATE_FILE = path.join(ROOT, 'tools', 'push-state.json');
 const REPO = 'Koyome/koyome';
 const BRANCH = 'main';
 const API = 'https://api.github.com';
+
+// resumable state: blobs already on GitHub (uploaded via API in earlier runs)
+// and blobs GitHub refuses (too large for the blob API)
+const state = fs.existsSync(STATE_FILE)
+  ? JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'))
+  : { uploaded: [], tooLarge: {} };
+const saveState = () => fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 1));
 
 // PortableGit: cmd/git.exe lacks the https helper but we never touch the
 // network with git here — local object access only, any git.exe works.
@@ -59,12 +67,18 @@ async function api(method, urlPath, body, tries = 8) {
       });
       const text = await res.text();
       if (res.status >= 200 && res.status < 300) return text ? JSON.parse(text) : {};
-      // 422 on ref update = non-fast-forward; surface immediately
+      // 422 on blob create with "too large" — let caller handle it specially
+      if (res.status === 422 && /too large/i.test(text)) {
+        const err = new Error('BLOB_TOO_LARGE');
+        err.code = 'BLOB_TOO_LARGE';
+        throw err;
+      }
       console.error(`  ${method} ${urlPath} -> ${res.status} (try ${i}) ${text.slice(0, 200)}`);
       if (res.status === 422 || res.status === 401 || res.status === 403 || res.status === 404) {
         throw new Error(`API ${res.status}: ${text.slice(0, 300)}`);
       }
     } catch (e) {
+      if (e.code === 'BLOB_TOO_LARGE') throw e;
       if (e.message.startsWith('API ')) throw e;
       console.error(`  ${method} ${urlPath} ERR ${e.message} (try ${i})`);
     }
@@ -115,17 +129,41 @@ function lsTreeRecursive(sha) {
 
 async function ensureTree(rootTreeSha, remoteBlobShas, stats) {
   const entries = lsTreeRecursive(rootTreeSha);
-  // upload every missing blob
+  // upload every missing blob (resumable via state.uploaded; too-large are skipped and reported)
   for (const e of entries.filter((x) => x.type === 'blob')) {
-    if (remoteBlobShas.has(e.sha)) continue;
+    if (remoteBlobShas.has(e.sha) || state.uploaded.includes(e.sha)) continue;
+    if (state.tooLarge[e.sha]) { stats.skippedLarge++; continue; }
     const content = gitBuffer(['cat-file', 'blob', e.sha]);
-    const created = await api('POST', `/repos/${REPO}/git/blobs`, {
-      content: content.toString('base64'), encoding: 'base64',
-    });
-    if (created.sha !== e.sha) throw new Error(`blob sha mismatch for ${e.path}: local ${e.sha} remote ${created.sha}`);
-    remoteBlobShas.add(e.sha);
-    stats.blobs++;
-    if (stats.blobs % 10 === 0) console.log(`  uploaded ${stats.blobs} blobs...`);
+    const mb = (content.length / 1024 / 1024).toFixed(1);
+    // cheap existence probe — earlier runs may have uploaded it already
+    try {
+      await api('GET', `/repos/${REPO}/git/blobs/${e.sha}`, null, 2);
+      state.uploaded.push(e.sha); saveState();
+      console.log(`  blob already on GitHub (${mb} MB) ${e.path}`);
+      continue;
+    } catch { /* not there — upload it */ }
+    try {
+      const created = await api('POST', `/repos/${REPO}/git/blobs`, {
+        content: content.toString('base64'), encoding: 'base64',
+      });
+      if (created.sha !== e.sha) throw new Error(`blob sha mismatch for ${e.path}: local ${e.sha} remote ${created.sha}`);
+      state.uploaded.push(e.sha);
+      saveState();
+      stats.blobs++;
+      console.log(`  blob ok (${mb} MB) ${e.path}`);
+    } catch (err) {
+      if (err.code === 'BLOB_TOO_LARGE') {
+        state.tooLarge[e.sha] = e.path;
+        saveState();
+        stats.skippedLarge++;
+        console.log(`  !! TOO LARGE for blob API (${mb} MB): ${e.path}`);
+        continue;
+      }
+      throw err;
+    }
+  }
+  if (stats.skippedLarge > 0) {
+    throw new Error(`LARGE_BLOBS_PENDING: ${stats.skippedLarge} blob(s) exceed the REST blob API limit — see tools/push-state.json tooLarge`);
   }
   // create subtrees bottom-up (children before parents)
   const trees = entries.filter((x) => x.type === 'tree').sort((a, b) => b.path.length - a.path.length);
@@ -180,7 +218,7 @@ async function ensureTree(rootTreeSha, remoteBlobShas, stats) {
   }
   console.log(`commits to consider: ${toReplay.length}`);
 
-  const stats = { blobs: 0, trees: 0 };
+  const stats = { blobs: 0, trees: 0, skippedLarge: 0 };
   const shaMap = new Map(); // local sha -> remote sha
   let parentSha = remoteSha;
 
@@ -268,4 +306,12 @@ async function ensureTree(rootTreeSha, remoteBlobShas, stats) {
 
   console.log(`DONE. uploaded ${stats.blobs} blobs, ${stats.trees} trees.`);
   console.log('Pages rebuilds in ~1 min: https://koyome.github.io/koyome/');
-})().catch((e) => { console.error('FATAL', e.message); process.exit(1); });
+})().catch((e) => {
+  if (e.message.startsWith('LARGE_BLOBS_PENDING')) {
+    console.error('PAUSED: ' + e.message);
+    console.error('Everything below the size limit is uploaded. Resolve the large files (git protocol via a working proxy) and re-run.');
+    process.exit(2);
+  }
+  console.error('FATAL', e.message);
+  process.exit(1);
+});

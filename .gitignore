@@ -3,5 +3,9 @@ tools/*.log
 tools/env-probe.txt
 tools/gh-token.txt
 tools/device-flow.json
+tools/push-state.json
 .DS_Store
 Thumbs.db
+
+tools/deploy-key
+tools/deploy-key.pub
