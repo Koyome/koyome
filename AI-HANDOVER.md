@@ -2,7 +2,7 @@
 
 > 这份文档写给下一个接管本项目的 AI（或人类开发者）。
 > 读完这一份，你就拥有了继续开发的全部上下文。
-> 最后更新：2026-09-20（第七轮：首页爱好引导区 + 留言板上云准备 Supabase —— 代码已上线，等用户注册 Supabase 后填 `docs/js/gb-config.js` 即可全站共享留言）
+> 最后更新：2026-09-20（第七轮：首页爱好引导区 + 留言板已上云 Supabase —— **全站共享留言已上线**）
 
 ---
 
@@ -191,7 +191,8 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
   - `docs/js/gb-config.js`（新文件，已上线但**凭据为空**）：`window.GB_CLOUD = { url, anonKey }`。填好后全站任何设备访客共享同一留言板；空着则自动回退旧逻辑（本地 API → localStorage）。
   - `data.js`：`gbCloud()` / `loadGuestbookCloud()`（GET `/rest/v1/guestbook?select=...&order=created_at.desc`，带 `apikey` + `Authorization: Bearer` 头，行映射 `id→'sb'+id`）/ `postGuestbookCloud()`（POST，`Prefer: return=minimal`，失败抛错）；`loadGuestbook()` 链改为 云 → API → localStorage → 内置 JSON → 种子。
   - `guestbook.js`：发送链同样云优先；**蜜罐字段** `#gbSite`（CSS 移出屏幕而非 display:none，机器人填了则假成功真丢弃）；**20 秒限流**（localStorage `koyome_gb_last_sent`，提示键 `gb_slow`）；云模式下隐藏删除按钮（anon key 无 DELETE 权限，站长去 Supabase 仪表盘删）。
-  - **待办（只差用户操作）**：用户注册 Supabase → 建表（SQL 见下）→ 把 Project URL + anon public key 发回来 → 填入 `gb-config.js` → push。建表 SQL：
+  - **✅ 已完成（2026-09-20，提交 `1575278`）**：项目 `hvywwgbzzqrwjrxiwfhx`，gb-config.js 已填 URL + `sb_publishable_` 新版密钥；云端首条数据=原欢迎留言（id=2）；留言板现全站共享。删留言只能去 Supabase 仪表盘（Table Editor）操作，或 SQL `delete from public.guestbook where id=…`。
+  - 踩坑：用户手抄 JWT 密钥两次都串字符（401 Invalid API key）——**让对方用 dashboard 的 Copy 按钮复制，或直接用 `sb_publishable_` 短密钥**；建表前 GET 报 PGRST205 "Could not find the table"；验证 INSERT 权限可不落数据——故意违反 check 约束，返回 23514 即权限正常（401/42501 才是策略缺失）。建表 SQL（已执行，存档）：
     ```sql
     create table public.guestbook (
       id bigint generated always as identity primary key,
@@ -271,8 +272,7 @@ GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome.github.io/contents
 ## 10. 当前状态快照（2026-09-20 凌晨，部署完成）
 
 ### Git / 部署
-- **✅ 部署已完成**：最新推送 `442c869`（第七轮：首页爱好引导区 + 留言板云准备）已上线，线上抽查 index/guestbook/gb-config.js 全部 200。
-- **⏳ 唯一待办**：留言板 Supabase 凭据未填（`docs/js/gb-config.js` 两字段为空）——等用户注册并把 Project URL + anon key 发回来，填入推送即完成全站共享留言。建表 SQL 见 §7 第七轮。
+- **✅ 部署已完成**：最新推送 `1575278`（留言板 Supabase 凭据 + 云端时间本地化）已上线；全新无状态浏览器实测：云模式激活、欢迎留言从云端渲染、时间显示访客本地时区、无删除按钮、蜜罐在位、首页爱好区 4 卡正常。
 - 历史分叉已用 `--force-with-lease` 一次性抹平（远端 `0b52fbd` 被覆盖）；此后普通 `git push`（SSH，§9.0）即可。
 - 推送通道：SSH 密钥 `tools/deploy-key`（公钥已登记用户账号）；备用 REST token `tools/gh-token.txt`。两者均 gitignore。
 
