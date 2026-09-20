@@ -194,6 +194,61 @@ img { max-width: 100%; display: block; }
   .home-catalog { padding-left: 22px; padding-right: 22px; }
 }
 
+/* ---------- Home: hobbies invitation strip ---------- */
+.home-hobbies { max-width: 1080px; margin: 0 auto; padding: 4px 40px 88px; }
+.hh-intro { margin-bottom: 0; }
+.hh-strip {
+  display: flex; flex-wrap: wrap;
+  gap: clamp(18px, 3vw, 30px);
+  margin-top: 30px;
+}
+.hh-card {
+  display: block; width: clamp(120px, 15.5vw, 164px);
+}
+.hh-fig {
+  position: relative; margin: 0;
+  border: 1px solid var(--line); background: var(--bg-deep); padding: 8px;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.3s;
+}
+.hh-card:nth-of-type(odd) .hh-fig { transform: rotate(-1.6deg); }
+.hh-card:nth-of-type(even) .hh-fig { transform: rotate(1.6deg); }
+.hh-card:hover .hh-fig { transform: rotate(0deg) translateY(-3px); box-shadow: var(--shadow); border-color: var(--muted); }
+/* the same accent corner ticks that frame media everywhere */
+.hh-fig::before, .hh-fig::after {
+  content: ""; position: absolute; width: 13px; height: 13px; pointer-events: none;
+}
+.hh-fig::before { top: -6px; left: -6px; border-top: 1px solid var(--accent); border-left: 1px solid var(--accent); }
+.hh-fig::after { bottom: -6px; right: -6px; border-bottom: 1px solid var(--accent); border-right: 1px solid var(--accent); }
+.hh-fig img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; mix-blend-mode: multiply; }
+.hh-name {
+  margin-top: 11px; text-align: center;
+  font-family: var(--serif); font-size: 13.5px; letter-spacing: 0.04em; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hh-card:hover .hh-name { color: var(--accent); }
+.hh-links {
+  margin-top: 36px; display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 12px 26px;
+}
+.hh-links a {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.25em; color: var(--muted);
+  border-bottom: 1px solid var(--line); padding-bottom: 6px;
+  transition: color 0.25s, border-color 0.25s, gap 0.25s;
+}
+.hh-links a em { font-style: normal; color: var(--accent); }
+.hh-links a:hover { color: var(--accent); border-color: var(--accent); gap: 13px; }
+.hh-bridge {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em;
+  color: var(--line);
+}
+@media (max-width: 720px) {
+  .home-hobbies { padding-left: 22px; padding-right: 22px; }
+  .hh-card { width: calc(33.333% - 14px); min-width: 96px; }
+  .hh-bridge { width: 100%; order: 3; letter-spacing: 0.16em; }
+  .hh-links a { padding: 8px 0 6px; }
+}
+
 /* ---------- Home: hexagram sigil (animated) ---------- */
 .home-sigil {
   max-width: 1080px; margin: 0 auto;
@@ -625,6 +680,14 @@ img { max-width: 100%; display: block; }
   display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.3em; color: var(--muted); margin-bottom: 6px;
 }
 .gb-form input:focus, .gb-form textarea:focus { border-color: var(--accent); }
+
+/* honeypot — present in the DOM (bots fill it) but never visible
+   or reachable for humans; kept out of layout without display:none
+   so simple bot heuristics don't skip it */
+.gb-form .hp {
+  position: absolute; left: -10000px; top: auto;
+  width: 1px; height: 1px; overflow: hidden;
+}
 
 .gb-list { margin-top: 60px; }
 .gb-item {

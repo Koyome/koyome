@@ -31,6 +31,11 @@
         <label for="gbText" data-i18n="gb_msg">MESSAGE</label>
         <textarea id="gbText" data-i18n-ph="ph_msg" placeholder="write something…" maxlength="2000" required></textarea>
       </div>
+      <!-- honeypot: invisible to humans, bots fill it and get dropped -->
+      <div class="hp" aria-hidden="true">
+        <label for="gbSite">Website</label>
+        <input type="text" id="gbSite" name="website" tabindex="-1" autocomplete="off" />
+      </div>
       <div class="form-actions">
         <button type="submit" class="btn" data-i18n="gb_send">SEND</button>
         <span class="form-msg" id="gbMsg"></span>
@@ -44,6 +49,7 @@
     <span data-i18n="footer">© 2026 KOYOME. ALL RIGHTS RESERVED.</span> &nbsp;·&nbsp; <span class="addr">KOYOME.ME</span>
   </footer>
 
+  <script src="js/gb-config.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/header.js"></script>
   <script src="js/data.js"></script>

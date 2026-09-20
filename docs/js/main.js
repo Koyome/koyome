@@ -6,9 +6,27 @@
    ============================================================ */
 (function () {
   'use strict';
-  const { loadProfile, loadContent, loc, escapeHtml, typeLabel } = window.Koyome;
+  const { loadProfile, loadContent, loadHobbies, loc, escapeHtml, typeLabel } = window.Koyome;
   const { t } = window.I18N;
   const esc = escapeHtml;
+
+  /* gentle staggered fade-in as elements enter the viewport */
+  function observeReveals(els) {
+    const rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (rm || !('IntersectionObserver' in window)) {
+      els.forEach((r) => r.classList.add('in-view', 'settled'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in-view');
+        io.unobserve(en.target);
+        setTimeout(() => en.target.classList.add('settled'), 1600);
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -5% 0px' });
+    els.forEach((r) => io.observe(r));
+  }
 
   /* ---------- Loading curtain ---------- */
   const loader = document.getElementById('loader');
@@ -77,24 +95,44 @@
         <span class="d">${esc(typeLabel(it.type))}${it.date ? ' · ' + esc(it.date) : ''}</span>
       </a>`).join('');
 
-    /* gentle staggered fade-in as the rows enter the viewport */
-    const rows = [...listEl.querySelectorAll('.reveal-row')];
-    const rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (rm || !('IntersectionObserver' in window)) {
-      rows.forEach((r) => r.classList.add('in-view', 'settled'));
-      return;
+    observeReveals([...listEl.querySelectorAll('.reveal-row')]);
+  }
+
+  /* ---------- Hobbies invitation strip ---------- */
+  async function renderHobbies() {
+    const strip = document.getElementById('hhStrip');
+    if (!strip) return;
+    const doc = await loadHobbies();
+    const total = doc.sections.reduce((n, s) => n + s.items.length, 0);
+    document.getElementById('hhCount').textContent = String(total).padStart(2, '0') + ' ' + t('items');
+
+    /* up to four pictured favorites, interleaving the two sections */
+    const pools = doc.sections.map((s) => s.items.filter((it) => it.src));
+    const picks = [];
+    for (let i = 0; picks.length < 4; i++) {
+      let took = false;
+      pools.forEach((p) => { if (p[i] && picks.length < 4) { picks.push(p[i]); took = true; } });
+      if (!took) break;
     }
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((en) => {
-        if (!en.isIntersecting) return;
-        en.target.classList.add('in-view');
-        io.unobserve(en.target);
-        setTimeout(() => en.target.classList.add('settled'), 1600);
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -5% 0px' });
-    rows.forEach((r) => io.observe(r));
+    if (!picks.length) { strip.remove(); return; } /* words + links still invite */
+
+    strip.innerHTML = picks.map((it, i) => {
+      /* proper nouns: when the current-language name is empty,
+         show whichever language exists rather than "Untitled" */
+      const name = loc(it, 'name') || it.name || it.nameZh || t('untitled');
+      return `
+      <a class="hh-card reveal-row" style="--d:${(0.05 + i * 0.09).toFixed(2)}s" href="hobbies.html">
+        <figure class="hh-fig">
+          <img src="${esc(it.src)}" alt="${esc(name)}" loading="lazy" />
+        </figure>
+        <div class="hh-name">${esc(name)}</div>
+      </a>`;
+    }).join('');
+
+    observeReveals([...strip.querySelectorAll('.reveal-row')]);
   }
 
   render();
   renderCatalog();
+  renderHobbies();
 })();

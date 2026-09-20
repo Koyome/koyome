@@ -150,8 +150,55 @@
   }
 
   /* ---------- guestbook ---------- */
+  /* Shared cloud backend (Supabase PostgREST) — when configured it is
+     THE guestbook for every visitor on every device, replacing the
+     per-browser localStorage fallback. Config lives in gb-config.js. */
+  function gbCloud() {
+    const c = global.GB_CLOUD;
+    return c && c.url && c.anonKey ? c : null;
+  }
+
+  async function loadGuestbookCloud() {
+    const c = gbCloud();
+    if (!c) return null;
+    try {
+      const r = await fetch(
+        c.url.replace(/\/+$/, '') + '/rest/v1/guestbook?select=id,name,text,created_at&order=created_at.desc&limit=200',
+        { headers: { apikey: c.anonKey, Authorization: 'Bearer ' + c.anonKey }, cache: 'no-store' }
+      );
+      if (!r.ok) return null;
+      const rows = await r.json();
+      if (!Array.isArray(rows)) return null;
+      return rows.map((row) => ({
+        id: 'sb' + row.id,
+        name: row.name,
+        text: row.text,
+        date: String(row.created_at || '').slice(0, 16).replace('T', ' '),
+      }));
+    } catch (_) { return null; }
+  }
+
+  async function postGuestbookCloud(name, text) {
+    const c = gbCloud();
+    if (!c) return false;
+    const r = await fetch(c.url.replace(/\/+$/, '') + '/rest/v1/guestbook', {
+      method: 'POST',
+      headers: {
+        apikey: c.anonKey,
+        Authorization: 'Bearer ' + c.anonKey,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ name, text }),
+    });
+    if (!r.ok) throw new Error('cloud post failed: ' + r.status);
+    return true;
+  }
+
   async function loadGuestbook() {
     if (hasAPI) {
+      const cloud = await loadGuestbookCloud();
+      if (cloud) return cloud;
       const viaApi = await tryApi('api/guestbook');
       if (viaApi) return viaApi;
       const local = readLS(LS_GB);
@@ -262,6 +309,7 @@
     loc, loadContent, saveOverride, normalize, normalizeAll, firstMedia,
     loadProfile, saveProfileOverride,
     loadGuestbook, saveGuestbookOverride,
+    gbCloud, loadGuestbookCloud, postGuestbookCloud,
     loadHobbies, saveHobbiesOverride,
     escapeHtml, typeLabel, excerpt, hasAPI, apiAvailable,
     PROFILE_SEED,

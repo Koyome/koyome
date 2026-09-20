@@ -1,13 +1,25 @@
 /* ============================================================
    guestbook.js — Guests leave notes; every note is visible to
-   everyone (owner and visitors alike)
+   everyone (owner and visitors alike).
+
+   Storage chain when sending:
+     1. Supabase cloud (gb-config.js filled in) — THE shared
+        guestbook, same messages for every visitor on any device.
+     2. Local Node API (owner running server.js).
+     3. This browser's localStorage (last-resort, private fallback).
    ============================================================ */
 (function () {
   'use strict';
-  const { loadGuestbook, saveGuestbookOverride, escapeHtml, apiAvailable } = window.Koyome;
+  const {
+    loadGuestbook, saveGuestbookOverride, escapeHtml, apiAvailable,
+    gbCloud, postGuestbookCloud,
+  } = window.Koyome;
   const { t } = window.I18N;
   const esc = escapeHtml;
   const $ = (id) => document.getElementById(id);
+
+  const LS_SENT = 'koyome_gb_last_sent'; /* gentle rate limit */
+  const RATE_MS = 20 * 1000;
 
   let messages = [];
   let canEdit = false; /* owner mode — deleting notes is an admin operation */
@@ -43,7 +55,9 @@
 
   async function refresh() {
     messages = await loadGuestbook();
-    try { canEdit = await apiAvailable(); } catch (_) { canEdit = false; }
+    /* in cloud mode there is no public delete — the owner removes
+       messages from the Supabase dashboard instead */
+    try { canEdit = !gbCloud() && await apiAvailable(); } catch (_) { canEdit = false; }
     render();
   }
 
@@ -52,8 +66,18 @@
     const msg = $('gbMsg');
     const name = $('gbName').value.trim();
     const text = $('gbText').value.trim();
+
+    /* honeypot — bots fill every field; humans never see this one.
+       Fail silently so the bot thinks it succeeded. */
+    const hp = $('gbSite');
+    if (hp && hp.value) { msg.textContent = t('msg_gb_sent'); $('gbForm').reset(); return; }
+
     if (!name) { msg.textContent = t('msg_name'); return; }
     if (!text) { msg.textContent = t('msg_text'); return; }
+
+    /* one note per 20s per browser — keeps casual spam down */
+    const last = Number(localStorage.getItem(LS_SENT) || 0);
+    if (Date.now() - last < RATE_MS) { msg.textContent = t('gb_slow'); return; }
 
     msg.textContent = t('gb_sending');
     const entry = {
@@ -63,7 +87,9 @@
     };
 
     try {
-      if (await apiAvailable()) {
+      if (gbCloud()) {
+        await postGuestbookCloud(name, text);
+      } else if (await apiAvailable()) {
         const r = await fetch('api/guestbook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -75,6 +101,7 @@
         messages.unshift(entry);
         saveGuestbookOverride(messages);
       }
+      try { localStorage.setItem(LS_SENT, String(Date.now())); } catch (_) { /* ignore */ }
       msg.textContent = t('msg_gb_sent');
       $('gbForm').reset();
       refresh();
