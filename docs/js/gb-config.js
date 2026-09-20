@@ -7,6 +7,6 @@
    while empty the site quietly uses its local fallbacks.
    ============================================================ */
 window.GB_CLOUD = {
-  url: '',      /* Project URL, e.g. https://abcdefgh.supabase.co */
-  anonKey: '',  /* "anon public" key — Project Settings → API */
+  url: 'https://hvywwgbzzqrwjrxiwfhx.supabase.co',
+  anonKey: 'sb_publishable_szeepgUvtUbWYEV2Ii7UAA_YLGMHNp_',
 };

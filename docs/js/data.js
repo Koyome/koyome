@@ -173,7 +173,14 @@
         id: 'sb' + row.id,
         name: row.name,
         text: row.text,
-        date: String(row.created_at || '').slice(0, 16).replace('T', ' '),
+        /* cloud timestamps are UTC — show them in the visitor's local time */
+        date: (() => {
+          const d = new Date(row.created_at || '');
+          if (isNaN(d)) return String(row.created_at || '').slice(0, 16).replace('T', ' ');
+          const p = (n) => String(n).padStart(2, '0');
+          return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+            ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+        })(),
       }));
     } catch (_) { return null; }
   }
