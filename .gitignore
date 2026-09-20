@@ -1,5 +1,7 @@
 # logs and local test artifacts
 tools/*.log
+tools/server.pid
+tools/node-procs.json
 tools/env-probe.txt
 tools/gh-token.txt
 tools/device-flow.json
