@@ -2,7 +2,7 @@
 
 > 这份文档写给下一个接管本项目的 AI（或人类开发者）。
 > 读完这一份，你就拥有了继续开发的全部上下文。
-> 最后更新：2026-09-20（第六轮：交接整合 + **部署已完成，本地与线上已同步**）
+> 最后更新：2026-09-20（第七轮：首页爱好引导区 + 留言板上云准备 Supabase —— 代码已上线，等用户注册 Supabase 后填 `docs/js/gb-config.js` 即可全站共享留言）
 
 ---
 
@@ -136,7 +136,7 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 ```
 用户已填入真实内容（5 部动漫 + 4 个角色，均带图带文），**勿重置**。deco 三槽目前为空。
 
-### 留言（guestbook.json）
+### 留言（guestbook.json + 第七轮起可选 Supabase 云表，见 §7 第七轮）
 `{ id, name, text, date }`
 
 ## 6. 本地 API 一览（server.js）
@@ -184,6 +184,28 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 - **hobbies.js**：空图框的 "+" 路径仅 canEdit 渲染（游客只看圆圈）；空分区文案分角色——游客 `hob_empty_guest`（"Nothing here yet."），管理员仍是添加引导。
 - 验证：test 双视角 34 项全过（游客 6 页零编辑痕迹 + 管理员全功能）；静态回归 22 项全过（期望值已同步用户当前真实内容：t1 分类 Music/音乐、zh 标题「電台」、body 含 playlist/歌單）。
 - 注意：静态模式下 admin 页 gate 会触发 jsdom "Not implemented: navigation" 噪音——预期行为（游客被重定向）。
+
+### 2026-09-20 第七轮：首页爱好引导区 + 留言板上云准备（Supabase）
+- **首页新增「Hobbies」引导区**（index.html `.home-hobbies`，位于目录区与六芒星之间）：main.js `renderHobbies()` 从两个爱好分区交错挑最多 4 个有图的条目渲染 `.hh-card`（拍立得式 ±1.6° 倾斜 + 红色角标 tick，与全站设计语言一致）；下方 `.hh-links` 双链接「BROWSE MY HOBBIES → / LEAVE A NOTE →」夹一句 `.hh-bridge` 过渡文案引导访客去留言。名称为空时回退另一语言（爱好名多为专有名词），都不存在才显示 Untitled。i18n 键 `hh_*` 双语已加。移动端卡片 33% 宽三列换行。
+- **留言板云后端（Supabase PostgREST，无 SDK 纯 fetch）**：
+  - `docs/js/gb-config.js`（新文件，已上线但**凭据为空**）：`window.GB_CLOUD = { url, anonKey }`。填好后全站任何设备访客共享同一留言板；空着则自动回退旧逻辑（本地 API → localStorage）。
+  - `data.js`：`gbCloud()` / `loadGuestbookCloud()`（GET `/rest/v1/guestbook?select=...&order=created_at.desc`，带 `apikey` + `Authorization: Bearer` 头，行映射 `id→'sb'+id`）/ `postGuestbookCloud()`（POST，`Prefer: return=minimal`，失败抛错）；`loadGuestbook()` 链改为 云 → API → localStorage → 内置 JSON → 种子。
+  - `guestbook.js`：发送链同样云优先；**蜜罐字段** `#gbSite`（CSS 移出屏幕而非 display:none，机器人填了则假成功真丢弃）；**20 秒限流**（localStorage `koyome_gb_last_sent`，提示键 `gb_slow`）；云模式下隐藏删除按钮（anon key 无 DELETE 权限，站长去 Supabase 仪表盘删）。
+  - **待办（只差用户操作）**：用户注册 Supabase → 建表（SQL 见下）→ 把 Project URL + anon public key 发回来 → 填入 `gb-config.js` → push。建表 SQL：
+    ```sql
+    create table public.guestbook (
+      id bigint generated always as identity primary key,
+      name text not null check (char_length(name) <= 40),
+      text text not null check (char_length(text) <= 2000),
+      created_at timestamptz not null default now()
+    );
+    alter table public.guestbook enable row level security;
+    create policy "anon read"  on public.guestbook for select to anon using (true);
+    create policy "anon write" on public.guestbook for insert to anon with check (true);
+    -- 不给 update/delete —— anon key 天生只能读和写，无法篡改或删除
+    ```
+- 端到端验证（CDP，提交 `442c869` 前）：首页 4 卡渲染 + 图全加载 + 移动端三列无横向滚动；留言板蜜罐拦截 ✓、API 提交 ✓、刷新持久 ✓、限流拦截 ✓、游客模式无删除按钮 ✓；测试留言已清理。
+- 曾评估 WorkBuddy Cloud Service 做后端——不可行：publishableKey 强制 Origin 匹配自家分享域名，浏览器从 koyome.github.io 调用会被拒。
 
 ### 2026-09-20 第三轮：爱好页重构（动漫主题）+ 首页目录区
 - **爱好页推倒重做**：旧的四分类卡片废弃，改为固定两分区「喜歡的動漫 anime / 動漫角色 chars」，数据驱动（结构见 §5）。每个条目=图+文流动布局：页面中央虚线「河流」，条目左右交错排布、交汇处红节点，图片轻微倾斜悬停回正；图片框点击上传（/api/hobbies/upload），名称/介绍双击编辑，条目可增删。
@@ -249,7 +271,8 @@ GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome.github.io/contents
 ## 10. 当前状态快照（2026-09-20 凌晨，部署完成）
 
 ### Git / 部署
-- **✅ 部署已完成**：本地 main 与 GitHub `origin/main` 均在 `35fe384`（内容完全一致，SHA 相同）；GitHub Pages 新构建已上线（hobbies/catalog/详情页/全部素材抽查 200 通过）。
+- **✅ 部署已完成**：最新推送 `442c869`（第七轮：首页爱好引导区 + 留言板云准备）已上线，线上抽查 index/guestbook/gb-config.js 全部 200。
+- **⏳ 唯一待办**：留言板 Supabase 凭据未填（`docs/js/gb-config.js` 两字段为空）——等用户注册并把 Project URL + anon key 发回来，填入推送即完成全站共享留言。建表 SQL 见 §7 第七轮。
 - 历史分叉已用 `--force-with-lease` 一次性抹平（远端 `0b52fbd` 被覆盖）；此后普通 `git push`（SSH，§9.0）即可。
 - 推送通道：SSH 密钥 `tools/deploy-key`（公钥已登记用户账号）；备用 REST token `tools/gh-token.txt`。两者均 gitignore。
 
