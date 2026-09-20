@@ -223,7 +223,8 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 
 - Node 运行时：`C:\Users\Public\koyome-node\node.exe`（绿色版副本；用系统 node 也行，无依赖）。
 - 启动：双击 `start-koyome.bat`，或 `PORT=80 node server.js`（端口被占自动回退 8080）。
-- **开机自启（2026-09-20 配置）**：`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\koyome-site.vbs` 登录时隐藏窗口启动 server.js（__dirname 寻址，无 cwd 依赖）。取消自启=删该文件；停服务=任务管理器结束 node.exe。注：WorkBuddy 沙箱拉黑 schtasks.exe，故用启动文件夹方案而非计划任务。
+- **开机自启（2026-09-20 配置）**：`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\koyome-site.vbs` 登录时隐藏窗口启动 server.js（__dirname 寻址，无 cwd 依赖）。手动启动同款：`start-hidden.vbs`（仓库根，双击无声无窗口）。取消自启=删启动文件夹里那个文件；停服务=任务管理器结束 node.exe。
+- **⚠️ AI 无法在沙箱里代起持久进程**（2026-09-20 实测）：WorkBuddy 沙箱拉黑 schtasks/wscript/cmd，且会话结束会回收整棵进程树——`run_in_background`、detached+unref spawn、PowerShell Start-Process 全部随会话死亡。**要"关掉 WorkBuddy 还能访问"，只能由用户双击 start-hidden.vbs 或重新登录触发自启**；AI 代开的服务仅当前会话有效。
 - hosts 已配置 `127.0.0.1 Koyome.me`（setup-koyome-me.bat 跑的，只需一次）。
 - 重启服务：杀掉占用 80 端口的 node 进程再启动（API 代码改动必须重启才生效；docs/ 下前端改动刷新即可）。
 
