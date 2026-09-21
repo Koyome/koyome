@@ -1,8 +1,19 @@
 # Koyome.me — 项目交接文档（AI Handover）
 
 > 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
-> 最后更新：2026-09-21（第九轮：大改版——夜间模式 / 首页重设计 / Galgame 分区 / Q版定位修复 / 素材边框 / 旅行地图 / 星空 / 性能优化。改动明细见 `UPDATE-LOG-2026-09-21.md`）
-> 仓库 HEAD：`579fbf1`（线上已同步）｜ 用户已授予 AI **随时推送的常驻权限**（§4.3）
+> 最后更新：2026-09-21（第十轮：素材清理 / Stone Island 式新图形 / 东京地图重绘 + 济州岛地图 / 私人剪辑边框重设计。改动明细见 `UPDATE-LOG-2026-09-21-R10.md`）
+> 仓库 HEAD：`3ccf06a`（线上已同步）｜ 用户已授予 AI **随时推送的常驻权限**（§4.3）
+
+---
+
+## 0.8 第十轮速览（2026-09-21）
+
+- **素材清理**：用户提供的两张设计图（罗盘星/放射之眼）及其全部引用已删除（`assets/deco/` 目录不存在了，勿再引用）；首页人像注释改为**可编辑组件**——文字存 `profile.json` 的 `figNote/figNoteZh`（空=隐藏），站长双击编辑，main.js `renderPortraitNote()`。
+- **新图形（Stone Island 式：几何线条、简洁构图、品牌标识感）**：首页爱好区 **罗盘徽章 `.hh-compass`**（内联 SVG，四芒星+刻度+60s 扫秒针，接替被删素材）；旅行页首 **线条房屋立面图 `.i1-houses`**（entry.js `housesStrip()`）。与首页星球同一套细线/虚线/mono/红点语言，CSS 变量驱动日夜自适应。**星球图形用户确认满意，勿动。**
+- **双地图（entry i1，`renderMaps()`）**：旧潦草街网+连线已废弃。**东京图**=数字化重绘（测量网格、东京湾、隅田川、山手线环+站点、绿地、印刷体地名；照片图钉仍由描绘关键词驱动，点击跳照片）；**济州岛图**=同标准新绘（汉拿山盾形岛、1132 环岛路、城山/山房山峰标）。**站长点击地图空白处可标注地名**（浮出命名卡 → `entry.mapPins.{tokyo,jeju}` → PUT /api/content；点自建图钉可删）；游客只读。**地标间不画连线（用户明确要求）。**
+- **私人剪辑（v1）边框**：胶片齿孔已废弃，改为画廊展板=发丝细框+左上角一小段红角标+纸质标签牌。
+- **server.js 新字段**：PUT /api/content 接受 `mapPins`（坐标钳制 0–560/0–400，每图 ≤60）；POST /api/profile 接受 `figNote/figNoteZh`。**本机服务需重启一次才生效**（§4.2）。
+- 上一轮（人像抠图 `avatar_cutout.webp` + 星球细节化）本轮才随之一并推送上线。
 
 ---
 
@@ -97,7 +108,7 @@
 |---|---|---|
 | 首页 index | ✅ 上线 | loader 动画、个人资料（头像/欢迎语/自述）、目录索引区、**爱好引导区**（拍立得卡片+引导链接）、六芒星 sigil |
 | 目录页 catalog | ✅ 上线 | kinetic title：逐字模糊入场、悬停扫光+下划线、ghost 序号视差；站长双击标题内联改名 |
-| 详情页 entry | ✅ 上线 | 图文/视频/音乐；12 列错落网格；素材描绘 caption 双击编辑；音频 track-card（ID3 封面自动读取）；NOTE/手記 区块 |
+| 详情页 entry | ✅ 上线 | 图文/视频/音乐；12 列错落网格；素材描绘 caption 双击编辑；音频 track-card（ID3 封面自动读取）；NOTE/手記 区块；**i1 双地图（东京+济州岛，站长点击标注地标）**；t2 星空 |
 | 爱好页 hobbies | ✅ 上线 | 两分区「喜歡的動漫/動漫角色」河流式交错布局；图文自由增删改；3 个 Q版装饰槽（已用 2） |
 | 留言板 guestbook | ✅ 上线 | **Supabase 云端共享**；蜜罐反机器人；20 秒限流；云端时间按访客本地时区显示 |
 | 管理页 admin | ✅ 上线 | 仅站长机可见（游客重定向）；条目增删改、profile 编辑、上传 |
@@ -277,11 +288,15 @@ GIT="/c/Users/杨坤/.workbuddy/binaries/PortableGit/versions/1.2.0/cmd/git.exe"
     { type: 'image', src: 'assets/xx.png', caption, captionZh },  // 素材描绘（双语）
     { type: 'video', src: 'assets/xx.mp4' },
     { type: 'audio', src: 'assets/xx.mp3', title: '歌名', cover: 'assets/xx.jpg' }  // 音频专有
-  ]
+  ],
+  mapPins: {                    // 第十轮新增（仅 i1 用）：旅行地图自建地标
+    tokyo: [{ x, y, zh, en }],  // 坐标钳制 0–560 / 0–400，每图 ≤60 枚
+    jeju:  [{ x, y, zh, en }]   // 站长在地图上点击添加；游客只读
+  }
 }
 ```
 ### Profile（profile.json）
-`name, nameZh, tagline, taglineZh, intro, introZh, avatar`
+`name, nameZh, tagline, taglineZh, intro, introZh, avatar, figNote, figNoteZh`（figNote=首页人像注释，空则隐藏，站长双击编辑）
 ### 爱好（hobbies.json）
 ```js
 { intro, introZh,
