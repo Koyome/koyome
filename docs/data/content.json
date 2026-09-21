@@ -17,37 +17,71 @@
         "type": "audio",
         "src": "assets/1789830788692_Reynard_Silva_-_The_Way_I_Still_Love_You.mp3",
         "title": "Reynard Silva - The Way I Still Love You",
-        "cover": "assets/1789830788701_Reynard_Silva_-_The_Way_I_Still_Love_You.jpg"
+        "cover": "assets/1789830788701_Reynard_Silva_-_The_Way_I_Still_Love_You.jpg",
+        "captionZh": "亦或许说，你还深爱着我     如同我仍对你那般的心心念念"
       },
       {
         "type": "audio",
         "src": "assets/1789830796992_mixed_matches_-_Dark.mp3",
         "title": "mixed matches - Dark",
-        "cover": "assets/1789830796999_mixed_matches_-_Dark.mp3.jpg"
+        "cover": "assets/1789830796999_mixed_matches_-_Dark.mp3.jpg",
+        "captionZh": "Dark"
       },
       {
         "type": "audio",
         "src": "assets/1789845577073_kuudere_utumiyqcom_-_existence_feat._utu.mp3",
         "title": "kuudere,utumiyqcom - existence (feat. utumiyqcom)",
-        "cover": "assets/1789845577081_kuudere_utumiyqcom_-_existence_feat._utu.jpg"
+        "cover": "assets/1789845577081_kuudere_utumiyqcom_-_existence_feat._utu.jpg",
+        "captionZh": "写给妈妈的   旋律好听"
       },
       {
         "type": "audio",
         "src": "assets/1789845620790_palefire_ilypvc_-_Not_on_ur_way.mp3",
         "title": "palefire,ilypvc - Not on ur way",
-        "cover": "assets/1789845620797_palefire_ilypvc_-_Not_on_ur_way.mp3.jpg"
+        "cover": "assets/1789845620797_palefire_ilypvc_-_Not_on_ur_way.mp3.jpg",
+        "captionZh": "就是单纯的好听"
       },
       {
         "type": "audio",
         "src": "assets/1789845682526_Kanye_West_Paul_McCartney_-_Only_One.mp3",
         "title": "Kanye West,Paul McCartney - Only One",
-        "cover": "assets/1789845682535_Kanye_West_Paul_McCartney_-_Only_One.mp3.jpg"
+        "cover": "assets/1789845682535_Kanye_West_Paul_McCartney_-_Only_One.mp3.jpg",
+        "captionZh": "在我孤独，悲伤，痛苦时候陪着我的歌     听完觉得有再大的坎也能过得去"
       },
       {
         "type": "audio",
         "src": "assets/1789845919184_Kanye_West_-_Come_to_Life.mp3",
         "title": "Kanye West - Come to Life",
-        "cover": "assets/1789845919197_Kanye_West_-_Come_to_Life.mp3.jpg"
+        "cover": "assets/1789845919197_Kanye_West_-_Come_to_Life.mp3.jpg",
+        "captionZh": "低谷情绪极度低落的时候听，相信无论遇到什么总有一天都能Come to life"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789910826396_MISTERK_Tphunk_89DX_-_Sakana_.mp3",
+        "title": "MISTERK,Tphunk,89DX - Sakana~",
+        "cover": "assets/1789910826405_MISTERK_Tphunk_89DX_-_Sakana_.mp3.jpg",
+        "captionZh": "Sakana~( ˵>ㅿ<˵ )♡♡!!"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789911054881_downw4sdown_envy1uv_-_winter_luv.mp3",
+        "title": "downw4sdown,envy1uv - winter luv",
+        "cover": "assets/1789911054885_downw4sdown_envy1uv_-_winter_luv.mp3.jpg",
+        "captionZh": "来自冬日的爱"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789911198618_MISTERK_89DX_-_Oppai_prod.lil_waifu_.mp3",
+        "title": "MISTERK,89DX - Oppai!(prod.lil waifu)",
+        "cover": "assets/1789911198625_MISTERK_89DX_-_Oppai_prod.lil_waifu_.mp3.jpg",
+        "captionZh": "我也爱Oppai！"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1789911277718_Drake_GIV_ON_-_Chicago_Freestyle.mp3",
+        "title": "Drake,GIVĒON - Chicago Freestyle",
+        "cover": "assets/1789911277748_Drake_GIV_ON_-_Chicago_Freestyle.mp3.jpg",
+        "captionZh": "风城随笔"
       }
     ],
     "src": "assets/1789830788692_Reynard_Silva_-_The_Way_I_Still_Love_You.mp3"
@@ -104,7 +138,7 @@
       }
     ],
     "body": "",
-    "bodyZh": "下次旅行目的地为：北海道"
+    "bodyZh": "下次的旅行预告：北海道"
   },
   {
     "id": "t2",
@@ -136,19 +170,48 @@
     "media": [
       {
         "type": "video",
-        "src": "assets/1789828151153_合成_1_14.mp4"
+        "src": "assets/1789828151153_合成_1_14.mp4",
+        "captionZh": "我们仍未知道那天所开的花的名字"
       },
       {
         "type": "video",
-        "src": "assets/1789828215636_刀剑神域.realesrgan.mp4"
+        "src": "assets/1789828215636_刀剑神域.realesrgan.mp4",
+        "captionZh": "刀剑神域     Asuan&Kirito"
       },
       {
         "type": "video",
-        "src": "assets/1789828253531_ff15t.mp4"
+        "src": "assets/1789828253531_ff15t.mp4",
+        "captionZh": "FF15     最终幻想"
       },
       {
         "type": "video",
-        "src": "assets/1789828271720_合成_1_18.mp4"
+        "src": "assets/1789828271720_合成_1_18.mp4",
+        "captionZh": "Aoi 葵      虽然牛了我但是可爱归可爱"
+      },
+      {
+        "type": "video",
+        "src": "assets/1789911599964_小野寺1.realesrgan.mp4",
+        "captionZh": "是与否已经不重要了    只有这份回忆真的"
+      },
+      {
+        "type": "video",
+        "src": "assets/1789911692948_合成_1.mp4",
+        "captionZh": "人神：不不不我无疑是愤怒的     梦幻也命运般的相遇"
+      },
+      {
+        "type": "video",
+        "src": "assets/1789911900614_合成_1_7.mp4",
+        "captionZh": "那个夏日... 我一定会救你的。"
+      },
+      {
+        "type": "video",
+        "src": "assets/1789912035405_猫猫.realesrgan.mp4",
+        "captionZh": "黑猫可爱捏    五更琉璃没有输"
+      },
+      {
+        "type": "video",
+        "src": "assets/1789912121995_Emilia.mp4",
+        "captionZh": "为我和Emilia相遇十年制作    最爱Emilia"
       }
     ]
   }
