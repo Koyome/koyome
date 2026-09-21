@@ -15,7 +15,8 @@
 - **爱好Q版槽防遮挡**（hobbies.js `DECO_POS` 三档）：≥1400px 六槽全部锚定内容列两侧**页边空白**（`calc(50% ± 566px)`，固定不滚且零遮挡）；721–1399px 缩为 2 个 64px 角落槽；≤720px 只留 1 个 46px 小槽在页头下方。槽本就 position:fixed（R9），用户感知的"跟随滚动"是缓存旧版；本轮真问题是遮挡，已按档位消除。
 - **电台封面**：`.track-cover::after` 中圆（盖住封面中央 32%）已删；圆形黑胶裁切与均衡器刻度保留。
 - **测试沙箱事故**：jsdom 回归的 guestbook 测试把 `StaticTester` 写进了**真实云表**（id=9；anon key 无 DELETE 权限，**需用户在 Supabase 仪表盘 Table Editor 手动删除该行**）。已在 test-static.js 内置静态服务器拦截 `/js/gb-config.js` 返回空配置——测试永远走本地回退链，24 项全绿，云表不再受测试污染。
-- **新工具**：`tools/probe-deck.js`（照片叠+图钉跳传 CDP 实测）、`tools/probe-hdeco.js`（装饰槽 fixed 实测）、`tools/check-sb-tester.js`（云表测试残留排查）。经验：**SVG `<g>` 无 `.click()`，探针须 dispatch MouseEvent**。
+- **新工具**：`tools/probe-deck.js`（照片叠+图钉跳传 CDP 实测）、`tools/probe-hdeco.js`（装饰槽 fixed 实测）、`tools/check-sb-tester.js`（云表测试残留排查）、`tools/pages-build-admin.js`（Pages 构建状态查询 + 请求重建）。经验：**SVG `<g>` 无 `.click()`，探针须 dispatch MouseEvent**。
+- **Pages 构建事故（首次遇到）**：R12 三次推送的代码瞬间到达远端（SSH 推送本身毫无问题），但 GitHub Pages 的**自动构建**连续三次 `errored: Page build failed`（15:42–15:45 UTC，GitHub 官方状态页无事故，仓库内容无异常——纯服务端抖动）。**解法等不用改代码**：`POST /repos/Koyome/koyome.github.io/pages/builds`（带 gh-token）手动请求一次重建即 `built` 成功，同一 commit。排查命令在 `tools/pages-build-admin.js`。教训：push 成功 ≠ 上线，线上轮询失败时先查构建状态再怀疑代码。
 
 ---
 
@@ -269,7 +270,7 @@ GIT="/c/Users/杨坤/.workbuddy/binaries/PortableGit/versions/1.2.0/cmd/git.exe"
 
 **兜底**：GitHub Contents API 逐文件 PUT（单文件 <1MB，碎 commit + 哈希分叉，仅应急）。
 
-**推送后验证**：① `git ls-remote git@github.com:Koyome/koyome.github.io.git main` = 本地 HEAD；② 轮询 https://koyome.github.io/ 出现新内容；③ 抽查关键资源 200（含大文件素材各一）。
+**推送后验证**：① `git ls-remote git@github.com:Koyome/koyome.github.io.git main` = 本地 HEAD；② 轮询 https://koyome.github.io/ 出现新内容；③ 抽查关键资源 200（含大文件素材各一）。**若 ② 迟迟不出现**：查 Pages 构建状态 `node tools/pages-build-admin.js`——自动构建偶发 `errored`（服务端抖动），`node tools/pages-build-admin.js rebuild` 手动重建一次即可（2026-09-21 实测，§0.10）。
 
 ### 4.4 本机网络现状（2026-09-20 实测）
 - `github.com` git smart-HTTP：约九成丢包，不可用；**SSH(22/443) 畅通**；`api.github.com` 畅通。
