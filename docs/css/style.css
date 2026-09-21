@@ -27,6 +27,9 @@
   --sigil-chord: #cdcac2;
   --sigil-tri: #a3a09a;
   --sigil-node: #c9c7c2;
+  /* travel map tints (light paper) */
+  --map-water: #d3dcda;
+  --map-park: #ccd4c2;
 }
 
 /* ---------- Night mode ----------
@@ -53,6 +56,9 @@
   --sigil-chord: #33312d;
   --sigil-tri: #55524c;
   --sigil-node: #45423d;
+  /* travel map tints (black paper — kept hushed) */
+  --map-water: #1e2a28;
+  --map-park: #232b20;
 }
 /* photos stop blending into paper at night — multiply would bury them */
 [data-theme="dark"] .hh-fig img,
@@ -1136,9 +1142,12 @@ img { max-width: 100%; display: block; }
 
   /* chibi characters stay on phones too — just pocket-sized.
      deco.js likewise renders a smaller set of drifting shapes
-     instead of none at all (the design follows you to mobile). */
-  .hdeco-slot.filled { width: 62px; }
-  .hdeco-slot.empty { width: 54px; height: 54px; font-size: 7.5px; }
+     instead of none at all (the design follows you to mobile).
+     R12: fixed slots must never sit on text or photos — phones show
+     a single tiny chibi in the one safe corner (under the header) */
+  .hdeco-slot:nth-child(n+2) { display: none; }
+  .hdeco-slot.filled { width: 46px; }
+  .hdeco-slot.empty { width: 48px; height: 48px; font-size: 7px; }
 
   .media-stack { grid-template-columns: 1fr; gap: 30px; }
   .media-block.lay-a, .media-block.lay-b, .media-block.lay-c, .media-block.lay-d { grid-column: 1 / -1; margin-top: 0; }
@@ -1148,7 +1157,7 @@ img { max-width: 100%; display: block; }
 @media (max-width: 480px) {
   .hflow-fig { max-width: 200px; }
   .hflow-name { font-size: 18px; }
-  .hdeco-slot.filled { width: 52px; }
+  .hdeco-slot.filled { width: 42px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hdeco-img { animation: none; }
@@ -1270,12 +1279,11 @@ img { max-width: 100%; display: block; }
   background: var(--bg); color: var(--muted);
   border: 1px solid var(--line); padding: 3px 10px;
 }
-/* radio (entry t1): vinyl cover + equalizer ticks at the sides */
+/* radio (entry t1): vinyl cover + equalizer ticks at the sides.
+   R12: the solid label disc that used to sit over the CENTRE of every
+   cover is gone — it hid a third of the artwork; the round vinyl crop
+   and the equalizer ticks keep the dialect on their own */
 .media-item.is-track .track-cover { border-radius: 50%; position: relative; }
-.media-item.is-track .track-cover::after {
-  content: ""; position: absolute; inset: 34%; border-radius: 50%;
-  background: var(--bg); border: 1px solid var(--line);
-}
 .media-t1 .media-item.is-track::before {
   content: ""; border: none; top: 50%; left: -8px; width: 4px; height: 30px;
   transform: translateY(-50%);
@@ -1327,8 +1335,8 @@ img { max-width: 100%; display: block; }
 /* digitized map anatomy */
 .tm-grat path { stroke: var(--line); stroke-width: 0.5; stroke-dasharray: 1 6; opacity: 0.5; fill: none; }
 .tm-ave path { stroke: var(--line); stroke-width: 0.8; opacity: 0.8; fill: none; }
-.tm-water { fill: var(--bg-deep); stroke: var(--line); stroke-width: 1; opacity: 0.75; }
-.tm-river { fill: var(--bg-deep); stroke: var(--line); stroke-width: 0.7; opacity: 0.7; }
+.tm-water { fill: var(--map-water); stroke: var(--line); stroke-width: 1; opacity: 0.75; }
+.tm-river { fill: var(--map-water); stroke: var(--line); stroke-width: 0.7; opacity: 0.7; }
 .tm-waves path { stroke: var(--muted); stroke-width: 0.8; fill: none; opacity: 0.6; }
 .tm-park ellipse, .tm-park rect {
   fill: none; stroke: var(--frame-mark); stroke-width: 0.9; stroke-dasharray: 3 3;
@@ -1344,18 +1352,106 @@ img { max-width: 100%; display: block; }
 }
 .tm-geo .tm-sea { font-style: italic; opacity: 0.85; }
 
-/* pins: photo pins in accent, owner-named pins in ink — no lines between them */
+/* pins: photo pins in accent, owner-named pins in ink — no lines between them.
+   each pin is a sigil badge hovering over its point on a hairline stem */
 .tm-node { cursor: pointer; }
 .tm-node circle.halo { fill: transparent; stroke: var(--accent); stroke-width: 0.8; opacity: 0.35; }
 .tm-node circle.core { fill: var(--bg); stroke: var(--accent); stroke-width: 1.4; }
 .tm-node:hover circle.halo, .tm-node:focus circle.halo { opacity: 0.9; }
 .tm-upin circle.halo { fill: transparent; stroke: var(--ink); stroke-width: 0.7; opacity: 0.3; }
 .tm-upin circle.core { fill: var(--accent); stroke: var(--bg); stroke-width: 1; }
+.tm-stem { stroke: var(--muted); stroke-width: 0.7; opacity: 0.75; }
+.tm-badge {
+  fill: var(--bg); stroke: var(--ink); stroke-width: 1;
+}
+.tm-node .tm-badge { stroke: var(--accent); }
+.tm-icon path { stroke: var(--ink); stroke-width: 1.25; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.tm-node .tm-icon path { stroke: var(--accent); }
+.tm-upin.tm-linked { cursor: pointer; }
+.tm-upin.tm-linked .tm-badge { stroke: var(--accent); }
+.tm-upin.tm-linked .tm-icon path { stroke: var(--accent); }
+.tm-upin.tm-linked:hover circle.halo, .tm-upin.tm-linked:focus circle.halo { opacity: 0.8; stroke: var(--accent); }
+.tm-upin-x {
+  font-family: var(--mono); font-size: 9px; fill: var(--accent); cursor: pointer;
+  opacity: 0.85;
+}
+.tm-upin-x:hover { opacity: 1; }
 .tm-node text, .tm-upin text { font-family: var(--mono); fill: var(--ink); }
+.tm-node .tm-upin-x, .tm-upin .tm-upin-x { fill: var(--accent); }
 .tm-zh { font-size: 11.5px; letter-spacing: 0.06em; }
 .tm-en { font-size: 7px; letter-spacing: 0.2em; fill: var(--muted); }
 [data-theme="dark"] .tm-island { fill: var(--panel); }
 [data-theme="dark"] .tm-station circle { fill: var(--panel); }
+[data-theme="dark"] .tm-badge { fill: var(--panel); }
+
+/* cartographer's furniture — north rose & scale bar */
+.tm-north circle { fill: none; stroke: var(--frame-mark); stroke-width: 0.9; }
+.tm-north path { fill: var(--accent); stroke: none; opacity: 0.85; }
+.tm-north text { font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.18em; fill: var(--muted); }
+.tm-scale path { stroke: var(--muted); stroke-width: 1; fill: none; }
+.tm-scale text { font-family: var(--mono); font-size: 6.5px; letter-spacing: 0.22em; fill: var(--muted); }
+
+/* ---------- i1 photo deck: a pile of prints, click cycles top → back ---------- */
+.media-stack .deck { grid-column: 1 / -1; outline: none; }
+.deck-pile {
+  position: relative; width: min(100%, 480px); margin: 0 auto;
+  aspect-ratio: 4 / 5;
+}
+.deck-card {
+  position: absolute; inset: 0; margin: 0; cursor: pointer;
+  transform: translate(calc(var(--d0, 0) * 9px), calc(var(--d0, 0) * -10px))
+             rotate(calc(var(--d0, 0) * 1.8deg));
+  transition: transform 0.55s cubic-bezier(0.22, 0.8, 0.3, 1), opacity 0.4s ease;
+  will-change: transform;
+}
+.deck-card:nth-child(even) {
+  transform: translate(calc(var(--d0, 0) * -9px), calc(var(--d0, 0) * -10px))
+             rotate(calc(var(--d0, 0) * -1.8deg));
+}
+.deck-card .media-item { height: 100%; }
+.deck-card .media-item img, .deck-card .media-item video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.deck-card.deck-gone { opacity: 0; pointer-events: none; }
+.deck-card:not(.deck-top) .media-del { display: none; }
+/* the departing print: a quick glide off-stage, then it snaps to the
+   back invisibly (.deck-settle kills the transition for one frame) */
+.deck-card.deck-exit {
+  transform: translate(54%, 8%) rotate(8deg) !important;
+  opacity: 0; z-index: 90 !important;
+  transition: transform 0.26s ease-in, opacity 0.26s ease-in !important;
+}
+.deck-card.deck-settle { transition: none !important; }
+.deck-foot {
+  width: min(100%, 480px); margin: 16px auto 0;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  font-family: var(--mono);
+}
+.deck-count { font-size: 10.5px; letter-spacing: 0.3em; color: var(--accent); }
+.deck-hint { font-size: 8.5px; letter-spacing: 0.22em; color: var(--muted); text-align: right; }
+.deck-cap { width: min(100%, 480px); margin: 18px auto 0; }
+.cap-fade { animation: cap-in 0.45s ease; }
+@keyframes cap-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 720px) {
+  .deck-pile { width: min(100%, 330px); }
+  .deck-card, .deck-card:nth-child(even) {
+    transform: translate(calc(var(--d0, 0) * 6px), calc(var(--d0, 0) * -7px))
+               rotate(calc(var(--d0, 0) * 1.5deg));
+  }
+  .deck-card:nth-child(even) {
+    transform: translate(calc(var(--d0, 0) * -6px), calc(var(--d0, 0) * -7px))
+               rotate(calc(var(--d0, 0) * -1.5deg));
+  }
+  .deck-foot { flex-direction: column; gap: 4px; }
+  .deck-hint { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-card, .deck-card.deck-exit { transition: none !important; }
+  .cap-fade { animation: none; }
+}
 
 /* the floating name-card for a fresh pin (owner only) */
 .tm-pinform {
@@ -1393,10 +1489,17 @@ img { max-width: 100%; display: block; }
 .hh-daily b { color: var(--accent); font-weight: 400; }
 
 @media (max-width: 720px) {
-  /* pocket screen: at most three chibi, and the fixed pins hug corners */
-  .hdeco-slot:nth-child(n+4) { display: none; }
+  /* pocket screen: at most one chibi, tucked under the header */
   .travel-map { padding: 16px 14px 8px; }
   .tm-head .tm-hint { display: none; }
+}
+
+/* mid-width windows (721–1399px): the 1080px column leaves no real
+   margin, so only two small corner chibi stay on duty */
+@media (min-width: 721px) and (max-width: 1399px) {
+  .hdeco-slot:nth-child(n+3) { display: none; }
+  .hdeco-slot.filled { width: 64px; }
+  .hdeco-slot.empty { width: 58px; height: 58px; font-size: 7.5px; }
 }
 
 /* ---------- Koyome's own marks, drawn in the planet's dialect ---------- */

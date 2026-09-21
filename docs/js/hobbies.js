@@ -23,20 +23,24 @@
   };
   /* where each chibi slot sits — PINNED TO THE VIEWPORT (position:fixed
      in CSS), so adding items never pushes a chibi down the page.
-     Six slots: three per margin. On phones only the first three show
-     (CSS hides the rest) and they hug the corners. */
-  const MOBILE = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
-  const DECO_POS = MOBILE ? [
-    { top: '86px', right: '8px' },      /* under the header, right corner */
-    { top: '44%', left: '4px' },        /* midway down the left edge */
-    { bottom: '110px', right: '10px' }, /* waving near the footer */
+     R12: positions are chosen so a slot never lands on text or photos —
+     wide screens park all six in the empty margins BESIDE the 1080px
+     content column (CSS calc off the centre line); narrower windows get
+     two small corner chibi; phones get a single tiny one tucked under
+     the header. CSS hides the slots beyond each tier's count. */
+  const VW = window.innerWidth || 1280;
+  const DECO_POS = VW <= 720 ? [
+    { top: '86px', right: '8px' },          /* the one safe corner on a phone */
+  ] : VW < 1400 ? [
+    { top: '86px', right: '10px' },         /* under the header, right corner */
+    { bottom: '90px', left: '10px' },       /* above the footer, left corner */
   ] : [
-    { top: '110px', right: '26px' },    /* beside the page intro */
-    { top: '36%', left: '18px' },       /* left margin, upper */
-    { top: '54%', right: '34px' },      /* right margin, middle */
-    { top: '70%', left: '30px' },       /* left margin, lower */
-    { bottom: '84px', right: '11%' },   /* near the footer, right */
-    { bottom: '64px', left: '9%' },     /* near the footer, left */
+    { top: '120px', left: 'calc(50% + 566px)' },   /* right margin, beside the intro */
+    { top: '34%', right: 'calc(50% + 566px)' },    /* left margin, upper */
+    { top: '52%', left: 'calc(50% + 572px)' },     /* right margin, midway */
+    { bottom: '26%', right: 'calc(50% + 572px)' }, /* left margin, lower */
+    { bottom: '96px', left: 'calc(50% + 566px)' }, /* right margin, near the footer */
+    { bottom: '110px', right: 'calc(50% + 566px)' },/* left margin, near the footer */
   ];
 
   let doc = { intro: '', introZh: '', sections: [], deco: [] };

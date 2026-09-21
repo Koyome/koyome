@@ -17,6 +17,15 @@ const MIME = {
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
   if (p === '/') p = '/index.html';
+  /* SANDBOX: never let a test reach the real cloud guestbook — serve an
+     empty gb-config so the page exercises its local fallback chain.
+     (2026-09-21: without this, a StaticTester row leaked into the live
+     Supabase table; the anon key cannot DELETE, cleanup was manual.) */
+  if (p === '/js/gb-config.js') {
+    res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8' });
+    res.end('window.GB_CLOUD = { url: "", anonKey: "" }; /* test sandbox stub */');
+    return;
+  }
   const file = path.join(PUB, p);
   /* no API here — anything under /api/ 404s, like GitHub Pages */
   if (!file.startsWith(PUB) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {

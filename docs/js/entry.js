@@ -193,12 +193,25 @@
     });
   }
 
+  /* set by renderDeck() so the travel maps can lift a named print
+     to the top of the pile (null on every other board) */
+  let i1DeckCtl = null;
+
   function renderMedia() {
     const wrap = $('entryMedia');
     /* one border language per board: the stack carries the entry id
        so CSS can frame travel photos / films / tracks differently */
     wrap.className = 'media-stack media-' + entry.id;
+    i1DeckCtl = null;
     if (!entry.media || !entry.media.length) { wrap.innerHTML = ''; return; }
+
+    /* the travel board shows its photographs as a pile of prints */
+    if (entry.id === 'i1' && entry.media.length > 1 &&
+        entry.media.every((m) => m.type !== 'audio')) {
+      renderDeck(wrap);
+      return;
+    }
+
     const lays = layoutClasses();
     wrap.innerHTML = entry.media.map((m, i) => {
       const label = m.type === 'audio'
@@ -281,6 +294,158 @@
     observeReveals(wrap);
   }
 
+  /* ================= i1 photo deck =================
+     The travel photographs rest as a pile of prints: the top one is
+     fully visible, the next few peek out behind it. Clicking the pile
+     sends the top print gliding off and it settles at the very back —
+     an endless, calm shuffle. The shared caption strip below always
+     describes whichever print is on top. */
+  function renderDeck(wrap) {
+    const n = entry.media.length;
+    const order = entry.media.map((_, i) => i);   /* order[0] = top print */
+    let busy = false;
+
+    const anyCap = entry.media.some((m) => loc(m, 'caption'));
+    wrap.innerHTML = `
+    <div class="deck reveal-row" tabindex="0" role="group"
+         aria-label="${esc(loc(entry, 'title'))}">
+      <div class="deck-pile">
+        ${entry.media.map((m, i) => `
+        <div class="media-block deck-card" data-mi="${i}">
+          <div class="media-item">
+            <span class="media-label">${esc(typeLabel(m.type))} ${String(i + 1).padStart(2, '0')}</span>
+            ${m.type === 'video'
+              ? `<video src="${esc(m.src)}" controls preload="none" playsinline></video>`
+              : `<img src="${esc(m.src)}" alt="${esc(loc(entry, 'title'))} ${i + 1}" loading="lazy" decoding="async">`}
+            ${canEdit ? `<button class="media-del" data-index="${i}" title="${esc(t('del'))}">${esc(t('del'))} ✕</button>` : ''}
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="deck-foot">
+        <span class="deck-count" data-count></span>
+        <span class="deck-hint">${esc(t('deck_hint'))}</span>
+      </div>
+      ${(anyCap || canEdit) ? `
+      <div class="media-cap deck-cap" data-cap="${order[0]}">
+        <span class="cap-label">${esc(t('caption_label'))}</span>
+        <div class="cap-text" data-captext></div>
+        <span class="cap-status" data-capstatus></span>
+      </div>` : ''}
+    </div>`;
+
+    const deck = wrap.querySelector('.deck');
+    const cards = [...wrap.querySelectorAll('.deck-card')];
+    const capWrap = wrap.querySelector('.deck-cap');
+    const capText = wrap.querySelector('[data-captext]');
+
+    function applyDepth() {
+      cards.forEach((el, mi) => {
+        const d = order.indexOf(mi);
+        el.style.setProperty('--d0', d);
+        el.style.zIndex = String(50 - d);
+        el.classList.toggle('deck-top', d === 0);
+        el.classList.toggle('deck-gone', d > 3);
+      });
+      const top = order[0];
+      wrap.querySelector('[data-count]').textContent =
+        `${String(top + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+      if (capWrap) {
+        capWrap.dataset.cap = top;
+        const cap = loc(entry.media[top], 'caption');
+        capText.textContent = cap || t('caption_empty');
+        capText.classList.toggle('is-empty', !cap);
+        capWrap.classList.remove('cap-fade');
+        void capWrap.offsetWidth;           /* restart the caption fade */
+        capWrap.classList.add('cap-fade');
+      }
+    }
+
+    /* top print flies off, the rest glide one notch forward, the
+       departed print snaps invisibly to the back of the pile */
+    function cycle() {
+      if (busy) return;
+      busy = true;
+      const topEl = cards[order[0]];
+      topEl.classList.add('deck-exit');
+      setTimeout(() => {
+        order.push(order.shift());
+        topEl.classList.add('deck-settle');   /* no transition while it teleports */
+        topEl.classList.remove('deck-exit');
+        applyDepth();
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => topEl.classList.remove('deck-settle')));
+        setTimeout(() => { busy = false; }, RM ? 0 : 420);
+      }, RM ? 0 : 230);
+    }
+
+    deck.addEventListener('click', (e) => {
+      if (e.target.closest('.media-del, video, .deck-cap')) return;
+      cycle();
+    });
+    deck.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycle(); }
+    });
+
+    /* owner: delete straight from the pile (top print only, via CSS) */
+    deck.querySelectorAll('.media-del').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(t('confirm_del'))) return;
+        const index = parseInt(btn.dataset.index, 10);
+        const api = await apiAvailable();
+        if (api) {
+          await fetch(`api/media?id=${encodeURIComponent(entry.id)}&index=${index}`, { method: 'DELETE' });
+        }
+        entry.media.splice(index, 1);
+        entry.src = entry.media.length ? entry.media[0].src : '';
+        if (!api) {
+          const list = await loadContent();
+          const mine = list.find((it) => it.id === entry.id);
+          if (mine) { mine.media = entry.media; mine.src = entry.src; saveOverride(list); }
+        }
+        renderMedia();
+      });
+    });
+
+    /* caption editing — the strip always edits the TOP print */
+    if (canEdit && capText) {
+      bindInlineText(capText, () => {
+        const idx = parseInt(capWrap.dataset.cap, 10);
+        return loc(entry.media[idx], 'caption') || '';
+      }, async (v) => {
+        const idx = parseInt(capWrap.dataset.cap, 10);
+        const field = window.I18N.lang === 'zh' ? 'captionZh' : 'caption';
+        const r = await fetch(
+          `api/media?id=${encodeURIComponent(entry.id)}&index=${idx}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: v }),
+          });
+        if (!r.ok) throw new Error('fail');
+        entry.media[idx][field] = v;
+        capText.classList.toggle('is-empty', !v);
+        return v || t('caption_empty');
+      }, true, true);
+    }
+
+    /* the maps drive the pile: lift a named print straight to the top */
+    i1DeckCtl = {
+      toTop(mi) {
+        const at = order.indexOf(mi);
+        if (at > 0) {
+          order.splice(at, 1);
+          order.unshift(mi);
+        }
+        applyDepth();
+      },
+      scroll() {
+        deck.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
+      },
+    };
+
+    applyDepth();
+    observeReveals(wrap);
+  }
+
   /* ================= travel maps (entry i1) =================
      Two digitized line maps drawn in one dialect:
      · TOKYO — the Yamanote loop, Sumida river, the bay; photo pins
@@ -292,14 +457,31 @@
      just read the pins. */
 
   /* where the already-captioned photographs were taken — positions
-     follow real Tokyo geography on the 560×400 grid */
+     follow real Tokyo geography on the 560×400 grid; each spot carries
+     its own landmark sigil, drawn in the same line dialect */
   const TOKYO_SPOTS = [
-    { key: '东京塔',   en: 'TOKYO TOWER',             x: 266, y: 262 },
-    { key: '东京大学', en: 'THE UNIVERSITY OF TOKYO', x: 306, y: 106 },
-    { key: '你的名字', en: 'SUGA SHRINE · YOUR NAME', x: 206, y: 212 },
-    { key: '新宿',     en: 'SHINJUKU',                x: 112, y: 178 },
-    { key: '涩谷',     en: 'SHIBUYA CROSSING',        x: 138, y: 300 },
+    { key: '东京塔',   en: 'TOKYO TOWER',             x: 266, y: 262, icon: 'tower' },
+    { key: '东京大学', en: 'THE UNIVERSITY OF TOKYO', x: 306, y: 106, icon: 'campus' },
+    { key: '你的名字', en: 'SUGA SHRINE · YOUR NAME', x: 206, y: 212, icon: 'torii' },
+    { key: '新宿',     en: 'SHINJUKU',                x: 112, y: 178, icon: 'towers' },
+    { key: '涩谷',     en: 'SHIBUYA CROSSING',        x: 138, y: 300, icon: 'crossing' },
   ];
+
+  /* landmark sigils on a 24×24 grid centred on 0,0 — stroke only */
+  const SPOT_ICONS = {
+    /* Tokyo Tower: antenna, tapering lattice legs, cross braces */
+    tower: '<path d="M0 -11 V-8 M-1.6 -8 L-6.5 11 M1.6 -8 L6.5 11 M-3.2 -4.5 H3.2 M-4.3 0.5 H4.3 M-5.4 5.5 H5.4"/>',
+    /* Yasuda-auditorium style: pediment, colonnade, stylobate */
+    campus: '<path d="M-9 -4 L0 -10 L9 -4 M-7.5 -4 H7.5 M-5.5 -4 V8.5 M-1.8 -4 V8.5 M1.8 -4 V8.5 M5.5 -4 V8.5 M-9 8.5 H9 M0 -10 V-7.5"/>',
+    /* torii: curved kasagi, straight nuki, two pillars */
+    torii: '<path d="M-9 -6.5 Q0 -9.5 9 -6.5 M-7.5 -2.5 H7.5 M-5.2 -6.8 V10 M5.2 -6.8 V10 M-6.8 10 H-3.6 M3.6 10 H6.8"/>',
+    /* Shinjuku: a small skyline of three towers with lit windows */
+    towers: '<path d="M-9.5 11 V-4 H-3.5 V11 M-1.5 11 V-10 H4.5 V11 M6.5 11 V-1 H10.5 V11 M-7.5 -1 h1.2 M-7.5 3 h1.2 M0.5 -7 h1.2 M0.5 -3 h1.2 M0.5 1 h1.2 M7.5 3 h1.2"/>',
+    /* Shibuya: the scramble — a boxed X crossing with a centre dot */
+    crossing: '<path d="M-8 -8 H8 V8 H-8 Z M-8 -8 L8 8 M8 -8 L-8 8 M0 -1.4 V1.4 M-1.4 0 H1.4"/>',
+    /* generic map pin for owner-marked places */
+    pin: '<path d="M0 -10 A6.5 6.5 0 0 1 6.5 -3.5 C6.5 2 0 11 0 11 C0 11 -6.5 2 -6.5 -3.5 A6.5 6.5 0 0 1 0 -10 Z M0 -5.4 A1.9 1.9 0 1 0 0 -1.6 A1.9 1.9 0 1 0 0 -5.4 Z"/>',
+  };
 
   /* faint survey grid — the digitized-map backbone */
   function graticule(w, h, step) {
@@ -309,14 +491,63 @@
     return `<g class="tm-grat">${g}</g>`;
   }
 
-  /* one labelled pin: dot + halo + zh / en captions beside it */
-  function pinMarkup(p, cls, extra) {
+  /* one labelled pin: a badge with the landmark sigil hovering over
+     the exact point on a hairline stem, labels beside the badge.
+     Near the top edge the badge hangs below the point instead. */
+  function pinMarkup(p, cls, extra, icon, xMark) {
+    const flip = p.y < 58;
+    const by = flip ? p.y + 28 : p.y - 28;
+    const leftSide = p.x > 420;
+    const lx = leftSide ? p.x - 16 : p.x + 16;
+    const anchor = leftSide ? 'end' : 'start';
     return `
       <g class="${cls}" ${extra || ''}>
-        <circle class="halo" cx="${p.x}" cy="${p.y}" r="12"/>
-        <circle class="core" cx="${p.x}" cy="${p.y}" r="4"/>
-        <text class="tm-zh" x="${p.x + 13}" y="${p.y + 2}">${esc(p.zh)}</text>
-        ${p.en ? `<text class="tm-en" x="${p.x + 13}" y="${p.y + 14}">${esc(p.en)}</text>` : ''}
+        <circle class="halo" cx="${p.x}" cy="${p.y}" r="9"/>
+        <path class="tm-stem" d="M${p.x} ${flip ? p.y + 4 : p.y - 4} V${flip ? by - 12 : by + 12}"/>
+        <circle class="tm-badge" cx="${p.x}" cy="${by}" r="12"/>
+        <g class="tm-icon" transform="translate(${p.x} ${by}) scale(0.85)">${icon || SPOT_ICONS.pin}</g>
+        <circle class="core" cx="${p.x}" cy="${p.y}" r="3"/>
+        <text class="tm-zh" x="${lx}" y="${by}" text-anchor="${anchor}">${esc(p.zh)}</text>
+        ${p.en ? `<text class="tm-en" x="${lx}" y="${by + 12}" text-anchor="${anchor}">${esc(p.en)}</text>` : ''}
+        ${xMark ? `<text class="tm-upin-x" x="${p.x}" y="${flip ? by + 27 : by - 19}" text-anchor="middle">✕</text>` : ''}
+      </g>`;
+  }
+
+  /* an owner-placed pin: if its name shows up in a photo caption it
+     becomes a jump button (tm-linked, carries data-mi); the owner also
+     gets a small ✕ beside it for removal — the pin itself never deletes */
+  function upinLink(p) {
+    const names = [p.zh, p.en]
+      .map((s) => String(s || '').trim().toLowerCase())
+      .filter((s) => s.length >= 2);
+    if (!names.length) return -1;
+    return entry.media.findIndex((m) => {
+      const cz = String(m.captionZh || '').toLowerCase();
+      const ce = String(m.caption || '').toLowerCase();
+      return names.some((n) => cz.includes(n) || ce.includes(n));
+    });
+  }
+
+  function upinMarkup(p, i) {
+    const li = upinLink(p);
+    const cls = 'tm-upin' + (li >= 0 ? ' tm-linked' : '');
+    const extra = `data-upin="${i}"` + (li >= 0
+      ? ` data-mi="${li}" tabindex="0" role="button" aria-label="${esc(p.zh)}"` : '');
+    return pinMarkup(p, cls, extra, SPOT_ICONS.pin, canEdit);
+  }
+
+  /* cartographer's furniture: a north rose and a scale bar,
+     same instruments on every map */
+  function mapFurniture(h, scale) {
+    return `
+      <g class="tm-north" transform="translate(30 32)">
+        <circle r="11"/>
+        <path d="M0 -6.5 L3.8 5.5 L0 2.6 L-3.8 5.5 Z"/>
+        <text y="-15" text-anchor="middle">N</text>
+      </g>
+      <g class="tm-scale" transform="translate(30 ${h - 16})">
+        <path d="M0 0 H56 M0 -3.5 V3.5 M28 -2.5 V2.5 M56 -3.5 V3.5"/>
+        <text x="28" y="-7" text-anchor="middle">${esc(scale)}</text>
       </g>`;
   }
 
@@ -372,11 +603,13 @@
     return mapPanel('tokyo', t('tm_tokyo'), stops.length ? t('tm_hint_jump') : '', `
       <svg viewBox="0 0 560 400" role="img" aria-label="${esc(t('tm_tokyo'))}" data-map="tokyo">
         ${geo}
+        ${mapFurniture(400, '5 KM')}
         ${stops.map((st) => pinMarkup(
           { x: st.spot.x, y: st.spot.y, zh: st.zh, en: st.spot.en },
-          'tm-node', `data-mi="${st.mi}" tabindex="0" role="button" aria-label="${esc(st.zh)}"`
+          'tm-node', `data-mi="${st.mi}" tabindex="0" role="button" aria-label="${esc(st.zh)}"`,
+          SPOT_ICONS[st.spot.icon]
         )).join('')}
-        ${pins.map((p, i) => pinMarkup(p, 'tm-upin', `data-upin="${i}"`)).join('')}
+        ${pins.map((p, i) => upinMarkup(p, i)).join('')}
       </svg>`);
   }
 
@@ -422,7 +655,8 @@
     return mapPanel('jeju', t('tm_jeju'), '', `
       <svg viewBox="0 0 560 380" role="img" aria-label="${esc(t('tm_jeju'))}" data-map="jeju">
         ${geo}
-        ${pins.map((p, i) => pinMarkup(p, 'tm-upin', `data-upin="${i}"`)).join('')}
+        ${mapFurniture(380, '10 KM')}
+        ${pins.map((p, i) => upinMarkup(p, i)).join('')}
       </svg>`);
   }
 
@@ -526,14 +760,23 @@
     const media = $('entryMedia');
     media.parentNode.insertBefore(box, media);
 
-    /* photo pin → glide to its photograph */
-    box.querySelectorAll('.tm-node').forEach((node) => {
-      const jump = () => {
-        const idx = parseInt(node.dataset.mi, 10);
-        const block = document.querySelectorAll('#entryMedia .media-block')[idx];
-        if (block) block.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
-      };
-      node.addEventListener('click', jump);
+    /* photo pin (and linked owner pin) → glide to its photograph;
+       when the photo deck is on stage, bring that print to the top */
+    const jumpTo = (mi) => {
+      if (i1DeckCtl) {
+        i1DeckCtl.toTop(mi);
+        i1DeckCtl.scroll();
+        return;
+      }
+      const block = document.querySelectorAll('#entryMedia .media-block')[mi];
+      if (block) block.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
+    };
+    box.querySelectorAll('.tm-node, .tm-upin.tm-linked').forEach((node) => {
+      const jump = () => jumpTo(parseInt(node.dataset.mi, 10));
+      node.addEventListener('click', (e) => {
+        if (e.target.closest('.tm-upin-x')) return;
+        jump();
+      });
       node.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(); }
       });
@@ -541,11 +784,12 @@
 
     if (!canEdit) return;   /* visitors read the maps, never alter them */
 
-    /* owner: click a self-made pin to remove it */
-    box.querySelectorAll('.tm-upin').forEach((node) => {
-      node.addEventListener('click', async (e) => {
+    /* owner: only the small ✕ beside a self-made pin removes it */
+    box.querySelectorAll('.tm-upin-x').forEach((x) => {
+      x.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!confirm(t('tm_pin_del') + '?')) return;
+        const node = x.closest('.tm-upin');
         const mapId = node.closest('svg').dataset.map;
         const arr = Array.isArray(entry.mapPins?.[mapId]) ? entry.mapPins[mapId] : [];
         arr.splice(parseInt(node.dataset.upin, 10), 1);
