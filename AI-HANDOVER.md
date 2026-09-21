@@ -1,10 +1,24 @@
 # Koyome.me — 项目交接文档（AI Handover）
 
 > 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
-> 最后更新：2026-09-21（第十轮：素材清理 / Stone Island 式新图形 / 东京地图重绘 + 济州岛地图 / 私人剪辑边框重设计。改动明细见 `UPDATE-LOG-2026-09-21-R10.md`）
-> 仓库 HEAD：`3ccf06a`（线上已同步）｜ 用户已授予 AI **随时推送的常驻权限**（§4.3）
+> 最后更新：2026-09-21（第十一轮：手机端首页修复 / 罗盘质感升级 / 夜间六芒星线条整治 / 星空移动端性能优化）
+> 仓库 HEAD：`2b93649`（线上已同步）｜ 用户已授予 AI **随时推送的常驻权限**（§4.3）
 
 ---
+
+## 0.9 第十一轮速览（2026-09-21）
+
+- **手机端首页**：deco.js 首页第一个漂浮图形（摆动圆）在手机端与星球重叠——移动端首页已过滤该图形（桌面端不受影响，`page==='home' && si===0` 才跳过）；`.hero-orbit` 移动端从 `right:-90px`（外环被裁）改为 `right:-10px; top:-14px; min(60vw,250px)`，整个星球雕塑完整入镜；`.hh-compass` 移动端 `right:2px` 不再出血。
+- **罗盘质感升级**（index.html 内联 SVG）：新增渐变表盘（`hhFace` 径向）、北针红色渐变（`hhNorth`）、墨针渐变（`hhInk`）、30° 短刻度环、右上玻璃高光弧、中心帽高光点、扫秒针尖光晕；CSS 加 `drop-shadow`（日夜两色）。设计语言不变，变量驱动日夜自适应。
+- **夜间六芒星整治**：sigil SVG 硬编码灰色全部接入新 CSS 变量 `--sigil-{dash,ring,chord,tri,node}`（日间值=原色，像素级不变；夜间调暗调匀），弦线组 `.sigil-chords` 夜间 opacity 降至 0.5——黑纸上的线条不再凌乱。
+- **星空性能**（entry.js `renderStarfield()`）：手机端 DPR 封顶 1（原 ≤2，全屏重绘量减半以上）、重绘节流 ~30fps（dt 累加 `dtDraw`，流星步长用累计值，速度不变）、小方星改为单 alpha 批量填充（逐星 globalAlpha 切换是主要绘制开销），十字星保留闪烁。视觉几乎无差，滑动不再卡。
+- **事故记录**：本轮中 `.git` 再次损坏（refs 目录与 objects/pack 丢失，`bad object HEAD`——与第九轮同因，非 AI 操作导致；一次 `git stash` 命令途中被 SIGTERM 可能加剧了暴露）。已按 §0.7 同法恢复：SSH 克隆 → 移植 `.git` → 工作区零改动（diff 仅本轮 4 个文件），另补回 repo 本地 `user.name/user.email`（Koyome/koyome@localhost，新克隆不带）。
+- **新工具**：`tools/shot-r11.js`（Edge headless CDP 截图台：多规格 视口/主题/滚动 批量截图，复用性强）、`tools/check-sb.js`（Supabase 只读探针）、`tools/verify-r11-live.js`（线上轮询验收）。
+- **测试备注**：jsdom 回归 22 项中 guestbook en/zh list 两项报 0 items——jsdom 内云表 fetch 不可达所致的环境性失败（Supabase 实测 HTTP 200 有数据），与本轮 diff 无关；其余全过。
+
+---
+
+
 
 ## 0.8 第十轮速览（2026-09-21）
 
