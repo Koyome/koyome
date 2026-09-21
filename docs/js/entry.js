@@ -373,8 +373,8 @@
   /* ================= starfield (entry t2 — About Koyome) =================
      Geometric night sky behind the page: plus-shaped stars, a few
      faint constellation threads, and a meteor sweeping by now and
-     then. Colors follow the theme variables; reduced motion gets a
-     single static frame. */
+     then. Retina-crisp (devicePixelRatio aware), calmer in day mode,
+     richer at night; reduced motion gets a single static frame. */
   function renderStarfield() {
     if (entry.id !== 't2') return;
     const cv = document.createElement('canvas');
@@ -382,33 +382,43 @@
     cv.setAttribute('aria-hidden', 'true');
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
     let W = 0, H = 0, stars = [], threads = [], meteors = [];
     let colStar = '#7d8798', colLine = 'rgba(110,118,132,0.32)', colMeteor = '#9e2b25';
-    let frame = 0, visible = !document.hidden, nextMeteor = 2.5, last = performance.now();
+    /* mood: day = sparse & whisper-quiet, night = dense & bright */
+    let mood = { density: 22000, alpha: 0.5, meteorEvery: [7, 14], meteorAlpha: 0.55 };
+    let frame = 0, visible = !document.hidden, nextMeteor = 4, last = performance.now();
 
     function themeColors() {
       const cs = getComputedStyle(document.documentElement);
       colStar = (cs.getPropertyValue('--star') || colStar).trim();
       colLine = (cs.getPropertyValue('--star-line') || colLine).trim();
       colMeteor = (cs.getPropertyValue('--meteor') || colMeteor).trim();
+      const dark = document.documentElement.dataset.theme === 'dark';
+      mood = dark
+        ? { density: 13000, alpha: 1, meteorEvery: [3.5, 8], meteorAlpha: 0.95 }
+        : { density: 22000, alpha: 0.5, meteorEvery: [7, 14], meteorAlpha: 0.55 };
     }
 
     function seed() {
-      W = cv.width = window.innerWidth;
-      H = cv.height = window.innerHeight;
-      const n = Math.round((W * H) / 16000);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      cv.width = Math.round(W * DPR);
+      cv.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const n = Math.round((W * H) / mood.density);
       stars = Array.from({ length: n }, () => ({
         x: Math.random() * W,
         y: Math.random() * H,
-        r: Math.random() < 0.72 ? 1 + Math.random() * 1.1 : 2.6 + Math.random() * 2.2,
-        cross: Math.random() >= 0.72,           /* big ones are plus-shaped */
+        r: Math.random() < 0.74 ? 0.8 + Math.random() * 1 : 2.4 + Math.random() * 2,
+        cross: Math.random() >= 0.74,           /* big ones are plus-shaped */
         ph: Math.random() * Math.PI * 2,        /* twinkle phase */
-        sp: 0.4 + Math.random() * 0.8,
+        sp: 0.25 + Math.random() * 0.55,        /* slow, calm shimmer */
       }));
       /* constellation threads: link a few close neighbours */
       threads = [];
-      for (let i = 0; i < stars.length && threads.length < 9; i += 7) {
+      for (let i = 0; i < stars.length && threads.length < 8; i += 7) {
         const a = stars[i];
         let best = null, bd = 1e9;
         for (let j = i + 1; j < Math.min(i + 24, stars.length); j++) {
@@ -416,19 +426,20 @@
           const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
           if (d < bd) { bd = d; best = b; }
         }
-        if (best && bd < 260 * 260) threads.push([a, best]);
+        if (best && bd < 240 * 240) threads.push([a, best]);
       }
     }
 
     function drawStatic(time) {
       ctx.clearRect(0, 0, W, H);
       ctx.strokeStyle = colLine;
-      ctx.lineWidth = 0.7;
+      ctx.lineWidth = 0.6;
+      ctx.globalAlpha = mood.alpha * 0.8;
       threads.forEach(([a, b]) => {
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       });
       stars.forEach((s) => {
-        const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph));
+        const tw = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph))) * mood.alpha;
         ctx.globalAlpha = tw;
         ctx.strokeStyle = colStar;
         ctx.lineWidth = 1;
@@ -438,6 +449,14 @@
           ctx.moveTo(s.x - r, s.y); ctx.lineTo(s.x + r, s.y);
           ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x, s.y + r);
           ctx.stroke();
+          /* a tiny diamond core on the brightest crosses */
+          if (tw > mood.alpha * 0.85) {
+            ctx.fillStyle = colStar;
+            ctx.beginPath();
+            ctx.moveTo(s.x, s.y - 1.6); ctx.lineTo(s.x + 1.6, s.y);
+            ctx.lineTo(s.x, s.y + 1.6); ctx.lineTo(s.x - 1.6, s.y);
+            ctx.closePath(); ctx.fill();
+          }
         } else {
           ctx.fillStyle = colStar;
           ctx.fillRect(s.x - s.r / 2, s.y - s.r / 2, s.r, s.r);
@@ -447,13 +466,17 @@
     }
 
     function spawnMeteor() {
-      const fromLeft = Math.random() < 0.5;
+      /* always a graceful ~32° diagonal, alternating direction */
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      const speed = 300 + Math.random() * 240;
+      const ang = (32 + Math.random() * 8) * Math.PI / 180;
       meteors.push({
-        x: fromLeft ? -40 : Math.random() * W * 0.7 + W * 0.3,
-        y: Math.random() * H * 0.32 - 20,
-        vx: (fromLeft ? 1 : -1) * (240 + Math.random() * 220),
-        vy: 150 + Math.random() * 120,
-        life: 0, ttl: 1.4 + Math.random() * 0.8,
+        x: dir > 0 ? -60 : W + 60,
+        y: Math.random() * H * 0.36 - 10,
+        vx: dir * Math.cos(ang) * speed,
+        vy: Math.sin(ang) * speed,
+        life: 0, ttl: 1.5 + Math.random() * 0.9,
+        big: Math.random() < 0.22,              /* occasional fireball */
       });
     }
 
@@ -468,31 +491,48 @@
       drawStatic(time);
 
       nextMeteor -= dt;
-      if (nextMeteor <= 0) { spawnMeteor(); nextMeteor = 3 + Math.random() * 6; }
-      meteors = meteors.filter((m) => m.life < m.ttl);
+      if (nextMeteor <= 0) {
+        spawnMeteor();
+        nextMeteor = mood.meteorEvery[0] + Math.random() * (mood.meteorEvery[1] - mood.meteorEvery[0]);
+      }
+      meteors = meteors.filter((m) => m.life < m.ttl && m.y < H + 80);
       meteors.forEach((m) => {
         m.life += dt;
         m.x += m.vx * dt;
         m.y += m.vy * dt;
-        const fade = Math.sin((m.life / m.ttl) * Math.PI);
-        const tx = m.x - m.vx * 0.28, ty = m.y - m.vy * 0.28;
+        const fade = Math.sin((m.life / m.ttl) * Math.PI) * mood.meteorAlpha;
+        const tailLen = m.big ? 0.42 : 0.3;
+        const tx = m.x - m.vx * tailLen, ty = m.y - m.vy * tailLen;
+        /* tapered tail: a wide faint stroke under a thin bright one */
         const g = ctx.createLinearGradient(m.x, m.y, tx, ty);
         g.addColorStop(0, colMeteor);
         g.addColorStop(1, 'transparent');
-        ctx.globalAlpha = fade * 0.9;
         ctx.strokeStyle = g;
-        ctx.lineWidth = 1.4;
+        ctx.globalAlpha = fade * 0.45;
+        ctx.lineWidth = m.big ? 3.2 : 2.2;
         ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tx, ty); ctx.stroke();
         ctx.globalAlpha = fade;
-        ctx.fillStyle = colMeteor;
-        ctx.fillRect(m.x - 1.2, m.y - 1.2, 2.4, 2.4);
+        ctx.lineWidth = 1.1;
+        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.vx * tailLen * 0.6, m.y - m.vy * tailLen * 0.6); ctx.stroke();
+        /* glowing head */
+        const hr = m.big ? 7 : 4.5;
+        const halo = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, hr);
+        halo.addColorStop(0, colMeteor);
+        halo.addColorStop(1, 'transparent');
+        ctx.globalAlpha = fade * 0.8;
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(m.x, m.y, hr, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1;
       });
     }
 
     themeColors();
     seed();
-    window.addEventListener('resize', seed, { passive: true });
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(seed, 180);   /* debounce: don't re-seed per pixel */
+    }, { passive: true });
     document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
 
     if (RM) { drawStatic(1); return; }   /* one calm frame, no motion */
