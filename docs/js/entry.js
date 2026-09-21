@@ -57,7 +57,7 @@
     renderHead(title);
     renderBody();
     renderMedia();
-    renderTravelMap();
+    renderMaps();
     renderStarfield();
   }
 
@@ -281,79 +281,252 @@
     observeReveals(wrap);
   }
 
-  /* ================= travel map (entry i1) =================
-     A simplified line map: hand-drawn streets, one dashed route
-     walking point to point through the places the photos were taken.
-     Nodes come from the media captions — caption a photo with a
-     place name below and it appears on the map by itself. */
-  const TRAVEL_SPOTS = [
-    { key: '东京塔',   en: 'TOKYO TOWER',            x: 448, y: 268,
-      icon: 'M-4.5 5 L0 -6.5 L4.5 5 M-2.6 1 L2.6 1 M0 -6.5 L0 -9' },
-    { key: '东京大学', en: 'THE UNIVERSITY OF TOKYO', x: 178, y: 86,
-      icon: 'M-5.5 5 L-5.5 -1.5 A5.5 4.5 0 0 1 5.5 -1.5 L5.5 5 M-7.5 5 L7.5 5' },
-    { key: '你的名字', en: 'SUGA SHRINE · YOUR NAME', x: 330, y: 178,
-      icon: 'M-5.5 -4.5 L5.5 -4.5 M-4.5 -7 L4.5 -7 M-3.5 -4.5 L-3.5 5 M3.5 -4.5 L3.5 5' },
-    { key: '新宿',     en: 'SHINJUKU',                x: 112, y: 212,
-      icon: 'M-5 5 L-5 -3.5 L-1.5 -3.5 L-1.5 5 M0.5 5 L0.5 -6.5 L4.5 -6.5 L4.5 5' },
-    { key: '涩谷',     en: 'SHIBUYA CROSSING',        x: 252, y: 302,
-      icon: 'M-5.5 -5.5 L5.5 5.5 M-5.5 5.5 L5.5 -5.5 M0 -7.5 L0 7.5' },
+  /* ================= travel maps (entry i1) =================
+     Two digitized line maps drawn in one dialect:
+     · TOKYO — the Yamanote loop, Sumida river, the bay; photo pins
+       rise by themselves from the media captions (place-name match)
+     · JEJU — Hallasan's shield, the coastal ring road, empty until
+       the owner names places on it
+     No lines between landmarks. The owner clicks anywhere on a map
+     to name a spot (saved into entry.mapPins via the API); visitors
+     just read the pins. */
+
+  /* where the already-captioned photographs were taken — positions
+     follow real Tokyo geography on the 560×400 grid */
+  const TOKYO_SPOTS = [
+    { key: '东京塔',   en: 'TOKYO TOWER',             x: 266, y: 262 },
+    { key: '东京大学', en: 'THE UNIVERSITY OF TOKYO', x: 306, y: 106 },
+    { key: '你的名字', en: 'SUGA SHRINE · YOUR NAME', x: 206, y: 212 },
+    { key: '新宿',     en: 'SHINJUKU',                x: 112, y: 178 },
+    { key: '涩谷',     en: 'SHIBUYA CROSSING',        x: 138, y: 300 },
   ];
 
-  function renderTravelMap() {
-    if (entry.id !== 'i1' || !entry.media || !entry.media.length) return;
+  /* faint survey grid — the digitized-map backbone */
+  function graticule(w, h, step) {
+    let g = '';
+    for (let x = step; x < w; x += step) g += `<path d="M${x} 0 V${h}"/>`;
+    for (let y = step; y < h; y += step) g += `<path d="M0 ${y} H${w}"/>`;
+    return `<g class="tm-grat">${g}</g>`;
+  }
 
-    /* pair each spot with the media item whose caption names it */
+  /* one labelled pin: dot + halo + zh / en captions beside it */
+  function pinMarkup(p, cls, extra) {
+    return `
+      <g class="${cls}" ${extra || ''}>
+        <circle class="halo" cx="${p.x}" cy="${p.y}" r="12"/>
+        <circle class="core" cx="${p.x}" cy="${p.y}" r="4"/>
+        <text class="tm-zh" x="${p.x + 13}" y="${p.y + 2}">${esc(p.zh)}</text>
+        ${p.en ? `<text class="tm-en" x="${p.x + 13}" y="${p.y + 14}">${esc(p.en)}</text>` : ''}
+      </g>`;
+  }
+
+  /* ---------- TOKYO — drawn after real city maps ---------- */
+  function tokyoSvg(stops, pins) {
+    const geo = [
+      /* survey grid + main avenues */
+      graticule(560, 400, 56),
+      `<g class="tm-ave">
+         <path d="M0 140 H468"/><path d="M0 250 H472"/><path d="M0 322 H484"/>
+         <path d="M58 0 V392"/><path d="M198 0 V392"/><path d="M312 0 V400"/>
+         <path d="M0 366 C140 306 268 238 428 52"/>
+         <path d="M0 58 C122 118 246 182 466 334"/>
+       </g>`,
+      /* Tokyo Bay — open water to the southeast */
+      `<path class="tm-water" d="M560 56 C518 88 492 122 480 172 C468 222 464 262 472 302 C482 348 522 376 560 390 Z"/>
+       <g class="tm-waves">
+         <path d="M508 210 q7 -6 14 0 q7 6 14 0"/>
+         <path d="M496 268 q7 -6 14 0 q7 6 14 0"/>
+         <path d="M518 326 q7 -6 14 0 q7 6 14 0"/>
+       </g>`,
+      /* the Sumida, winding down to the bay */
+      `<path class="tm-river" d="M406 -6 C412 56 402 118 420 172 C432 214 450 246 468 268 L460 276 C442 252 424 220 412 176 C396 122 404 56 398 -6 Z"/>`,
+      /* green: Imperial Palace grounds, Ueno, Shinjuku Gyoen */
+      `<g class="tm-park">
+         <ellipse cx="274" cy="196" rx="31" ry="21"/>
+         <rect x="318" y="94" width="42" height="26"/>
+         <rect x="140" y="222" width="46" height="26"/>
+       </g>`,
+      /* Chuo line — the straight east-west cut */
+      `<path class="tm-rail" d="M112 178 C186 188 282 192 354 196"/>`,
+      /* the Yamanote loop and its stations */
+      `<path class="tm-loop" d="M112 178 C104 98 190 56 252 62 C322 68 358 120 356 196 C354 274 340 338 288 334 C236 330 158 332 132 286 C112 250 114 214 112 178 Z"/>
+       <g class="tm-station">
+         <circle cx="152" cy="66" r="3"/><circle cx="326" cy="84" r="3"/>
+         <circle cx="354" cy="196" r="3"/><circle cx="292" cy="332" r="3"/>
+         <circle cx="138" cy="300" r="3"/><circle cx="112" cy="178" r="3"/>
+       </g>`,
+      /* district names, set like a printed map */
+      `<g class="tm-geo">
+         <text x="152" y="54" text-anchor="middle">IKEBUKURO</text>
+         <text x="326" y="72" text-anchor="middle">UENO</text>
+         <text x="404" y="40" text-anchor="middle">ASAKUSA</text>
+         <text x="354" y="184" text-anchor="middle">TOKYO STA.</text>
+         <text x="330" y="238" text-anchor="middle">GINZA</text>
+         <text x="292" y="350" text-anchor="middle">SHINAGAWA</text>
+         <text x="274" y="226" text-anchor="middle">IMPERIAL PALACE</text>
+         <text x="512" y="150" text-anchor="middle" class="tm-sea">TOKYO BAY</text>
+         <text x="428" y="120" class="tm-sea" transform="rotate(76 428 120)">SUMIDA RIVER</text>
+       </g>`,
+    ].join('');
+
+    return mapPanel('tokyo', t('tm_tokyo'), stops.length ? t('tm_hint_jump') : '', `
+      <svg viewBox="0 0 560 400" role="img" aria-label="${esc(t('tm_tokyo'))}" data-map="tokyo">
+        ${geo}
+        ${stops.map((st) => pinMarkup(
+          { x: st.spot.x, y: st.spot.y, zh: st.zh, en: st.spot.en },
+          'tm-node', `data-mi="${st.mi}" tabindex="0" role="button" aria-label="${esc(st.zh)}"`
+        )).join('')}
+        ${pins.map((p, i) => pinMarkup(p, 'tm-upin', `data-upin="${i}"`)).join('')}
+      </svg>`);
+  }
+
+  /* ---------- JEJU — Hallasan's shield, the ring road ---------- */
+  function jejuSvg(pins) {
+    const geo = [
+      graticule(560, 380, 56),
+      /* the island — one calm volcanic shield */
+      `<path class="tm-island" d="M108 168 C116 106 210 76 302 78 C394 80 464 118 472 178 C480 238 442 300 352 318 C262 336 152 320 118 260 C100 226 100 198 108 168 Z"/>`,
+      /* Udo, the little islet off the east cape */
+      `<ellipse class="tm-island" cx="510" cy="112" rx="17" ry="10"/>`,
+      /* route 1132 — the coastal ring road */
+      `<path class="tm-ring" d="M130 172 C136 122 216 96 300 98 C384 100 446 132 452 182 C458 232 424 282 348 298 C272 314 172 300 140 252 C124 224 122 196 130 172 Z"/>`,
+      /* Hallasan at the heart, Seongsan's crater on the east cape,
+         Sanbangsan alone in the southwest */
+      `<g class="tm-peak">
+         <path d="M270 208 L282 184 L294 208 Z"/>
+         <path d="M278 194 L282 188 L286 194"/>
+         <path d="M446 162 L454 146 L462 162 Z"/>
+         <path d="M124 292 L132 276 L140 292 Z"/>
+       </g>`,
+      /* the two cities */
+      `<g class="tm-station">
+         <circle cx="274" cy="112" r="3"/><circle cx="282" cy="292" r="3"/>
+       </g>`,
+      `<g class="tm-geo">
+         <text x="282" y="230" text-anchor="middle">HALLASAN · 1,947M</text>
+         <text x="454" y="136" text-anchor="middle">SEONGSAN</text>
+         <text x="132" y="266" text-anchor="middle">SANBANGSAN</text>
+         <text x="510" y="92" text-anchor="middle">UDO</text>
+         <text x="274" y="100" text-anchor="middle">JEJU-SI</text>
+         <text x="282" y="312" text-anchor="middle">SEOGWIPO-SI</text>
+         <text x="120" y="42" class="tm-sea">JEJU STRAIT</text>
+         <text x="470" y="356" text-anchor="end" class="tm-sea">EAST CHINA SEA</text>
+       </g>`,
+      `<g class="tm-waves">
+         <path d="M52 96 q7 -6 14 0 q7 6 14 0"/>
+         <path d="M66 330 q7 -6 14 0 q7 6 14 0"/>
+         <path d="M480 300 q7 -6 14 0 q7 6 14 0"/>
+       </g>`,
+    ].join('');
+
+    return mapPanel('jeju', t('tm_jeju'), '', `
+      <svg viewBox="0 0 560 380" role="img" aria-label="${esc(t('tm_jeju'))}" data-map="jeju">
+        ${geo}
+        ${pins.map((p, i) => pinMarkup(p, 'tm-upin', `data-upin="${i}"`)).join('')}
+      </svg>`);
+  }
+
+  function mapPanel(mapId, title, hint, svg) {
+    const ownerHint = canEdit ? t('tm_hint_add') : hint;
+    return `
+      <div class="travel-map" data-panel="${mapId}">
+        <div class="tm-head">
+          <span>${esc(title)}</span>
+          <span class="tm-hint">${esc(ownerHint)}</span>
+        </div>
+        ${svg}
+      </div>`;
+  }
+
+  /* the line-drawn street elevation that opens the travel board —
+     same stroke dialect as the planet and the compass */
+  function housesStrip() {
+    return `
+    <div class="i1-houses" aria-hidden="true">
+      <svg viewBox="0 0 560 132" fill="none">
+        <text class="hs-word" x="540" y="16" text-anchor="end">DWELLINGS · 住まい</text>
+        <text class="hs-word hs-alt" x="20" y="16">FIELD RECORD — 01</text>
+        <!-- ground -->
+        <path class="hs-ground" d="M20 104 H540"/>
+        <path class="hs-dash" d="M20 112 H540"/>
+        <!-- house A: gabled, round window -->
+        <g class="hs-ink">
+          <path d="M42 104 V54 L78 28 L114 54 V104"/>
+          <path d="M64 104 V78 H86 V104"/>
+          <circle cx="96" cy="62" r="6"/>
+        </g>
+        <!-- house B: flat roof, three floors -->
+        <g class="hs-ink">
+          <path d="M136 104 V34 H192 V104"/>
+          <path d="M136 58 H192 M136 81 H192"/>
+          <path d="M148 46 h10 M160 46 h10 M172 46 h10 M148 70 h10 M172 70 h10 M148 92 h10 M160 92 h10 M172 92 h10"/>
+        </g>
+        <path class="hs-dash" d="M136 26 H192 M136 22 v8 M192 22 v8"/>
+        <!-- house C: the long gable, accent window -->
+        <g class="hs-ink">
+          <path d="M214 104 V58 L256 32 L298 58 V104"/>
+          <path d="M282 44 V28 H292 V50"/>
+          <rect x="240" y="66" width="12" height="12" class="hs-accent"/>
+          <path d="M262 104 V80 H278 V104"/>
+        </g>
+        <!-- the tall one: gridded apartments -->
+        <g class="hs-ink">
+          <path d="M330 104 V26 H392 V104"/>
+          <path d="M345 38 h8 M361 38 h8 M377 38 h8 M345 54 h8 M361 54 h8 M377 54 h8
+                   M345 70 h8 M361 70 h8 M377 70 h8 M345 86 h8 M361 86 h8 M377 86 h8"/>
+          <path d="M361 26 V14 M355 14 h12" class="hs-accent-line"/>
+        </g>
+        <path class="hs-dash" d="M330 118 H392"/>
+        <!-- tree between them -->
+        <g class="hs-ink">
+          <path d="M312 104 V86"/>
+          <circle cx="312" cy="78" r="9"/>
+        </g>
+        <!-- small gable on the right -->
+        <g class="hs-ink">
+          <path d="M424 104 V66 L452 46 L480 66 V104"/>
+          <path d="M444 104 V84 H460 V104"/>
+        </g>
+        <!-- construction verticals -->
+        <path class="hs-dash" d="M78 28 V8 M256 32 V8 M452 46 V8"/>
+        <g class="hs-ink hs-ticks">
+          <path d="M74 8 h8 M252 8 h8 M448 8 h8"/>
+        </g>
+        <!-- surveyor's spark -->
+        <path class="hs-accent-line" d="M516 86 v10 M511 91 h10"/>
+      </svg>
+    </div>`;
+  }
+
+  function renderMaps() {
+    if (entry.id !== 'i1' || !entry.media || !entry.media.length) return;
+    const old = document.querySelector('.travel-maps');
+    if (old) old.remove();
+
+    /* photo pins: pair each known spot with the media item whose
+       caption names it (first match wins) */
     const stops = [];
     entry.media.forEach((m, mi) => {
       const cap = String(m.captionZh || m.caption || '');
       if (!cap) return;
-      const spot = TRAVEL_SPOTS.find((s) => cap.includes(s.key));
+      const spot = TOKYO_SPOTS.find((s) => cap.includes(s.key));
       if (spot && !stops.some((st) => st.spot === spot)) {
         stops.push({ spot, mi, zh: cap.trim() });
       }
     });
-    if (stops.length < 2) return;
 
-    /* journey order follows the photo order in the entry */
-    const route = stops.map((st, i) =>
-      `${i ? 'L' : 'M'}${st.spot.x} ${st.spot.y}`).join(' ');
+    const allPins = (entry.mapPins && typeof entry.mapPins === 'object') ? entry.mapPins : {};
+    const tokyoPins = Array.isArray(allPins.tokyo) ? allPins.tokyo : [];
+    const jejuPins = Array.isArray(allPins.jeju) ? allPins.jeju : [];
 
     const box = document.createElement('div');
-    box.className = 'travel-map';
-    box.innerHTML = `
-      <div class="tm-head">
-        <span>${esc(t('tm_title'))}</span>
-        <span class="tm-hint">${esc(t('tm_hint'))}</span>
-      </div>
-      <svg viewBox="0 0 560 380" role="img" aria-label="${esc(t('tm_title'))}">
-        <!-- hand-drawn street web -->
-        <g aria-hidden="true">
-          <path class="tm-street" d="M-10 70 C70 58 150 92 240 76 S420 46 575 78"/>
-          <path class="tm-street" d="M-8 140 C90 128 180 162 280 142 S460 112 578 148"/>
-          <path class="tm-street" d="M-12 236 C80 222 190 258 300 238 S470 208 580 240"/>
-          <path class="tm-street" d="M-6 330 C90 318 200 350 320 332 S480 306 578 334"/>
-          <path class="tm-street" d="M84 -8 C74 90 106 190 90 300 S84 350 92 392"/>
-          <path class="tm-street" d="M252 -10 C244 100 276 200 260 316 S254 360 262 392"/>
-          <path class="tm-street" d="M420 -6 C412 96 440 196 428 312 S422 358 430 392"/>
-          <path class="tm-street" d="M-10 186 C120 172 300 200 575 180"/>
-          <path class="tm-river" d="M-12 292 C110 276 210 312 330 296 S490 268 578 288"/>
-        </g>
-        <!-- the walk itself -->
-        <path class="tm-route" d="${route}"/>
-        ${stops.map((st, i) => `
-        <g class="tm-node" data-mi="${st.mi}" tabindex="0" role="button"
-           aria-label="${esc(st.zh)}">
-          <circle class="halo" cx="${st.spot.x}" cy="${st.spot.y}" r="13"/>
-          <circle class="core" cx="${st.spot.x}" cy="${st.spot.y}" r="4.5"/>
-          <g class="tm-icon" transform="translate(${st.spot.x}, ${st.spot.y - 24})">
-            <path d="${st.spot.icon}"/>
-          </g>
-          <text class="tm-zh" x="${st.spot.x + 16}" y="${st.spot.y + 4}">${esc(st.zh)}</text>
-          <text class="tm-en" x="${st.spot.x + 16}" y="${st.spot.y + 16}">${esc(st.spot.en)}</text>
-        </g>`).join('')}
-      </svg>`;
+    box.className = 'travel-maps';
+    box.innerHTML = housesStrip() + tokyoSvg(stops, tokyoPins) + jejuSvg(jejuPins);
 
-    /* click / Enter on a stop → glide to its photograph */
+    const media = $('entryMedia');
+    media.parentNode.insertBefore(box, media);
+
+    /* photo pin → glide to its photograph */
     box.querySelectorAll('.tm-node').forEach((node) => {
       const jump = () => {
         const idx = parseInt(node.dataset.mi, 10);
@@ -366,8 +539,77 @@
       });
     });
 
-    const media = $('entryMedia');
-    media.parentNode.insertBefore(box, media);
+    if (!canEdit) return;   /* visitors read the maps, never alter them */
+
+    /* owner: click a self-made pin to remove it */
+    box.querySelectorAll('.tm-upin').forEach((node) => {
+      node.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm(t('tm_pin_del') + '?')) return;
+        const mapId = node.closest('svg').dataset.map;
+        const arr = Array.isArray(entry.mapPins?.[mapId]) ? entry.mapPins[mapId] : [];
+        arr.splice(parseInt(node.dataset.upin, 10), 1);
+        entry.mapPins = { ...(entry.mapPins || {}), [mapId]: arr };
+        try {
+          await putContent({ mapPins: entry.mapPins });
+          renderMaps();
+        } catch (_) { /* keep the old map on failure */ }
+      });
+    });
+
+    /* owner: click bare map → name that place */
+    box.querySelectorAll('svg[data-map]').forEach((svg) => {
+      svg.addEventListener('click', (e) => {
+        if (e.target.closest('.tm-node, .tm-upin') || box.querySelector('.tm-pinform')) return;
+        const mapId = svg.dataset.map;
+        const vb = svg.viewBox.baseVal;
+        const rect = svg.getBoundingClientRect();
+        const x = Math.round((e.clientX - rect.left) / rect.width * vb.width);
+        const y = Math.round((e.clientY - rect.top) / rect.height * vb.height);
+        openPinForm(box.querySelector(`.travel-map[data-panel="${mapId}"]`), mapId, x, y, vb);
+      });
+    });
+  }
+
+  /* floating name-card for a fresh pin, positioned where clicked */
+  function openPinForm(panel, mapId, x, y, vb) {
+    const form = document.createElement('div');
+    form.className = 'tm-pinform';
+    form.style.left = (x / vb.width * 100) + '%';
+    form.style.top = (y / vb.height * 100) + '%';
+    form.innerHTML = `
+      <input type="text" data-fzh maxlength="40" placeholder="${esc(t('tm_pin_zh_ph'))}">
+      <input type="text" data-fen maxlength="40" placeholder="${esc(t('tm_pin_en_ph'))}">
+      <div class="tm-pinrow">
+        <button type="button" data-ok>${esc(t('tm_pin_add'))}</button>
+        <button type="button" data-no>${esc(t('tm_pin_cancel'))}</button>
+      </div>
+      <span class="tm-pinmsg"></span>`;
+    panel.appendChild(form);
+    const zh = form.querySelector('[data-fzh]');
+    const en = form.querySelector('[data-fen]');
+    const msg = form.querySelector('.tm-pinmsg');
+    zh.focus();
+    const close = () => form.remove();
+    form.querySelector('[data-no]').addEventListener('click', close);
+    form.querySelector('[data-ok]').addEventListener('click', async () => {
+      const name = zh.value.trim();
+      if (!name && !en.value.trim()) { zh.focus(); return; }
+      const arr = Array.isArray(entry.mapPins?.[mapId]) ? entry.mapPins[mapId].slice() : [];
+      arr.push({ x, y, zh: name, en: en.value.trim() });
+      entry.mapPins = { ...(entry.mapPins || {}), [mapId]: arr };
+      try {
+        await putContent({ mapPins: entry.mapPins });
+        close();
+        renderMaps();
+      } catch (_) {
+        msg.textContent = t('tm_pin_fail');
+      }
+    });
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); form.querySelector('[data-ok]').click(); }
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+    });
   }
 
   /* ================= starfield (entry t2 — About Koyome) =================

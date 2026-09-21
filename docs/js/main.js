@@ -6,7 +6,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  const { loadProfile, loadContent, loadHobbies, loc, escapeHtml, typeLabel } = window.Koyome;
+  const { loadProfile, loadContent, loadHobbies, loc, escapeHtml, typeLabel, apiAvailable } = window.Koyome;
   const { t } = window.I18N;
   const esc = escapeHtml;
 
@@ -78,7 +78,69 @@
       img.alt = name;
     }
 
+    /* portrait footnote — an editable content component: the words
+       live in profile.json (figNote / figNoteZh), so the owner can
+       retune them anytime; hidden entirely when empty (visitors) */
+    renderPortraitNote(profile);
+
     document.title = name + t('home_title_suffix');
+  }
+
+  async function renderPortraitNote(profile) {
+    const note = document.getElementById('portraitNote');
+    if (!note) return;
+    const text = loc(profile, 'figNote');
+    let owner = false;
+    try { owner = await apiAvailable(); } catch (_) { owner = false; }
+
+    const show = (v) => {
+      note.textContent = v;
+      note.hidden = !v && !owner;
+      note.classList.toggle('is-empty', !v);
+      if (!v && owner) note.textContent = t('home_fig_note_ph');
+    };
+    show(text);
+    if (!owner) return;
+
+    note.classList.add('editable');
+    note.title = t('caption_edit_hint');
+    note.addEventListener('dblclick', () => {
+      if (note.classList.contains('editing')) return;
+      note.classList.add('editing');
+      const current = loc(profile, 'figNote') || '';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 't-edit';
+      input.value = current;
+      note.textContent = '';
+      note.appendChild(input);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = async (save) => {
+        if (done) return;
+        done = true;
+        note.classList.remove('editing');
+        const v = input.value.trim();
+        if (!save || v === current) { show(current); return; }
+        const field = window.I18N.lang === 'zh' ? 'figNoteZh' : 'figNote';
+        try {
+          const r = await fetch('api/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: v }),
+          });
+          if (!r.ok) throw new Error('fail');
+          profile[field] = v;
+          show(v);
+        } catch (_) { show(current); }
+      };
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+        if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+      });
+      input.addEventListener('blur', () => finish(true));
+    });
   }
 
   /* ---------- Catalog preview on the home page ---------- */

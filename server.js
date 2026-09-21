@@ -220,6 +220,25 @@ const server = http.createServer(async (req, res) => {
       entry.body = nextBody;
       entry.bodyZh = nextBodyZh;
 
+      /* travel-map landmark pins: { tokyo: [{x,y,zh,en}], jeju: [...] }
+         — owner drops them on the map UI; validated & capped here */
+      if (body.mapPins != null) {
+        const clean = {};
+        if (body.mapPins && typeof body.mapPins === 'object') {
+          for (const mapId of ['tokyo', 'jeju']) {
+            const arr = body.mapPins[mapId];
+            if (!Array.isArray(arr)) continue;
+            clean[mapId] = arr.slice(0, 60).map((p) => ({
+              x: Math.max(0, Math.min(560, Math.round(Number(p.x) || 0))),
+              y: Math.max(0, Math.min(400, Math.round(Number(p.y) || 0))),
+              zh: str(p.zh, 60),
+              en: str(p.en, 60),
+            })).filter((p) => p.zh || p.en);
+          }
+        }
+        entry.mapPins = clean;
+      }
+
       saveContent(list);
       return send(res, 200, { ok: true, entry: normalizeEntry(entry) });
     } catch (e) {
@@ -325,6 +344,8 @@ const server = http.createServer(async (req, res) => {
         taglineZh: body.taglineZh != null ? str(body.taglineZh, 200) : current.taglineZh,
         intro: body.intro != null ? str(body.intro, 20000) : current.intro,
         introZh: body.introZh != null ? str(body.introZh, 20000) : current.introZh,
+        figNote: body.figNote != null ? str(body.figNote, 200) : current.figNote,
+        figNoteZh: body.figNoteZh != null ? str(body.figNoteZh, 200) : current.figNoteZh,
         avatar: current.avatar,
       };
       if (body.avatarFile) {

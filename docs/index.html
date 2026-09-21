@@ -30,51 +30,84 @@
   <header class="site-header" id="siteHeader"></header>
 
   <main class="home">
-    <!-- self-moving orbit sculpture: three rings turning at their own
-         pace behind the hero (pure geometry, no interaction needed) -->
+    <!-- the planet: textured sphere, double ring system, three
+         satellites on their own clocks, soft glow — self-moving -->
     <div class="hero-orbit" aria-hidden="true">
       <svg viewBox="0 0 420 420" fill="none">
-        <g class="orbit-ring-a" stroke="var(--frame-mark)" stroke-width="1">
-          <ellipse cx="210" cy="210" rx="200" ry="200"/>
-          <circle cx="210" cy="10" r="4" fill="var(--accent)" stroke="none"/>
+        <defs>
+          <radialGradient id="orbitGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.14"/>
+            <stop offset="55%" stop-color="var(--accent)" stop-opacity="0.05"/>
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="planetShade" cx="36%" cy="30%" r="78%">
+            <stop offset="0%" stop-color="var(--panel)"/>
+            <stop offset="100%" stop-color="var(--bg-deep)"/>
+          </radialGradient>
+        </defs>
+
+        <!-- halo -->
+        <circle cx="210" cy="210" r="185" fill="url(#orbitGlow)"/>
+
+        <!-- outer dashed walkway, marching slowly -->
+        <circle class="orbit-dash" cx="210" cy="210" r="192"
+                stroke="var(--frame-mark)" stroke-width="0.9" stroke-dasharray="2.5 10" opacity="0.7"/>
+
+        <!-- satellites: each group spins around the planet at its own pace -->
+        <g class="sat sat-a">
+          <circle cx="210" cy="210" r="98" stroke="var(--frame-mark)" stroke-width="0.6" opacity="0.55"/>
+          <circle cx="210" cy="112" r="5.5" fill="var(--accent)"/>
+          <circle cx="210" cy="112" r="9.5" stroke="var(--accent)" stroke-width="0.7" opacity="0.5"/>
         </g>
-        <g class="orbit-ring-b" stroke="var(--frame-mark)" stroke-width="0.8">
-          <ellipse cx="210" cy="210" rx="200" ry="86" transform="rotate(-24 210 210)"/>
-          <circle cx="410" cy="210" r="3" fill="var(--frame-mark)" stroke="none"/>
+        <g class="sat sat-b">
+          <circle cx="210" cy="210" r="136" stroke="var(--frame-mark)" stroke-width="0.6" opacity="0.45"/>
+          <circle cx="346" cy="210" r="4" fill="var(--ink)"/>
         </g>
-        <g class="orbit-ring-c" stroke="var(--frame-mark)" stroke-width="0.8">
-          <ellipse cx="210" cy="210" rx="150" ry="150" transform="rotate(38 210 210)"/>
+        <g class="sat sat-c">
+          <circle cx="210" cy="210" r="166" stroke="var(--frame-mark)" stroke-width="0.5" opacity="0.4"/>
+          <circle cx="210" cy="376" r="2.8" fill="var(--frame-mark)"/>
         </g>
-        <circle class="orbit-dash" cx="210" cy="210" r="122"
-                stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 12" opacity="0.55"/>
-        <circle cx="210" cy="210" r="2.6" fill="var(--accent)"/>
+
+        <!-- ring system (back half) -->
+        <g transform="rotate(-18 210 210)">
+          <ellipse cx="210" cy="210" rx="116" ry="30" stroke="var(--frame-mark)" stroke-width="1"/>
+          <ellipse cx="210" cy="210" rx="132" ry="36" stroke="var(--accent)" stroke-width="0.8"
+                   stroke-dasharray="4 7" opacity="0.65"/>
+        </g>
+
+        <!-- the planet itself: shaded sphere, latitude texture, craters -->
+        <circle cx="210" cy="210" r="62" fill="url(#planetShade)" stroke="var(--ink)" stroke-width="1.3"/>
+        <ellipse cx="210" cy="210" rx="62" ry="18" stroke="var(--ink)" stroke-width="0.7" opacity="0.5"/>
+        <ellipse cx="210" cy="210" rx="62" ry="40" stroke="var(--ink)" stroke-width="0.7" opacity="0.4"/>
+        <ellipse cx="210" cy="210" rx="62" ry="56" stroke="var(--ink)" stroke-width="0.6" opacity="0.3"/>
+        <path d="M148 210 A62 62 0 0 1 210 148" stroke="var(--bg)" stroke-width="2.2" opacity="0.85"/>
+        <circle cx="232" cy="228" r="7" stroke="var(--ink)" stroke-width="0.7" opacity="0.5"/>
+        <circle cx="188" cy="196" r="4.5" stroke="var(--ink)" stroke-width="0.7" opacity="0.45"/>
+        <circle cx="222" cy="182" r="2.6" fill="var(--ink)" opacity="0.4"/>
+        <circle cx="196" cy="238" r="2.2" fill="var(--accent)" opacity="0.8"/>
+
+        <!-- ring front half, passing over the sphere -->
+        <g transform="rotate(-18 210 210)">
+          <path d="M94 210 A116 30 0 0 0 326 210" stroke="var(--frame-mark)" stroke-width="1"/>
+          <path d="M78 210 A132 36 0 0 0 342 210" stroke="var(--accent)" stroke-width="0.8"
+                stroke-dasharray="4 7" opacity="0.65"/>
+        </g>
+
+        <!-- sparks -->
+        <g stroke="var(--frame-mark)" stroke-width="1" opacity="0.8">
+          <path d="M64 96 v14 M57 103 h14"/>
+          <path d="M362 306 v12 M356 312 h12"/>
+          <path d="M336 66 v10 M331 71 h10"/>
+        </g>
+        <circle cx="72" cy="262" r="2" fill="var(--accent)" opacity="0.7"/>
       </svg>
     </div>
 
     <figure class="portrait">
       <span class="portrait-dot" aria-hidden="true"></span>
-      <!-- hand-drawn street map wandering behind the photograph -->
-      <span class="portrait-map" aria-hidden="true">
-        <svg viewBox="0 0 340 420" fill="none" preserveAspectRatio="none">
-          <path d="M-10 60 C60 52 96 84 150 74 S262 40 352 66" stroke="currentColor" stroke-width="0.8"/>
-          <path d="M-12 150 C48 138 110 168 168 152 S286 118 354 142" stroke="currentColor" stroke-width="0.7"/>
-          <path d="M-8 250 C70 236 118 272 184 254 S300 220 356 246" stroke="currentColor" stroke-width="0.8"/>
-          <path d="M-10 348 C54 338 122 366 190 350 S296 322 352 342" stroke="currentColor" stroke-width="0.7"/>
-          <path d="M60 -10 C52 90 84 180 66 300 S58 380 70 430" stroke="currentColor" stroke-width="0.7"/>
-          <path d="M170 -12 C162 96 196 190 178 308 S172 386 182 430" stroke="currentColor" stroke-width="0.8"/>
-          <path d="M286 -8 C276 100 306 200 292 320 S286 390 296 430" stroke="currentColor" stroke-width="0.7"/>
-          <path d="M-6 200 C90 190 200 214 348 196" stroke="currentColor" stroke-width="1.1" stroke-dasharray="1 5"/>
-          <circle cx="296" cy="142" r="3.2" fill="var(--accent)" stroke="none"/>
-          <circle cx="296" cy="142" r="7" stroke="var(--accent)" stroke-width="0.8" opacity="0.5"/>
-        </svg>
-      </span>
-      <span class="portrait-cross tl" aria-hidden="true">+</span>
-      <span class="portrait-cross br" aria-hidden="true">+</span>
-      <div class="portrait-box">
-        <img id="portraitImg" src="assets/avatar.jpg" alt="Koyome" fetchpriority="high" decoding="async" />
-      </div>
+      <img id="portraitImg" class="portrait-cutout" src="assets/avatar_cutout.webp" alt="Koyome" fetchpriority="high" decoding="async" />
       <figcaption data-i18n="home_fig">FIG. 01 — KOYOME</figcaption>
-      <div class="portrait-note" data-i18n="home_fig_note">— pinned over the map of ordinary days</div>
+      <div class="portrait-note" id="portraitNote" hidden></div>
     </figure>
 
     <div class="home-text">
@@ -103,6 +136,33 @@
   <!-- Hobbies preview — an invitation: come see what I love,
        then say hi in the guestbook -->
   <section class="home-hobbies" aria-label="Hobbies">
+    <!-- compass badge — drawn in the same line language as the
+         planet: one accent-tipped rose, a slow sweep hand -->
+    <svg class="hh-compass" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+      <circle cx="100" cy="100" r="94" stroke="var(--frame-mark)" stroke-width="1"/>
+      <circle cx="100" cy="100" r="82" stroke="var(--frame-mark)" stroke-width="0.7" stroke-dasharray="2 7" opacity="0.8"/>
+      <!-- degree ticks: long at the cardinals, short between -->
+      <g stroke="var(--ink)" stroke-width="1">
+        <path d="M100 8 v13 M192 100 h-13 M100 192 v-13 M8 100 h13"/>
+      </g>
+      <g stroke="var(--frame-mark)" stroke-width="0.8" opacity="0.9">
+        <path d="M165 35 l-9 9 M165 165 l-9 -9 M35 165 l9 -9 M35 35 l9 9"/>
+      </g>
+      <!-- the rose: four elongated points, north tipped in accent -->
+      <g class="rose">
+        <path d="M100 26 L108 100 L100 174 L92 100 Z" fill="var(--ink)" opacity="0.9"/>
+        <path d="M26 100 L100 92 L174 100 L100 108 Z" fill="var(--ink)" opacity="0.55"/>
+        <path d="M100 26 L108 100 L92 100 Z" fill="var(--accent)"/>
+      </g>
+      <circle cx="100" cy="100" r="12" stroke="var(--ink)" stroke-width="0.9" fill="var(--bg)"/>
+      <circle cx="100" cy="100" r="3" fill="var(--accent)"/>
+      <!-- sweep hand: one slow revolution per minute -->
+      <g class="sweep">
+        <path d="M100 100 L100 20" stroke="var(--accent)" stroke-width="0.8" opacity="0.85"/>
+        <circle cx="100" cy="20" r="2" fill="var(--accent)"/>
+      </g>
+      <text x="100" y="178" class="hh-compass-word">KOYOME</text>
+    </svg>
     <div class="section-head">
       <span class="zh" data-i18n="hh_title">Hobbies</span>
       <span class="en" data-i18n="hh_en">THINGS I LOVE</span>

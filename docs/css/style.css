@@ -41,7 +41,6 @@
   --frame-mark: #54514c;
 }
 /* photos stop blending into paper at night — multiply would bury them */
-[data-theme="dark"] .portrait-box img,
 [data-theme="dark"] .hh-fig img,
 [data-theme="dark"] .hflow-fig img,
 [data-theme="dark"] .avatar-pick img,
@@ -163,17 +162,12 @@ img { max-width: 100%; display: block; }
 .home {
   max-width: 1080px; margin: 0 auto;
   padding: 30px 40px 90px;
-  display: grid; grid-template-columns: minmax(230px, 340px) 1fr;
+  display: grid; grid-template-columns: minmax(180px, 280px) 1fr;
   gap: clamp(40px, 7vw, 92px);
   align-items: center;
   min-height: 60vh;
 }
 .portrait { position: relative; }
-.portrait-box {
-  position: relative; border: 1px solid var(--line); background: var(--bg-deep); padding: 14px;
-  isolation: isolate;
-}
-.portrait-box img { width: 100%; height: auto; mix-blend-mode: multiply; }
 .portrait-dot {
   position: absolute; left: -5px; top: -5px; width: 9px; height: 9px; border-radius: 50%;
   background: var(--accent);
@@ -843,7 +837,7 @@ img { max-width: 100%; display: block; }
     min-height: 0;
     align-items: start;
   }
-  .portrait { max-width: 320px; }
+  .portrait { max-width: 250px; }
   .pair { grid-template-columns: 1fr; }
 }
 
@@ -903,7 +897,7 @@ img { max-width: 100%; display: block; }
 
 @media (max-width: 480px) {
   .home-name { font-size: clamp(34px, 11vw, 44px); }
-  .portrait { max-width: 250px; }
+  .portrait { max-width: 200px; }
   .track-cover { flex-basis: 52px; width: 52px; height: 52px; }
   .track-title { font-size: 14.5px; }
   .entry-head h1 { font-size: clamp(24px, 7.4vw, 30px); }
@@ -1180,42 +1174,49 @@ img { max-width: 100%; display: block; }
   width: clamp(280px, 34vw, 460px); height: clamp(280px, 34vw, 460px);
   z-index: 0; opacity: 0.55; pointer-events: none;
 }
-.home > * { position: relative; z-index: 1; }
 .hero-orbit svg { width: 100%; height: 100%; overflow: visible; }
-.orbit-ring-a { transform-box: view-box; transform-origin: 210px 210px; animation: slow-spin 90s linear infinite; }
-.orbit-ring-b { transform-box: view-box; transform-origin: 210px 210px; animation: slow-spin-rev 130s linear infinite; }
-.orbit-ring-c { transform-box: view-box; transform-origin: 210px 210px; animation: slow-spin 55s linear infinite; }
+/* lift content above the orbit sculpture — but never steal the
+   sculpture's own absolute positioning (it must stay out of the
+   grid, or it grabs a column and pushes the portrait wide) */
+.home > *:not(.hero-orbit) { position: relative; z-index: 1; }
+.sat { transform-box: view-box; transform-origin: 210px 210px; }
+.sat-a { animation: slow-spin 26s linear infinite; }
+.sat-b { animation: slow-spin-rev 44s linear infinite; }
+.sat-c { animation: slow-spin 70s linear infinite; }
 .orbit-dash { animation: orbit-march 26s linear infinite; }
 @keyframes orbit-march { to { stroke-dashoffset: -460; } }
 @media (max-width: 880px) { .hero-orbit { right: -90px; top: -60px; opacity: 0.4; } }
 @media (prefers-reduced-motion: reduce) {
-  .orbit-ring-a, .orbit-ring-b, .orbit-ring-c, .orbit-dash { animation: none; }
+  .sat-a, .sat-b, .sat-c, .orbit-dash { animation: none; }
 }
 
-/* ---------- Home portrait: a photograph pinned over a hand-drawn map ---------- */
+/* ---------- Home portrait: ink figure cut free of its paper ---------- */
 .portrait { position: relative; }
-.portrait-map {
-  position: absolute; inset: -40px -34px; z-index: 0;
-  pointer-events: none; color: var(--frame-mark); opacity: 0.85;
+.portrait-cutout {
+  position: relative; z-index: 1; width: 100%;
+  mix-blend-mode: multiply;               /* ink prints onto the page */
+  filter: drop-shadow(0 16px 26px rgba(60, 58, 54, 0.16));
 }
-.portrait-map svg { width: 100%; height: 100%; }
-.portrait-box { z-index: 1; transform: rotate(-1.2deg); transition: transform 0.4s ease, box-shadow 0.4s ease; }
-.portrait:hover .portrait-box { transform: rotate(0deg); box-shadow: var(--shadow); }
-/* vignette: the spotlight-edged photograph from the reference sheet */
-.portrait-box::after {
-  content: ""; position: absolute; inset: 14px; pointer-events: none; z-index: 2;
-  background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(24, 22, 20, 0.38) 100%);
+[data-theme="dark"] .portrait-cutout {
+  mix-blend-mode: normal;
+  filter: invert(0.92) drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
 }
-.portrait-cross {
-  position: absolute; font-family: var(--mono); font-size: 13px; line-height: 1;
-  color: var(--accent); z-index: 3; pointer-events: none;
-}
-.portrait-cross.tl { top: -18px; left: -16px; }
-.portrait-cross.br { bottom: -16px; right: -14px; }
 .portrait-note {
   margin-top: 10px; font-family: var(--serif); font-style: italic;
   font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em;
 }
+.portrait-note.editable { cursor: text; }
+.portrait-note.is-empty {
+  font-family: var(--mono); font-style: normal; font-size: 9px;
+  letter-spacing: 0.2em; color: var(--muted);
+  border-bottom: 1px dashed var(--line); display: inline-block; padding-bottom: 2px;
+}
+.portrait-note .t-edit {
+  font-family: var(--serif); font-style: italic; font-size: 12.5px;
+  border: none; border-bottom: 1px solid var(--accent); background: transparent;
+  color: var(--ink); width: 100%; padding: 1px 0;
+}
+.portrait-note .t-edit:focus { outline: none; }
 
 /* ---------- Media frame variants — one border language per board ---------- */
 /* travel (entry i1): exhibition photo plate — padded frame + pin tag */
@@ -1229,17 +1230,21 @@ img { max-width: 100%; display: block; }
   width: 7px; height: 7px; border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg); border: 1.2px solid var(--accent);
 }
-/* videos (entry v1): film strip — sprocket holes down both edges */
-.media-v1 .media-item { padding: 0 16px; }
+/* videos (entry v1): gallery plate — quiet hairline frame, one small
+   accent corner, a museum-tag label; nothing that competes with the film */
+.media-v1 .media-item { padding: 0; background: var(--panel); }
 .media-v1 .media-item::before {
-  content: ""; border: none; top: 8px; bottom: 8px; left: 5px; width: 6px; height: auto;
-  background-image: radial-gradient(circle, var(--muted) 1.5px, transparent 1.6px);
-  background-size: 6px 15px; background-repeat: repeat-y; opacity: 0.8;
+  content: ""; border: none; top: 0; left: 0; width: 30px; height: 1px;
+  background: var(--accent);
 }
 .media-v1 .media-item::after {
-  content: ""; border: none; top: 8px; bottom: 8px; right: 5px; left: auto; width: 6px; height: auto;
-  background-image: radial-gradient(circle, var(--muted) 1.5px, transparent 1.6px);
-  background-size: 6px 15px; background-repeat: repeat-y; opacity: 0.8;
+  content: ""; border: none; top: 0; left: 0; width: 1px; height: 30px;
+  background: var(--accent);
+}
+.media-v1 .media-item .media-label {
+  left: 10px; top: 10px;
+  background: var(--bg); color: var(--muted);
+  border: 1px solid var(--line); padding: 3px 10px;
 }
 /* radio (entry t1): vinyl cover + equalizer ticks at the sides */
 .media-item.is-track .track-cover { border-radius: 50%; position: relative; }
@@ -1263,11 +1268,26 @@ img { max-width: 100%; display: block; }
 [data-sec="galgame"] .hflow-fig { outline: 1px dashed var(--muted); outline-offset: 5px; }
 [data-sec="galgame"] .hob-sec-head .zh::before { content: "✦ "; color: var(--accent); }
 
-/* ---------- Travel map (entry i1) ---------- */
+/* ---------- Travel maps (entry i1): Tokyo & Jeju ---------- */
+.travel-maps { margin: 8px 0 52px; }
+
+/* line-drawn street elevation opening the board */
+.i1-houses { margin: 6px 0 20px; }
+.i1-houses svg { width: 100%; height: auto; display: block; }
+.hs-ink { stroke: var(--ink); stroke-width: 1.1; fill: none; stroke-linejoin: round; }
+.hs-ground { stroke: var(--ink); stroke-width: 1.4; }
+.hs-dash { stroke: var(--frame-mark); stroke-width: 0.7; stroke-dasharray: 3 6; fill: none; }
+.hs-accent { fill: var(--accent); stroke: none; }
+.hs-accent-line { stroke: var(--accent); stroke-width: 1.1; fill: none; }
+.hs-ticks { stroke-width: 0.9; }
+.hs-word { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.34em; fill: var(--muted); }
+.hs-alt { fill: var(--accent); }
+
 .travel-map {
-  margin: 8px 0 52px; border: 1px solid var(--line);
+  margin: 0 0 34px; border: 1px solid var(--line);
   padding: 22px 26px 14px; position: relative; background: var(--panel);
 }
+.travel-map:last-child { margin-bottom: 0; }
 .travel-map::before, .travel-map::after {
   content: ""; position: absolute; width: 15px; height: 15px; pointer-events: none;
 }
@@ -1279,21 +1299,64 @@ img { max-width: 100%; display: block; }
 }
 .tm-head .tm-hint { margin-left: auto; color: var(--muted); letter-spacing: 0.18em; font-size: 9px; }
 .travel-map svg { width: 100%; height: auto; display: block; }
-.tm-street { fill: none; stroke: var(--line); stroke-width: 0.7; opacity: 0.75; }
-.tm-river { fill: none; stroke: var(--line); stroke-width: 1.4; opacity: 0.9; }
-.tm-route {
-  fill: none; stroke: var(--accent); stroke-width: 1.3; stroke-dasharray: 5 6;
-  animation: orbit-march 18s linear infinite; opacity: 0.9;
+
+/* digitized map anatomy */
+.tm-grat path { stroke: var(--line); stroke-width: 0.5; stroke-dasharray: 1 6; opacity: 0.5; fill: none; }
+.tm-ave path { stroke: var(--line); stroke-width: 0.8; opacity: 0.8; fill: none; }
+.tm-water { fill: var(--bg-deep); stroke: var(--line); stroke-width: 1; opacity: 0.75; }
+.tm-river { fill: var(--bg-deep); stroke: var(--line); stroke-width: 0.7; opacity: 0.7; }
+.tm-waves path { stroke: var(--muted); stroke-width: 0.8; fill: none; opacity: 0.6; }
+.tm-park ellipse, .tm-park rect {
+  fill: none; stroke: var(--frame-mark); stroke-width: 0.9; stroke-dasharray: 3 3;
 }
+.tm-rail { stroke: var(--muted); stroke-width: 0.9; stroke-dasharray: 6 4; fill: none; opacity: 0.8; }
+.tm-loop { stroke: var(--ink); stroke-width: 1.5; fill: none; opacity: 0.9; }
+.tm-station circle { fill: var(--bg); stroke: var(--ink); stroke-width: 1.2; }
+.tm-island { fill: var(--bg); stroke: var(--ink); stroke-width: 1.2; }
+.tm-ring { stroke: var(--muted); stroke-width: 0.9; stroke-dasharray: 5 6; fill: none; }
+.tm-peak path { stroke: var(--ink); stroke-width: 1.1; fill: none; stroke-linejoin: round; }
+.tm-geo text {
+  font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.2em; fill: var(--muted);
+}
+.tm-geo .tm-sea { font-style: italic; opacity: 0.85; }
+
+/* pins: photo pins in accent, owner-named pins in ink — no lines between them */
 .tm-node { cursor: pointer; }
 .tm-node circle.halo { fill: transparent; stroke: var(--accent); stroke-width: 0.8; opacity: 0.35; }
 .tm-node circle.core { fill: var(--bg); stroke: var(--accent); stroke-width: 1.4; }
 .tm-node:hover circle.halo, .tm-node:focus circle.halo { opacity: 0.9; }
-.tm-node .tm-icon { stroke: var(--ink); fill: none; stroke-width: 1.2; }
-.tm-node text { font-family: var(--mono); fill: var(--ink); }
-.tm-node .tm-zh { font-size: 12px; letter-spacing: 0.08em; }
-.tm-node .tm-en { font-size: 7.5px; letter-spacing: 0.22em; fill: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .tm-route { animation: none; } }
+.tm-upin circle.halo { fill: transparent; stroke: var(--ink); stroke-width: 0.7; opacity: 0.3; }
+.tm-upin circle.core { fill: var(--accent); stroke: var(--bg); stroke-width: 1; }
+.tm-node text, .tm-upin text { font-family: var(--mono); fill: var(--ink); }
+.tm-zh { font-size: 11.5px; letter-spacing: 0.06em; }
+.tm-en { font-size: 7px; letter-spacing: 0.2em; fill: var(--muted); }
+[data-theme="dark"] .tm-island { fill: var(--panel); }
+[data-theme="dark"] .tm-station circle { fill: var(--panel); }
+
+/* the floating name-card for a fresh pin (owner only) */
+.tm-pinform {
+  position: absolute; transform: translate(14px, -50%); z-index: 5;
+  width: 172px; padding: 10px 10px 8px;
+  background: var(--bg); border: 1px solid var(--ink);
+  box-shadow: 0 10px 26px rgba(40, 38, 35, 0.18);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tm-pinform input {
+  font-family: var(--mono); font-size: 11px; padding: 5px 7px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  width: 100%; box-sizing: border-box;
+}
+.tm-pinform input:focus { outline: none; border-color: var(--accent); }
+.tm-pinrow { display: flex; gap: 6px; }
+.tm-pinrow button {
+  flex: 1; font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em;
+  padding: 5px 0; cursor: pointer; border: 1px solid var(--ink);
+  background: var(--ink); color: var(--bg);
+}
+.tm-pinrow button[data-no] { background: transparent; color: var(--muted); border-color: var(--line); }
+.tm-pinrow button:hover { border-color: var(--accent); }
+.tm-pinrow button[data-ok]:hover { background: var(--accent); }
+.tm-pinmsg { font-family: var(--mono); font-size: 9px; color: var(--accent); min-height: 10px; }
 
 /* ---------- Starfield (entry t2 — About Koyome) ---------- */
 .starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
@@ -1311,3 +1374,20 @@ img { max-width: 100%; display: block; }
   .travel-map { padding: 16px 14px 8px; }
   .tm-head .tm-hint { display: none; }
 }
+
+/* ---------- Koyome's own marks, drawn in the planet's dialect ---------- */
+/* compass badge (Stone Island-like: geometric, quiet, brand-mark)
+   guarding the hobbies invite — one slow sweep hand keeps it alive */
+.home-hobbies { position: relative; }
+.hh-compass {
+  position: absolute; right: -6px; top: 26px; width: 170px; height: 170px;
+  opacity: 0.6; pointer-events: none;
+}
+.hh-compass .hh-compass-word {
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.42em;
+  fill: var(--muted); text-anchor: middle;
+}
+.hh-compass .sweep { transform-box: view-box; transform-origin: 100px 100px; animation: slow-spin 60s linear infinite; }
+[data-theme="dark"] .hh-compass { opacity: 0.75; }
+@media (max-width: 880px) { .hh-compass { width: 100px; height: 100px; top: 18px; opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .hh-compass .sweep { animation: none; } }
