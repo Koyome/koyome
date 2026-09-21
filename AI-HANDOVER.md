@@ -203,6 +203,8 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 
 ### 4.3 部署到线上（push 后 Pages 约 1 分钟自动重建）
 
+**📌 常驻授权（2026-09-21 用户亲授）**：AI 可随时推送上线，无需逐次请示——内容/功能改动 commit 后直接 push 即可。
+
 **首选 SSH**（本机 SSH 畅通，git smart-HTTP 九成丢包）：
 ```bash
 cd /c/Users/Public/koyome-site
