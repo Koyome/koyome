@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="title_hobbies">Hobbies · Koyome</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("koyome_theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-page="hobbies" data-title-key="title_hobbies">
@@ -23,12 +24,12 @@
     <p class="section-intro hob-intro" id="hobIntro" data-reveal style="--d:0.08s"></p>
     <p class="edit-hint" id="hobEditHint" hidden></p>
 
-    <!-- sections (anime / characters) rendered here -->
+    <!-- sections (anime / characters / galgame) rendered here -->
     <div id="hobSections"></div>
     <p class="hob-msg" id="hobMsg"></p>
 
-    <!-- chibi decoration layer: free slots around the content,
-         never overlapping the main flow -->
+    <!-- chibi decoration layer: slots pinned to the viewport,
+         never pushed down by growing content -->
     <div class="hdeco-layer" id="hdecoLayer" aria-hidden="true"></div>
   </section>
 

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="title_home">Koyome · a quiet corner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("koyome_theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-page="home" data-title-key="title_home">
@@ -29,12 +30,51 @@
   <header class="site-header" id="siteHeader"></header>
 
   <main class="home">
+    <!-- self-moving orbit sculpture: three rings turning at their own
+         pace behind the hero (pure geometry, no interaction needed) -->
+    <div class="hero-orbit" aria-hidden="true">
+      <svg viewBox="0 0 420 420" fill="none">
+        <g class="orbit-ring-a" stroke="var(--frame-mark)" stroke-width="1">
+          <ellipse cx="210" cy="210" rx="200" ry="200"/>
+          <circle cx="210" cy="10" r="4" fill="var(--accent)" stroke="none"/>
+        </g>
+        <g class="orbit-ring-b" stroke="var(--frame-mark)" stroke-width="0.8">
+          <ellipse cx="210" cy="210" rx="200" ry="86" transform="rotate(-24 210 210)"/>
+          <circle cx="410" cy="210" r="3" fill="var(--frame-mark)" stroke="none"/>
+        </g>
+        <g class="orbit-ring-c" stroke="var(--frame-mark)" stroke-width="0.8">
+          <ellipse cx="210" cy="210" rx="150" ry="150" transform="rotate(38 210 210)"/>
+        </g>
+        <circle class="orbit-dash" cx="210" cy="210" r="122"
+                stroke="var(--accent)" stroke-width="1" stroke-dasharray="3 12" opacity="0.55"/>
+        <circle cx="210" cy="210" r="2.6" fill="var(--accent)"/>
+      </svg>
+    </div>
+
     <figure class="portrait">
       <span class="portrait-dot" aria-hidden="true"></span>
+      <!-- hand-drawn street map wandering behind the photograph -->
+      <span class="portrait-map" aria-hidden="true">
+        <svg viewBox="0 0 340 420" fill="none" preserveAspectRatio="none">
+          <path d="M-10 60 C60 52 96 84 150 74 S262 40 352 66" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M-12 150 C48 138 110 168 168 152 S286 118 354 142" stroke="currentColor" stroke-width="0.7"/>
+          <path d="M-8 250 C70 236 118 272 184 254 S300 220 356 246" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M-10 348 C54 338 122 366 190 350 S296 322 352 342" stroke="currentColor" stroke-width="0.7"/>
+          <path d="M60 -10 C52 90 84 180 66 300 S58 380 70 430" stroke="currentColor" stroke-width="0.7"/>
+          <path d="M170 -12 C162 96 196 190 178 308 S172 386 182 430" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M286 -8 C276 100 306 200 292 320 S286 390 296 430" stroke="currentColor" stroke-width="0.7"/>
+          <path d="M-6 200 C90 190 200 214 348 196" stroke="currentColor" stroke-width="1.1" stroke-dasharray="1 5"/>
+          <circle cx="296" cy="142" r="3.2" fill="var(--accent)" stroke="none"/>
+          <circle cx="296" cy="142" r="7" stroke="var(--accent)" stroke-width="0.8" opacity="0.5"/>
+        </svg>
+      </span>
+      <span class="portrait-cross tl" aria-hidden="true">+</span>
+      <span class="portrait-cross br" aria-hidden="true">+</span>
       <div class="portrait-box">
-        <img id="portraitImg" src="assets/avatar.jpg" alt="Koyome" />
+        <img id="portraitImg" src="assets/avatar.jpg" alt="Koyome" fetchpriority="high" decoding="async" />
       </div>
       <figcaption data-i18n="home_fig">FIG. 01 — KOYOME</figcaption>
+      <div class="portrait-note" data-i18n="home_fig_note">— pinned over the map of ordinary days</div>
     </figure>
 
     <div class="home-text">
@@ -70,6 +110,7 @@
     </div>
     <p class="section-intro hh-intro" data-i18n="hh_intro">A corner for the anime and characters I love — come see if we share a favorite.</p>
     <div class="hh-strip" id="hhStrip"></div>
+    <div class="hh-daily" id="hhDaily" hidden><b>✦</b> <span data-i18n="hh_daily">TODAY'S PICKS — SHUFFLED ONCE A DAY</span></div>
     <div class="hh-links">
       <a href="hobbies.html"><span data-i18n="hh_go">BROWSE MY HOBBIES</span><em>→</em></a>
       <span class="hh-bridge" data-i18n="hh_bridge">spot a favorite? come say hi</span>

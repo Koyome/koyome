@@ -31,20 +31,53 @@
         <button type="button" data-lang="zh">繁中</button>
       </div>
     </div>
-    <div class="menu" id="menu">
-      <button class="menu-btn" id="menuBtn" type="button"
-              aria-haspopup="true" aria-expanded="false" aria-controls="menuPanel"
-              data-i18n-aria="menu_label">
-        <i></i><i></i><i></i>
+    <div class="header-right">
+      <button class="theme-btn" id="themeBtn" type="button" data-i18n-aria="theme_aria">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.4"/>
+          <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9L19 19M19 5l-2.1 2.1M7.1 16.9L5 19"/>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M20 13.2A8.2 8.2 0 1 1 10.8 4 6.6 6.6 0 0 0 20 13.2Z"/>
+        </svg>
       </button>
-      <nav class="menu-panel" id="menuPanel" data-i18n-aria="menu_label">
-        ${PAGES.map((p, i) => `
-          <a href="${p.href}" class="${p.key === current ? 'active' : ''}" data-page="${p.key}">
-            <span class="no">${String(i + 1).padStart(2, '0')}</span>
-            <span data-i18n="${p.label}">${p.key}</span>
-          </a>`).join('')}
-      </nav>
+      <div class="menu" id="menu">
+        <button class="menu-btn" id="menuBtn" type="button"
+                aria-haspopup="true" aria-expanded="false" aria-controls="menuPanel"
+                data-i18n-aria="menu_label">
+          <i></i><i></i><i></i>
+        </button>
+        <nav class="menu-panel" id="menuPanel" data-i18n-aria="menu_label">
+          ${PAGES.map((p, i) => `
+            <a href="${p.href}" class="${p.key === current ? 'active' : ''}" data-page="${p.key}">
+              <span class="no">${String(i + 1).padStart(2, '0')}</span>
+              <span data-i18n="${p.label}">${p.key}</span>
+            </a>`).join('')}
+        </nav>
+      </div>
     </div>`;
+
+  /* architect's-plate corner marks on the viewport — the quiet frame
+     that holds every page together */
+  if (!document.querySelector('.page-frame')) {
+    const frame = document.createElement('div');
+    frame.className = 'page-frame';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.innerHTML = '<i></i><i></i><i></i><i></i>';
+    document.body.appendChild(frame);
+  }
+
+  /* ---------- night / day toggle ---------- */
+  const LS_THEME = 'koyome_theme';
+  const themeBtn = document.getElementById('themeBtn');
+  function setTheme(mode) {
+    const dark = mode === 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    try { localStorage.setItem(LS_THEME, dark ? 'dark' : 'light'); } catch (_) { /* ignore */ }
+  }
+  themeBtn.addEventListener('click', () => {
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
 
   const menu = document.getElementById('menu');
   const btn = document.getElementById('menuBtn');

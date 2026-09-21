@@ -352,7 +352,7 @@ const server = http.createServer(async (req, res) => {
       const doc = {
         intro: str(body.intro, 5000),
         introZh: str(body.introZh, 5000),
-        /* two fixed sections — anime & characters — each holding
+        /* fixed sections — anime, characters & galgame — each holding
            free-form image + text items */
         sections: (Array.isArray(body.sections) ? body.sections : []).slice(0, 4).map((sec) => ({
           id: str(sec.id, 40) || 'sec' + Date.now().toString(36),

@@ -1,8 +1,21 @@
 # Koyome.me — 项目交接文档（AI Handover）
 
 > 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
-> 最后更新：2026-09-21（第八轮：系统性整合重构，取代旧的逐轮追加式记录）
-> 仓库 HEAD：`a80506e`（线上已同步）｜ 用户已授予 AI **随时推送的常驻权限**（§4.3）
+> 最后更新：2026-09-21（第九轮：大改版——夜间模式 / 首页重设计 / Galgame 分区 / Q版定位修复 / 素材边框 / 旅行地图 / 星空 / 性能优化。改动明细见 `UPDATE-LOG-2026-09-21.md`）
+> 仓库 HEAD：见 git log（线上已同步）｜ 用户已授予 AI **随时推送的常驻权限**（§4.3）
+
+---
+
+## 0.7 第九轮速览（2026-09-21）
+
+- **夜间模式**：`[data-theme="dark"]` CSS 变量翻转（style.css 顶部）；header.js 注入日/夜按钮 + 全站图纸角标 `.page-frame`；6 个 HTML 的 `<head>` 有防闪烁预置脚本；localStorage 键 `koyome_theme`。
+- **首页**：hero 轨道雕塑 `.hero-orbit`（纯 CSS 自主运动）；画像区=照片钉在手绘地图（`.portrait-map` 线稿 + vignette + 倾斜回正）；爱好引导区**按日随机 4 张**（main.js `dailyShuffle`，日期做种子，当天固定）。
+- **爱好页**：新增 `galgame` 分区（i18n `hob_sec_galgame*`；data.js normalize 保证三分区；server.js 裁剪 ≤4 分区原生兼容）；Q版装饰槽 **3→6 且改 `position:fixed`**——不再随内容下移（bug 根因=百分比绝对定位）；移动端只显示前 3 个。
+- **素材边框按板块分方言**：`entry.js` 给 `.media-stack` 加 `media-<entryId>` 类——i1=图钉相片盘、v1=胶片链齿孔、t1=黑胶+均衡器刻度；爱好页按 `[data-sec]` 分框式。
+- **旅行地图**：entry.js `renderTravelMap()`（仅 i1）——SVG 街道网+虚线行进路线+地标图标；节点由**照片描绘里的地名**驱动（TRAVEL_SPOTS 关键词匹配），点击滚动到对应照片。
+- **星空**：entry.js `renderStarfield()`（仅 t2）——canvas 固定背景，十字/方形星+星座线+随机流星；颜色读 `--star/--star-line/--meteor` 变量（日夜自适应）；reduced-motion 只画静态帧。
+- **性能**：大图全部生成 `assets/opt/` 衍生（**原图未动**，脚本 `tools/make-opt-images.py`）；profile.avatar 与 i1 的 9 处 src 已切换引用；视频/音频 `preload="none"`；图片 `decoding="async"`。
+- **事故记录**：本轮中 `.git` 曾被外部力量送入回收站（非 AI 所为），已用 SSH 重新克隆移植恢复，零数据丢失。
 
 ---
 

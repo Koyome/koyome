@@ -19,18 +19,24 @@
   const SECTION_META = {
     anime: { zh: 'hob_sec_anime', en: 'hob_sec_anime_en' },
     chars: { zh: 'hob_sec_chars', en: 'hob_sec_chars_en' },
+    galgame: { zh: 'hob_sec_galgame', en: 'hob_sec_galgame_en' },
   };
-  /* where each chibi slot sits — kept clear of the text flow.
-     On phones the slots hug the corners instead of the wide margins. */
+  /* where each chibi slot sits — PINNED TO THE VIEWPORT (position:fixed
+     in CSS), so adding items never pushes a chibi down the page.
+     Six slots: three per margin. On phones only the first three show
+     (CSS hides the rest) and they hug the corners. */
   const MOBILE = !!(window.matchMedia && window.matchMedia('(max-width: 720px)').matches);
   const DECO_POS = MOBILE ? [
-    { top: '52px', right: '6px' },      /* beside the page intro */
-    { top: '44%', left: '0' },          /* between the two rivers */
-    { bottom: '16px', right: '12px' },  /* waving near the footer */
+    { top: '86px', right: '8px' },      /* under the header, right corner */
+    { top: '44%', left: '4px' },        /* midway down the left edge */
+    { bottom: '110px', right: '10px' }, /* waving near the footer */
   ] : [
-    { top: '64px', right: '6px' },      /* beside the page intro */
-    { top: '47%', left: '-14px' },      /* between the two rivers */
-    { bottom: '26px', right: '34px' },  /* waving near the footer */
+    { top: '110px', right: '26px' },    /* beside the page intro */
+    { top: '36%', left: '18px' },       /* left margin, upper */
+    { top: '54%', right: '34px' },      /* right margin, middle */
+    { top: '70%', left: '30px' },       /* left margin, lower */
+    { bottom: '84px', right: '11%' },   /* near the footer, right */
+    { bottom: '64px', left: '9%' },     /* near the footer, left */
   ];
 
   let doc = { intro: '', introZh: '', sections: [], deco: [] };
@@ -211,7 +217,7 @@
           ${rows || (!canEdit ? `<div class="empty">${esc(t('hob_empty_guest'))}</div>` : '')}
           ${canEdit ? `<button type="button" class="hflow-add reveal-row" style="--d:0.4s" data-hadd="${esc(sec.id)}">${esc(t('hob_add_item'))}</button>` : ''}
         </div>
-      </section>${si === 0 ? '<div class="hob-river" aria-hidden="true"><span></span></div>' : ''}`;
+      </section>${si < doc.sections.length - 1 ? '<div class="hob-river" aria-hidden="true"><span></span></div>' : ''}`;
     }).join('');
 
     /* chibi decoration slots */

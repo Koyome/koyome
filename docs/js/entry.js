@@ -57,6 +57,8 @@
     renderHead(title);
     renderBody();
     renderMedia();
+    renderTravelMap();
+    renderStarfield();
   }
 
   function renderHead(title) {
@@ -193,6 +195,9 @@
 
   function renderMedia() {
     const wrap = $('entryMedia');
+    /* one border language per board: the stack carries the entry id
+       so CSS can frame travel photos / films / tracks differently */
+    wrap.className = 'media-stack media-' + entry.id;
     if (!entry.media || !entry.media.length) { wrap.innerHTML = ''; return; }
     const lays = layoutClasses();
     wrap.innerHTML = entry.media.map((m, i) => {
@@ -201,18 +206,20 @@
         : `${esc(typeLabel(m.type))} ${String(i + 1).padStart(2, '0')}`;
       let inner;
       if (m.type === 'video') {
-        inner = `<video src="${esc(m.src)}" controls preload="metadata" playsinline></video>`;
+        /* preload="none": nine 20-45MB films must not all handshake on
+           page load — the browser fetches one only when played */
+        inner = `<video src="${esc(m.src)}" controls preload="none" playsinline></video>`;
       } else if (m.type === 'audio') {
         inner = `
           <div class="track-card">
-            <div class="track-cover"><img src="${esc(m.cover || PLACEHOLDER_COVER)}" alt=""></div>
+            <div class="track-cover"><img src="${esc(m.cover || PLACEHOLDER_COVER)}" alt="" loading="lazy" decoding="async"></div>
             <div class="track-main">
               <div class="track-title">${esc(trackTitle(m, i))}</div>
-              <audio src="${esc(m.src)}" controls preload="metadata"></audio>
+              <audio src="${esc(m.src)}" controls preload="none"></audio>
             </div>
           </div>`;
       } else {
-        inner = `<img src="${esc(m.src)}" alt="${esc(loc(entry, 'title'))} ${i + 1}" loading="lazy">`;
+        inner = `<img src="${esc(m.src)}" alt="${esc(loc(entry, 'title'))} ${i + 1}" loading="lazy" decoding="async">`;
       }
       const cap = loc(m, 'caption');
       const d = Math.min(0.05 + i * 0.1, 0.5).toFixed(2) + 's';
@@ -272,6 +279,224 @@
     }
 
     observeReveals(wrap);
+  }
+
+  /* ================= travel map (entry i1) =================
+     A simplified line map: hand-drawn streets, one dashed route
+     walking point to point through the places the photos were taken.
+     Nodes come from the media captions — caption a photo with a
+     place name below and it appears on the map by itself. */
+  const TRAVEL_SPOTS = [
+    { key: '东京塔',   en: 'TOKYO TOWER',            x: 448, y: 268,
+      icon: 'M-4.5 5 L0 -6.5 L4.5 5 M-2.6 1 L2.6 1 M0 -6.5 L0 -9' },
+    { key: '东京大学', en: 'THE UNIVERSITY OF TOKYO', x: 178, y: 86,
+      icon: 'M-5.5 5 L-5.5 -1.5 A5.5 4.5 0 0 1 5.5 -1.5 L5.5 5 M-7.5 5 L7.5 5' },
+    { key: '你的名字', en: 'SUGA SHRINE · YOUR NAME', x: 330, y: 178,
+      icon: 'M-5.5 -4.5 L5.5 -4.5 M-4.5 -7 L4.5 -7 M-3.5 -4.5 L-3.5 5 M3.5 -4.5 L3.5 5' },
+    { key: '新宿',     en: 'SHINJUKU',                x: 112, y: 212,
+      icon: 'M-5 5 L-5 -3.5 L-1.5 -3.5 L-1.5 5 M0.5 5 L0.5 -6.5 L4.5 -6.5 L4.5 5' },
+    { key: '涩谷',     en: 'SHIBUYA CROSSING',        x: 252, y: 302,
+      icon: 'M-5.5 -5.5 L5.5 5.5 M-5.5 5.5 L5.5 -5.5 M0 -7.5 L0 7.5' },
+  ];
+
+  function renderTravelMap() {
+    if (entry.id !== 'i1' || !entry.media || !entry.media.length) return;
+
+    /* pair each spot with the media item whose caption names it */
+    const stops = [];
+    entry.media.forEach((m, mi) => {
+      const cap = String(m.captionZh || m.caption || '');
+      if (!cap) return;
+      const spot = TRAVEL_SPOTS.find((s) => cap.includes(s.key));
+      if (spot && !stops.some((st) => st.spot === spot)) {
+        stops.push({ spot, mi, zh: cap.trim() });
+      }
+    });
+    if (stops.length < 2) return;
+
+    /* journey order follows the photo order in the entry */
+    const route = stops.map((st, i) =>
+      `${i ? 'L' : 'M'}${st.spot.x} ${st.spot.y}`).join(' ');
+
+    const box = document.createElement('div');
+    box.className = 'travel-map';
+    box.innerHTML = `
+      <div class="tm-head">
+        <span>${esc(t('tm_title'))}</span>
+        <span class="tm-hint">${esc(t('tm_hint'))}</span>
+      </div>
+      <svg viewBox="0 0 560 380" role="img" aria-label="${esc(t('tm_title'))}">
+        <!-- hand-drawn street web -->
+        <g aria-hidden="true">
+          <path class="tm-street" d="M-10 70 C70 58 150 92 240 76 S420 46 575 78"/>
+          <path class="tm-street" d="M-8 140 C90 128 180 162 280 142 S460 112 578 148"/>
+          <path class="tm-street" d="M-12 236 C80 222 190 258 300 238 S470 208 580 240"/>
+          <path class="tm-street" d="M-6 330 C90 318 200 350 320 332 S480 306 578 334"/>
+          <path class="tm-street" d="M84 -8 C74 90 106 190 90 300 S84 350 92 392"/>
+          <path class="tm-street" d="M252 -10 C244 100 276 200 260 316 S254 360 262 392"/>
+          <path class="tm-street" d="M420 -6 C412 96 440 196 428 312 S422 358 430 392"/>
+          <path class="tm-street" d="M-10 186 C120 172 300 200 575 180"/>
+          <path class="tm-river" d="M-12 292 C110 276 210 312 330 296 S490 268 578 288"/>
+        </g>
+        <!-- the walk itself -->
+        <path class="tm-route" d="${route}"/>
+        ${stops.map((st, i) => `
+        <g class="tm-node" data-mi="${st.mi}" tabindex="0" role="button"
+           aria-label="${esc(st.zh)}">
+          <circle class="halo" cx="${st.spot.x}" cy="${st.spot.y}" r="13"/>
+          <circle class="core" cx="${st.spot.x}" cy="${st.spot.y}" r="4.5"/>
+          <g class="tm-icon" transform="translate(${st.spot.x}, ${st.spot.y - 24})">
+            <path d="${st.spot.icon}"/>
+          </g>
+          <text class="tm-zh" x="${st.spot.x + 16}" y="${st.spot.y + 4}">${esc(st.zh)}</text>
+          <text class="tm-en" x="${st.spot.x + 16}" y="${st.spot.y + 16}">${esc(st.spot.en)}</text>
+        </g>`).join('')}
+      </svg>`;
+
+    /* click / Enter on a stop → glide to its photograph */
+    box.querySelectorAll('.tm-node').forEach((node) => {
+      const jump = () => {
+        const idx = parseInt(node.dataset.mi, 10);
+        const block = document.querySelectorAll('#entryMedia .media-block')[idx];
+        if (block) block.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
+      };
+      node.addEventListener('click', jump);
+      node.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); jump(); }
+      });
+    });
+
+    const media = $('entryMedia');
+    media.parentNode.insertBefore(box, media);
+  }
+
+  /* ================= starfield (entry t2 — About Koyome) =================
+     Geometric night sky behind the page: plus-shaped stars, a few
+     faint constellation threads, and a meteor sweeping by now and
+     then. Colors follow the theme variables; reduced motion gets a
+     single static frame. */
+  function renderStarfield() {
+    if (entry.id !== 't2') return;
+    const cv = document.createElement('canvas');
+    cv.className = 'starfield';
+    cv.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(cv);
+    const ctx = cv.getContext('2d');
+
+    let W = 0, H = 0, stars = [], threads = [], meteors = [];
+    let colStar = '#7d8798', colLine = 'rgba(110,118,132,0.32)', colMeteor = '#9e2b25';
+    let frame = 0, visible = !document.hidden, nextMeteor = 2.5, last = performance.now();
+
+    function themeColors() {
+      const cs = getComputedStyle(document.documentElement);
+      colStar = (cs.getPropertyValue('--star') || colStar).trim();
+      colLine = (cs.getPropertyValue('--star-line') || colLine).trim();
+      colMeteor = (cs.getPropertyValue('--meteor') || colMeteor).trim();
+    }
+
+    function seed() {
+      W = cv.width = window.innerWidth;
+      H = cv.height = window.innerHeight;
+      const n = Math.round((W * H) / 16000);
+      stars = Array.from({ length: n }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() < 0.72 ? 1 + Math.random() * 1.1 : 2.6 + Math.random() * 2.2,
+        cross: Math.random() >= 0.72,           /* big ones are plus-shaped */
+        ph: Math.random() * Math.PI * 2,        /* twinkle phase */
+        sp: 0.4 + Math.random() * 0.8,
+      }));
+      /* constellation threads: link a few close neighbours */
+      threads = [];
+      for (let i = 0; i < stars.length && threads.length < 9; i += 7) {
+        const a = stars[i];
+        let best = null, bd = 1e9;
+        for (let j = i + 1; j < Math.min(i + 24, stars.length); j++) {
+          const b = stars[j];
+          const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+          if (d < bd) { bd = d; best = b; }
+        }
+        if (best && bd < 260 * 260) threads.push([a, best]);
+      }
+    }
+
+    function drawStatic(time) {
+      ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = colLine;
+      ctx.lineWidth = 0.7;
+      threads.forEach(([a, b]) => {
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+      stars.forEach((s) => {
+        const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph));
+        ctx.globalAlpha = tw;
+        ctx.strokeStyle = colStar;
+        ctx.lineWidth = 1;
+        if (s.cross) {
+          const r = s.r * 2.1;
+          ctx.beginPath();
+          ctx.moveTo(s.x - r, s.y); ctx.lineTo(s.x + r, s.y);
+          ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x, s.y + r);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = colStar;
+          ctx.fillRect(s.x - s.r / 2, s.y - s.r / 2, s.r, s.r);
+        }
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function spawnMeteor() {
+      const fromLeft = Math.random() < 0.5;
+      meteors.push({
+        x: fromLeft ? -40 : Math.random() * W * 0.7 + W * 0.3,
+        y: Math.random() * H * 0.32 - 20,
+        vx: (fromLeft ? 1 : -1) * (240 + Math.random() * 220),
+        vy: 150 + Math.random() * 120,
+        life: 0, ttl: 1.4 + Math.random() * 0.8,
+      });
+    }
+
+    function tick(now) {
+      requestAnimationFrame(tick);
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      if (!visible) return;
+      frame++;
+      if (frame % 45 === 0) themeColors();   /* pick up day/night flips */
+      const time = now / 1000;
+      drawStatic(time);
+
+      nextMeteor -= dt;
+      if (nextMeteor <= 0) { spawnMeteor(); nextMeteor = 3 + Math.random() * 6; }
+      meteors = meteors.filter((m) => m.life < m.ttl);
+      meteors.forEach((m) => {
+        m.life += dt;
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+        const fade = Math.sin((m.life / m.ttl) * Math.PI);
+        const tx = m.x - m.vx * 0.28, ty = m.y - m.vy * 0.28;
+        const g = ctx.createLinearGradient(m.x, m.y, tx, ty);
+        g.addColorStop(0, colMeteor);
+        g.addColorStop(1, 'transparent');
+        ctx.globalAlpha = fade * 0.9;
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tx, ty); ctx.stroke();
+        ctx.globalAlpha = fade;
+        ctx.fillStyle = colMeteor;
+        ctx.fillRect(m.x - 1.2, m.y - 1.2, 2.4, 2.4);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    themeColors();
+    seed();
+    window.addEventListener('resize', seed, { passive: true });
+    document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
+
+    if (RM) { drawStatic(1); return; }   /* one calm frame, no motion */
+    requestAnimationFrame(tick);
   }
 
   /* ================= owner tools: upload ================= */

@@ -98,7 +98,28 @@
     observeReveals([...listEl.querySelectorAll('.reveal-row')]);
   }
 
-  /* ---------- Hobbies invitation strip ---------- */
+  /* ---------- Hobbies invitation strip ----------
+     daily picks: the pictured favorites are shuffled once per calendar
+     day (seeded by the date), so the strip feels alive but stays
+     stable within the same day */
+  function dailyShuffle(arr) {
+    const d = new Date();
+    let seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    const rand = () => {
+      /* mulberry32 — tiny deterministic PRNG */
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
+      return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+    };
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   async function renderHobbies() {
     const strip = document.getElementById('hhStrip');
     if (!strip) return;
@@ -106,14 +127,9 @@
     const total = doc.sections.reduce((n, s) => n + s.items.length, 0);
     document.getElementById('hhCount').textContent = String(total).padStart(2, '0') + ' ' + t('items');
 
-    /* up to four pictured favorites, interleaving the two sections */
-    const pools = doc.sections.map((s) => s.items.filter((it) => it.src));
-    const picks = [];
-    for (let i = 0; picks.length < 4; i++) {
-      let took = false;
-      pools.forEach((p) => { if (p[i] && picks.length < 4) { picks.push(p[i]); took = true; } });
-      if (!took) break;
-    }
+    /* every pictured item from every section, shuffled by today's date */
+    const pool = doc.sections.flatMap((s) => s.items.filter((it) => it.src));
+    const picks = dailyShuffle(pool).slice(0, 4);
     if (!picks.length) { strip.remove(); return; } /* words + links still invite */
 
     strip.innerHTML = picks.map((it, i) => {
@@ -123,11 +139,14 @@
       return `
       <a class="hh-card reveal-row" style="--d:${(0.05 + i * 0.09).toFixed(2)}s" href="hobbies.html">
         <figure class="hh-fig">
-          <img src="${esc(it.src)}" alt="${esc(name)}" loading="lazy" />
+          <img src="${esc(it.src)}" alt="${esc(name)}" loading="lazy" decoding="async" />
         </figure>
         <div class="hh-name">${esc(name)}</div>
       </a>`;
     }).join('');
+
+    const daily = document.getElementById('hhDaily');
+    if (daily) daily.hidden = false;
 
     observeReveals([...strip.querySelectorAll('.reveal-row')]);
   }

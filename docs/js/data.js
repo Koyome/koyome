@@ -224,31 +224,35 @@
   }
 
   /* ---------- hobbies page ----------
-     Two fixed sections (anime / characters), each a free-form list
-     of image + text items, plus chibi decoration slots (deco). */
+     Fixed sections (anime / characters / galgame), each a free-form
+     list of image + text items, plus chibi decoration slots (deco). */
   const HOBBIES_SEED = {
     intro: 'Anime I love, and the characters who stayed with me.',
     introZh: '喜歡的動漫，和那些留在我心裡的角色。',
     sections: [
       { id: 'anime', items: [] },
       { id: 'chars', items: [] },
+      { id: 'galgame', items: [] },
     ],
     deco: [
       { id: 'd1', src: '' },
       { id: 'd2', src: '' },
       { id: 'd3', src: '' },
+      { id: 'd4', src: '' },
+      { id: 'd5', src: '' },
+      { id: 'd6', src: '' },
     ],
   };
 
   function normalizeHobbies(doc) {
     const out = (doc && typeof doc === 'object') ? doc : {};
     if (!Array.isArray(out.sections)) out.sections = [];
-    ['anime', 'chars'].forEach((sid) => {
+    ['anime', 'chars', 'galgame'].forEach((sid) => {
       if (!out.sections.some((s) => s && s.id === sid)) out.sections.push({ id: sid, items: [] });
     });
     out.sections.forEach((s) => { if (!Array.isArray(s.items)) s.items = []; });
     if (!Array.isArray(out.deco)) out.deco = [];
-    while (out.deco.length < 3) out.deco.push({ id: 'd' + (out.deco.length + 1), src: '' });
+    while (out.deco.length < 6) out.deco.push({ id: 'd' + (out.deco.length + 1), src: '' });
     return out;
   }
 
