@@ -1,8 +1,8 @@
-# Koyome.me — AI 交接文档（AI Handover）
+# Koyome.me — 项目交接文档（AI Handover）
 
-> 这份文档写给下一个接管本项目的 AI（或人类开发者）。
-> 读完这一份，你就拥有了继续开发的全部上下文。
-> 最后更新：2026-09-20（第七轮：首页爱好引导区 + 留言板已上云 Supabase —— **全站共享留言已上线**）
+> 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
+> 最后更新：2026-09-21（第八轮：系统性整合重构，取代旧的逐轮追加式记录）
+> 仓库 HEAD：`5357dab` ｜ ⚠️ 本地有一批**已上传未推送**的用户新内容，见 §3.1（最高优先级）
 
 ---
 
@@ -10,309 +10,315 @@
 
 ```
 请阅读我项目根目录下的 AI-HANDOVER.md（路径 C:\Users\Public\koyome-site\AI-HANDOVER.md），
-它是完整的项目交接文档。读完后再开始改动。硬规则：不要删除或覆盖 docs/assets/ 里
-任何已存在的素材文件，不要重置 docs/data/ 下的 json —— 那是我手动上传的真实内容。
-改完想上线的话按文档 §9.0 用 SSH 推送（密钥在 tools/deploy-key）。
+它是完整的项目交接文档，读完再开始改动。硬规则：不要删除或覆盖 docs/assets/ 里任何
+已存在的素材文件，不要重置 docs/data/ 下的 json —— 那是我手动上传的真实内容。
+改完想上线的话按文档 §4.3 用 SSH 推送（密钥在 tools/deploy-key）。
 ```
 
 ---
 
-## 1. 项目是什么
-
-**Koyome.me** —— 一个双语（English / 繁體中文）极简个人网站，无框架、无构建步骤、零 npm 依赖。
-
-- **线上地址（GitHub Pages）**：https://koyome.github.io/ （2026-09-20 仓库改名为 `koyome.github.io`，从项目页升级为用户主页，原 `/koyome` 路径 GitHub 会自动跳转）
-- **仓库**：https://github.com/Koyome/koyome.github.io （public，Pages 从 `main` 分支 `/docs` 目录发布）
-- **本机地址**：http://Koyome.me （本地 Node 服务，端口 80；需 hosts 映射，已配置好）
-- **管理页**：`/admin.html`（本机版可真正写入数据；线上版改动只存访客自己的 localStorage）
-
-技术栈：纯 HTML/CSS/JS 前端 + 一个零依赖 Node.js `server.js`（静态托管 + JSON API）。
-
-## 2. 硬规则（违反会破坏用户数据）
+## 0.5 硬规则（红线——违反会破坏用户数据）
 
 1. **绝不删除/覆盖 `docs/assets/` 里任何已存在文件** —— 全是用户手动上传的照片、视频、MP3。
 2. **绝不重置 `docs/data/` 下的 `content.json`、`profile.json`、`hobbies.json`、`guestbook.json`** —— 全是用户真实内容，不是种子数据。
-3. **所有路径保持相对路径**（`assets/...`、`data/...`，不带前导 `/`），否则 GitHub Pages 子路径 `/koyome/` 下会 404。
+3. **所有路径保持相对路径**（`assets/...`、`data/...`，不带前导 `/`）——全站既有惯例，也防未来托管路径变动。
 4. **任何文本字段都要维护双语**：`title/titleZh`、`body/bodyZh` 等。新增 UI 文案必须同时加进 `docs/js/i18n.js` 的 `en` 和 `zh` 两个字典。
-5. 改完文件用搜索工具确认改动真的落盘（本环境出现过 Edit 静默失败）。
+5. 改完文件用搜索工具确认改动真的落盘（本环境出现过 Edit 静默失败，§4.5）。
 
-## 3. 目录结构
+---
+
+## 1. 项目概览
+
+### 1.1 目标
+**Koyome.me** —— 用户的双语（English / 繁體中文）极简个人网站：收藏文字、图片、视频、音乐，展示动漫爱好，并接受访客留言。设计语言：浅纸色底、衬线标题、等宽小标签、红色 accent（`--accent: #9e2b25`），安静的极简纸质风（参考 1uvng.me，不照搬）。
+
+### 1.2 整体架构
+
+```
+                        ┌────────────────────────────────────┐
+   访客（任何设备） ──► │ GitHub Pages 静态托管 (只读快照)     │  https://koyome.github.io/
+                        │  docs/ 目录 = 网站本体              │
+                        └──────────────┬─────────────────────┘
+                                       │ 留言读写 (fetch PostgREST)
+                                       ▼
+                        ┌────────────────────────────────────┐
+                        │ Supabase 云数据库 (public.guestbook)│  全站共享留言
+                        │ RLS: anon 仅 SELECT + INSERT        │
+                        └────────────────────────────────────┘
+
+   站长（用户电脑） ──►  server.js (端口 80, http://Koyome.me)
+                        = 站长编辑台：读写 docs/data/*.json、上传素材到 docs/assets/
+                        改完 → git commit → SSH push → Pages 自动重建上线
+```
+
+**双模式数据层**是理解全站的钥匙（`docs/js/data.js`）：运行时探测 `api/content` 是否存在——
+
+| | 本机模式（server.js 运行中） | 静态模式（GitHub Pages） |
+|---|---|---|
+| 判定 | API 存活 → 站长（管理员） | API 不存在 → 游客（纯只读） |
+| 内容数据 | Node API 读写磁盘 json | localStorage 覆盖层 → 内置 `data/*.json` |
+| 管理页/编辑按钮 | 可见可用 | 完全隐藏（§2.3-3） |
+| 上传素材 | 写入 `docs/assets/` | 无入口 |
+| 留言 | **云表优先**（与线上一致） | **云表优先**；云未配置/失败时回退 localStorage |
+
+**推论**：更新线上内容的唯一正确流程 = 本机改 → commit → push → Pages 重建。
+
+### 1.3 技术栈
+- 前端：纯 HTML/CSS/JS，无框架、无构建步骤、零 npm 依赖；双语 i18n 自制字典。
+- 本地后端：`server.js` 单文件零依赖 Node（静态托管 + JSON API + 上传落盘），~470 行。
+- 云后端：Supabase（PostgREST，纯 fetch，无 SDK；`sb_publishable_` anon key，RLS 只读+只写）。
+- 托管：GitHub Pages（main 分支 `/docs`，`.nojekyll` 已就位）。
+- 部署：SSH 原生推送（首选）/ REST Git Data API 重放（备选，§4.3）。
+- 测试：jsdom 静态回归 + Edge headless CDP 端到端（Node 22 内置 WebSocket）。
+
+### 1.4 当前进度
+**功能全部完成并上线**（线上 = 提交 `1575278` 的 docs/ 内容）：6 个页面、双语、游客只读、移动端适配、云端共享留言板全部生效。本地另有一批用户新上传的内容（4 首歌、5 个视频、15 张图、爱好新增）**尚未推送**，详见 §3.1。
+
+---
+
+## 2. 已完成工作
+
+### 2.1 功能模块清单
+
+| 模块 | 状态 | 说明 |
+|---|---|---|
+| 首页 index | ✅ 上线 | loader 动画、个人资料（头像/欢迎语/自述）、目录索引区、**爱好引导区**（拍立得卡片+引导链接）、六芒星 sigil |
+| 目录页 catalog | ✅ 上线 | kinetic title：逐字模糊入场、悬停扫光+下划线、ghost 序号视差；站长双击标题内联改名 |
+| 详情页 entry | ✅ 上线 | 图文/视频/音乐；12 列错落网格；素材描绘 caption 双击编辑；音频 track-card（ID3 封面自动读取）；NOTE/手記 区块 |
+| 爱好页 hobbies | ✅ 上线 | 两分区「喜歡的動漫/動漫角色」河流式交错布局；图文自由增删改；3 个 Q版装饰槽（已用 2） |
+| 留言板 guestbook | ✅ 上线 | **Supabase 云端共享**；蜜罐反机器人；20 秒限流；云端时间按访客本地时区显示 |
+| 管理页 admin | ✅ 上线 | 仅站长机可见（游客重定向）；条目增删改、profile 编辑、上传 |
+| 双语系统 | ✅ 上线 | EN（默认）/繁中切换，localStorage 记忆；全部 UI 文案双字典 |
+| 游客只读 | ✅ 上线 | 角色=API 探测；管理入口/编辑/上传/删除全部按角色条件渲染 |
+| 移动端适配 | ✅ 上线 | sticky 页头修复菜单遮挡、全宽菜单面板、装饰元素移动版缩减渲染、iOS 防缩放、480px 断点 |
+| 仓库改名 | ✅ 上线 | `Koyome/koyome` → `Koyome/koyome.github.io`，网址缩短为根路径 |
+
+### 2.2 文件目录结构及作用
 
 ```
 C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
-├─ server.js                          本地服务器 + 全部 API（零依赖，~400 行）
-├─ start-koyome.bat                   双击启动本机网站（端口 80）
+├─ server.js                          本地服务器 + 全部 API（零依赖；__dirname 寻址，无 cwd 依赖）
+├─ start-koyome.bat                   双击启动本机网站（带窗口，端口 80）
+├─ start-hidden.vbs                   ★ 双击后台静默启动（无窗口，独立于任何会话）
 ├─ setup-koyome-me.bat                一次性配置：hosts 映射 + 代理绕过（需管理员，已跑过）
 ├─ AI-HANDOVER.md                     本文档
-├─ docs/                              网站本体（GitHub Pages 发布的就是这个目录）
-│  ├─ .nojekyll                       必须存在！否则 Pages 的 Jekyll 会吞掉下划线文件
-│  ├─ index.html                      首页（个人介绍 + 形象图 + 目录索引区 + 六芒星 sigil）
-│  ├─ catalog.html                    目录页（全部条目列表，kinetic title 动效）
-│  ├─ entry.html?id=xxx               条目详情页（图文/视频/音乐，素材带描绘）
-│  ├─ hobbies.html                    爱好页（动漫/角色两分区 + Q版装饰槽）
-│  ├─ guestbook.html                  留言板
-│  ├─ admin.html                      管理页（仅站长机可见，游客被重定向）
-│  ├─ css/style.css                   全部样式（CSS 变量定义配色，浅色系纸质风）
+├─ .gitignore                         含 tools/deploy-key*、gh-token.txt、*.log、server.pid
+├─ docs/                              ★ 网站本体（GitHub Pages 发布的就是这个目录）
+│  ├─ .nojekyll                       必须存在！否则 Pages 的 Jekyll 吞掉下划线文件
+│  ├─ index.html                      首页（个人介绍 + 目录索引区 + 爱好引导区 + 六芒星）
+│  ├─ catalog.html                    目录页
+│  ├─ entry.html?id=xxx               条目详情页
+│  ├─ hobbies.html                    爱好页
+│  ├─ guestbook.html                  留言板（含蜜罐隐藏字段 #gbSite）
+│  ├─ admin.html                      管理页（游客被 JS 重定向）
+│  ├─ css/style.css                   全部样式（CSS 变量配色；~1000 行；含移动端 3 个断点）
 │  ├─ js/
-│  │  ├─ i18n.js                      双语字典 + 语言切换（localStorage: koyome_lang）
-│  │  ├─ data.js                      数据层：API 优先，静态托管时回退 localStorage/内置 JSON
+│  │  ├─ i18n.js                      双语字典 + 语言切换（所有 UI 文案在此，en/zh 双字典）
+│  │  ├─ data.js                      ★ 数据层：模式探测、云→API→localStorage→内置 json 回退链
+│  │  ├─ gb-config.js                 ★ Supabase 凭据（url + sb_publishable key，公开设计）
 │  │  ├─ header.js                    公共头部（导航 + 语言切换；admin 链接仅站长机注入）
-│  │  ├─ main.js                      首页逻辑（含目录索引区渲染）
-│  │  ├─ catalog.js                   目录页逻辑（双击标题改名，仅站长机）
-│  │  ├─ entry.js                     详情页逻辑（音频上传、ID3 封面、素材描绘编辑）
+│  │  ├─ main.js                      首页逻辑（loader、profile、目录区、爱好引导区渲染）
+│  │  ├─ catalog.js                   目录页逻辑（kinetic title、双击改名）
+│  │  ├─ entry.js                     详情页逻辑（媒体渲染、上传、ID3 封面、caption 编辑）
 │  │  ├─ hobbies.js                   爱好页逻辑（图文增删改、Q版装饰上传）
-│  │  ├─ deco.js                      全站漂浮几何装饰（reduced-motion/移动端自动关）
-│  │  ├─ admin.js                     管理页逻辑（顶部有角色 gate）
-│  │  └─ guestbook.js                 留言板逻辑（删除按钮仅站长机渲染）
+│  │  ├─ guestbook.js                 留言板逻辑（云优先发送链、蜜罐、限流）
+│  │  ├─ deco.js                      全站漂浮几何装饰（移动端缩减、reduced-motion 关闭）
+│  │  └─ admin.js                     管理页逻辑（顶部角色 gate）
 │  ├─ data/
 │  │  ├─ content.json                 ★ 全部条目（真实用户数据，勿重置）
-│  │  ├─ profile.json                 ★ 首页个人信息（用户改过，勿重置）
-│  │  ├─ hobbies.json                 ★ 爱好页数据（用户已填真实内容，勿重置）
-│  │  └─ guestbook.json               留言数据
-│  └─ assets/                         ★ 全部素材文件（用户上传的图/视频/MP3/封面，勿动）
-└─ tools/                             开发辅助脚本（不进网站）
-   ├─ test-static.js                  静态渲染回归测试（jsdom）
-   ├─ gh-device-auth.ps1              ★ GitHub 设备授权（生成 tools/gh-token.txt）
-   ├─ push-via-api.js                 ★ 走 REST API 的推送（本机 github.com 被墙时的正路）
+│  │  ├─ profile.json                 ★ 首页个人信息（用户亲笔，勿重置）
+│  │  ├─ hobbies.json                 ★ 爱好页数据（用户真实内容，勿重置）
+│  │  └─ guestbook.json               本地留言种子（云模式下仅兜底用）
+│  └─ assets/                         ★ 全部素材（用户上传的图/视频/MP3/封面，勿动）
+└─ tools/                             开发辅助（不进网站）
+   ├─ deploy-key / deploy-key.pub     ★ SSH 部署密钥（gitignore；公钥已登记 GitHub 账号）
+   ├─ gh-token.txt                    REST 备用 token（gitignore，scope=repo）
+   ├─ gh-device-auth.ps1              GitHub 设备授权脚本（带重试）
+   ├─ push-via-api.js                 REST 推送：重放提交保 SHA、断点续传 push-state.json
+   ├─ test-static.js                  jsdom 静态渲染回归（22 项）
    ├─ test-render.js / verify.js      渲染/验证脚本
    ├─ fix-git.js                      git 配置修复（历史遗留）
    └─ make-avatar.py                  形象图生成脚本
 ```
 
-注意：`C:\Users\杨坤\WorkBuddy\2026-09-19-19-30-28\koyome\` 与 `C:\Users\Public\koyome-site\` 是同一目录（junction）。**统一用 `C:\Users\Public\koyome-site\` 作为工作路径。**
+路径注意：`C:\Users\杨坤\WorkBuddy\2026-09-19-19-30-28\koyome\` 与 `C:\Users\Public\koyome-site\` 是同一目录（junction）。**统一用 `C:\Users\Public\koyome-site\`。**
 
-## 4. 架构：一个代码库，两种运行模式
+### 2.3 重要技术决策及原因
 
-`docs/js/data.js` 是理解全站的钥匙。它在运行时探测 `api/content` 是否存在：
+1. **双模式数据层（API 探测）**——同一套代码既能在本机读写磁盘（站长编辑），又能在 GitHub Pages 静态环境只读运行（游客）。免去两套代码；角色判定零配置。
+2. **留言板上 Supabase 而非自建**——Pages 无后端，访客留言原本只存各自 localStorage（互不共享，用户报障的根因）。选型排除：WorkBuddy Cloud Service（publishableKey 强制 Origin 匹配自家域名，跨域被拒）；自建服务器（家庭宽带无公网 IP）。Supabase 免费层 + RLS（anon 仅 SELECT/INSERT，天生无法改删）+ 纯 fetch 无 SDK，零成本零依赖。删除留言=站长去 Supabase 仪表盘 Table Editor。
+3. **游客纯只读的条件渲染**——曾所有访客可见删除按钮/管理入口（安全事故级）。现所有编辑能力由 `apiAvailable()` 驱动渲染，游客 DOM 里零编辑痕迹；admin 页 JS gate 重定向。
+4. **页面间过渡动画全部拆除**——做过两版（v1 被反馈"卡、不完整"；v2 修好后用户仍决定不要）。教训：用户审美判断优先于技术完成度。全站唯一动画=首页 loader，保持勿动。
+5. **仓库改名 `koyome.github.io`**——免费把网址从 `/koyome/` 缩短到根路径；Pages 配置自动保留。代价：旧 `/koyome/` 链接 404（Pages 不跟随改名跳转）。`koyome.com` 已被注册，`koyome.me` 可注册未购买。
+6. **移动端"缩减而非移除"**——曾直接 `display:none`/early-return 装饰元素（用户反馈"设计都没了"）。现 deco.js 移动端渲染 2 个缩小图形、Q版槽 62px 缩小、悬停反馈改 `:active`。
+7. **sticky 页头 z-index 100**——修三点菜单被图片压住点不了（页头与内容同 z-index 1，DOM 序决定覆盖）。`overflow-x: clip` 防横向滚动（`hidden` 会破坏 sticky）。
+8. **SSH 推送为正路**——本机 github.com 的 HTTPS 九成丢包（运营商级），SSH(22/443) 畅通；REST API 推送作备胎但 blob ≤37MB。
 
-| | 本机模式（server.js 运行中） | 静态模式（GitHub Pages） |
-|---|---|---|
-| 数据来源 | Node API 读写 `docs/data/*.json` | 先 localStorage 覆盖层，再 `data/*.json` |
-| 管理页改动 | **真正写入磁盘**，全访客可见 | 只存自己浏览器 localStorage |
-| 上传素材 | 写入 `docs/assets/` | 不可用（无后端） |
-| 留言 | 写入 `guestbook.json` | 只存 localStorage |
+---
 
-**推论**：线上站是只读快照。更新线上内容的正确流程 = 本机改 → git commit → push → Pages 自动重建。
+## 3. 待办事项、已知问题与风险
 
-## 5. 数据模型
+### 3.1 未完成任务（按紧急度）
+
+1. **🔴 用户新内容未推送上线**（本地工作树，接手后第一件事应与用户确认后推送）：
+   - `t1 電台` +4 首歌（Sakana、winter luv、Oppai、Chicago Freestyle，均带封面）→ 现 10 首
+   - `v1 私人剪輯視頻` +5 个视频（小野寺/合成_1/合成_1_7/猫猫/Emilia，含 realesrgan 修复版）→ 现 9 个；条目标题已改（Vibe edit / 私人剪輯視頻）
+   - 爱好页 +3 动漫（進擊的巨人/旋風管家/黑礁）→ 8 部；+1 角色（名称暂空）→ 5 个；Q版装饰槽 0→2 已用
+   - `docs/data/content.json`、`docs/data/hobbies.json` 已改 + 24 个新素材文件（4 MP3+4 封面+5 MP4+15 JPG，其中 2 个 JPG 同名重复 `1789913...8A1F...jpg`，疑似用户重复上传）
+   - **这些只存在于本机磁盘，电脑故障即丢失。推送方法与平时相同（§4.3），建议尽快。**
+2. **koyome.me 域名**：可注册（约 ¥70-120/年），用户未购买。购买后：DNS 加 `CNAME → koyome.github.io`，仓库 Settings → Pages 填自定义域名 + Enforce HTTPS（`koyome.com` 已被注册，放弃）。
+3. **旧链接 404**：`https://koyome.github.io/koyome/` 已失效。若用户分享过旧链接，可新建 `Koyome/koyome` 仓库放重定向页（用户决定）。
+4. **内容级待办（需用户素材或决定，AI 勿自行处理）**：Q版装饰槽剩 1 空位；旅行照片描绘只有中文（英文可补）；chars 分区第 5 个角色名称暂空；`assets/` 里早期重复上传的同一首歌（`1789830681xxx`/`1789830788xxx`）+ 本次 2 个同名 JPG 待用户决定是否清理。
+
+### 3.2 已知问题（均为有意设计或无害）
+
+- 留言删除无前端入口——有意设计（anon key 无 DELETE 权限），站长用 Supabase 仪表盘删。
+- 云端留言板故障/项目暂停时，留言自动回退 localStorage + 内置种子（优雅降级，不报错）。
+- 本仓库 `git fetch` 后 `refs/remotes/origin/main` 偶不持久化（junction 路径所致），`git update-ref` 手补即可，纯美观。
+- jsdom 测试在 admin 页 gate 会打 "Not implemented: navigation" 噪音——预期行为。
+
+### 3.3 潜在风险
+
+- **Supabase 免费层**：项目连续约 7 天无任何请求可能被暂停（paused）——留言板会静默降级到本地兜底。处理：仪表盘点 Restore 即可恢复，数据不丢。用量（500MB DB / 5GB 带宽）对留言板绰绰有余。
+- **GitHub Pages 限额**：100GB 存储 / 100GB/月带宽软限制。当前视频最大 46.8MB，正常使用无虞；若用户传超大视频注意单文件 <100MB（git 限制）。
+- **密钥面**：`tools/deploy-key`（SSH 私钥）与 `tools/gh-token.txt`（REST token）在本机明文——绝不外发、绝不入库（已 gitignore）；泄露即去 GitHub Settings 撤销。Supabase `sb_publishable_` key 是公开设计，无需保密，但只有读+写权限。
+- **hosts 依赖**：http://Koyome.me 依赖本机 hosts 映射（已配）；换电脑需重跑 `setup-koyome-me.bat`（管理员）。
+
+---
+
+## 4. 环境信息
+
+### 4.1 依赖与配置
+- **Node 运行时**：`C:\Users\Public\koyome-node\node.exe`（绿色版；系统 node 亦可，零依赖）。WorkBuddy 托管 node 22 在 `C:\Users\杨坤\.workbuddy\binaries\node\versions\22.22.2-3\node.exe`。
+- **PortableGit**：`C:\Users\杨坤\.workbuddy\binaries\PortableGit\versions\1.2.0\cmd\git.exe`（精简版，**无 remote-https helper**——push 必须显式写 SSH 地址，见 §4.3）。
+- **jsdom**（测试用）：`C:\Users\杨坤\.workbuddy\binaries\node\workspace\node_modules`（NODE_PATH 指过去）。
+- **Supabase**：项目 ref `hvywwgbzzqrwjrxiwfhx`；表 `public.guestbook(id, name≤40, text≤2000, created_at)`，RLS 策略 `anon read`(SELECT) + `anon write`(INSERT)。凭据在 `docs/js/gb-config.js`（可公开）。建表 SQL 存档于 git 历史 `86d3ac6` 及 Supabase SQL Editor。
+- **Edge headless**（端到端测试）：`C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`，`--headless=new --remote-debugging-port`，Node 22 内置 WebSocket 直连 CDP（参考工作区 `verify-live-cloud.js` / `verify-round2.js`）。
+
+### 4.2 本机运行
+- 启动：**双击 `start-hidden.vbs`**（后台无窗口，推荐）或 `start-koyome.bat`（带窗口）；或 `PORT=80 node server.js`（端口被占自动回退 8080）。
+- **开机自启已配置**：`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\koyome-site.vbs`（登录时静默启动）。取消=删该文件；停服务=任务管理器结束 node.exe。
+- **⚠️ AI 无法在 WorkBuddy 沙箱里代起持久进程**（2026-09-20 实测四条路全灭）：沙箱拉黑 schtasks/wscript/cmd，会话结束回收整棵进程树（run_in_background、detached+unref spawn、Start-Process 均随会话死）。**要"关掉 WorkBuddy 还能访问"，只能用户双击 vbs 或重新登录**。AI 代开的服务仅当前会话有效。
+- hosts 已配 `127.0.0.1 Koyome.me`。API 代码改动必须重启服务才生效；docs/ 前端改动刷新即可。
+
+### 4.3 部署到线上（push 后 Pages 约 1 分钟自动重建）
+
+**首选 SSH**（本机 SSH 畅通，git smart-HTTP 九成丢包）：
+```bash
+cd /c/Users/Public/koyome-site
+GIT="/c/Users/杨坤/.workbuddy/binaries/PortableGit/versions/1.2.0/cmd/git.exe"
+"$GIT" add <files> && "$GIT" commit -m "..."
+"$GIT" -c core.sshCommand="ssh -i C:/Users/Public/koyome-site/tools/deploy-key -o UserKnownHostsFile=C:/Users/Public/koyome-ssh/known_hosts -o StrictHostKeyChecking=accept-new" \
+  push git@github.com:Koyome/koyome.github.io.git main
+```
+- 密钥：`tools/deploy-key`（私钥绝不外发）；known_hosts 用 ASCII 路径 `C:/Users/Public/koyome-ssh/known_hosts`（中文用户名 `~` 展开会乱码）。
+- **坑：`git push origin main` 会报 `'remote-https' is not a git command`**（origin 是 HTTPS + PortableGit 精简版无 helper）——必须显式写 SSH URL。
+- 2026-09-20 曾 `--force-with-lease` 抹平远端分叉（`0b52fbd`），此后普通 push 即可。
+
+**备选 REST**（SSH 失效时）：`powershell -ExecutionPolicy Bypass -File tools\gh-device-auth.ps1`（生成/复用 gh-token.txt）→ `node tools/push-via-api.js`（重放提交保 SHA、断点续传；**blob >37MB 会被 422 拒**，大文件只能走 SSH）。
+
+**兜底**：GitHub Contents API 逐文件 PUT（单文件 <1MB，碎 commit + 哈希分叉，仅应急）。
+
+**推送后验证**：① `git ls-remote git@github.com:Koyome/koyome.github.io.git main` = 本地 HEAD；② 轮询 https://koyome.github.io/ 出现新内容；③ 抽查关键资源 200（含大文件素材各一）。
+
+### 4.4 本机网络现状（2026-09-20 实测）
+- `github.com` git smart-HTTP：约九成丢包，不可用；**SSH(22/443) 畅通**；`api.github.com` 畅通。
+- 跑网络脚本前清空全部代理环境变量：`http_proxy https_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY all_proxy`（残留 dead proxy `127.0.0.1:61928` 曾致 git 静默 502；`ALL_PROXY` 最隐蔽）。
+- 可达：`uploads.github.com`、`objects/raw.githubusercontent.com`、`codeload.github.com`。
+
+### 4.5 开发环境注意事项（本机/本工具链）
+- **WorkBuddy Bash 工具缺 coreutils**（ls/grep/head/tail/nul 重定向不可用）——用 shell 内建或 node 一行；`git -C` 不接受 `/c/` 路径，先 `cd`。
+- **PowerShell 工具 stdout 偶发不回显且 UTF-16 编码**——关键输出写文件，再用 node 读（BOM 处理：`s[0]===0xFF&&s[1]===0xFE` → `slice(2).toString('utf16le')`）。
+- **Edit 工具偶发静默失败**——关键改动后必须 grep/Read 复查落盘。
+- 内联 `node -e` 转义地狱——复杂脚本写成临时 .js 再跑。
+- PowerShell `Remove-Item` 在工作区曾静默失败——删除用 node `fs.unlinkSync/rmSync`；大目录 rmSync 偶被 SIGTERM，分开单条执行。
+- 写 Windows 脚本文件（.bat/.vbs）：内容保持纯 ASCII（非 ASCII 路径会乱码）；写入目标路径含中文无妨（Write 工具处理 Unicode 正常）。
+
+---
+
+## 5. 下一步建议（优先级排序）
+
+1. **P0 — 推送用户新内容上线**（§3.1-1）：与用户确认后直接 commit 全部改动 + 24 个素材，SSH 推送，抽查线上新条目。这既是备份也是上线。
+2. **P1 — 自定义域名 koyome.me**：用户购买后，DNS `CNAME → koyome.github.io` + 仓库 Pages 设置 + Enforce HTTPS，全站验证（Supabase 调用不受域名影响——PostgREST 独立域名，天然兼容）。
+3. **P2 — 内容收尾**（协助用户，勿代办）：Q版装饰槽第 3 位、chars 第 5 个角色命名、旅行照片英文描绘、重复素材清理决策。
+4. **P3 — 可选工程项**：
+   - 旧 `/koyome/` 链接重定向仓库（若用户分享过旧链接）；
+   - `tools/test-static.js` 扩充断言：首页爱好区、云留言回退链；
+   - Supabase 项目防暂停：可设每周一次的自动化访问留言板保持活跃（非必须——暂停也就一键恢复）。
+5. **不建议做**：页面过渡动画（用户明确否决过两次）、给留言板加站长前端删除入口（需要暴露更高权限密钥，风险大于收益）、自建后端替代 Supabase（无公网 IP）。
+
+---
+
+## 附录 A 数据模型
 
 ### 条目 Entry（content.json 数组元素）
 ```js
 {
-  id: 't1',                    // 服务器生成 'c'+base36；种子用 t1/i1/v1
-  type: 'text'|'image'|'video',// 注意：音频不是独立 type，音频条目是带 audio 媒体的 text 条目
-  title, titleZh,              // 双语标题
-  category, categoryZh,        // 双语分类（自由文本，如 Essays/隨筆）
+  id: 't1',                     // 服务器生成 'c'+base36；种子用 t1/i1/v1
+  type: 'text'|'image'|'video', // 音频不是独立 type——音频条目是带 audio 媒体的 text 条目
+  title, titleZh,               // 双语标题
+  category, categoryZh,         // 双语分类（自由文本）
   date: '2026-09-12',
-  featured: true,              // 首页/目录是否置顶星标
-  desc, descZh,                // 列表页摘要
-  body, bodyZh,                // 正文。text 类型必须有；image/video 类型可选，
-                               //   有内容时在前端渲染为素材旁的「手記/NOTE」设计区块
-  src: 'assets/xxx',           // = media[0].src，冗余缓存，删 media 时服务端会重算
-  media: [                     // 素材数组（图/视频/音频混排）
-    { type: 'image', src: 'assets/xx.png',
-      caption, captionZh },    // ★ 2026-09-20 新增：素材描绘（双语，详情页素材旁可双击编辑）
+  featured: true,               // 星标精选
+  desc, descZh,                 // 列表摘要
+  body, bodyZh,                 // 正文。text 必有；image/video 可选，渲染为素材旁「手記/NOTE」区块
+  src: 'assets/xxx',            // = media[0].src，冗余缓存，删 media 时服务端重算
+  media: [
+    { type: 'image', src: 'assets/xx.png', caption, captionZh },  // 素材描绘（双语）
     { type: 'video', src: 'assets/xx.mp4' },
-    { type: 'audio', src: 'assets/xx.mp3',
-      title: '歌名',           // 音频专有：曲名
-      cover: 'assets/xx.jpg' } // 音频专有：封面（来自 ID3 或手动选择）
+    { type: 'audio', src: 'assets/xx.mp3', title: '歌名', cover: 'assets/xx.jpg' }  // 音频专有
   ]
 }
 ```
-
 ### Profile（profile.json）
 `name, nameZh, tagline, taglineZh, intro, introZh, avatar`
-
-### 爱好（hobbies.json，第三轮重构后的结构）
+### 爱好（hobbies.json）
 ```js
-{
-  intro, introZh,
-  sections: [           // 固定两个分区：anime（喜歡的動漫）、chars（動漫角色）
-    { id: 'anime'|'chars',
-      items: [{ id, name, nameZh, text, textZh, src: 'assets/xx.jpg' }] }  // src=配图，可空
-  ],
-  deco: [{ id: 'd1'|'d2'|'d3', src: '' }]  // 3 个 Q版人物装饰槽位，src 空=未放置
-}
+{ intro, introZh,
+  sections: [ { id: 'anime'|'chars',        // 固定两分区
+    items: [{ id, name, nameZh, text, textZh, src }] } ],
+  deco: [{ id: 'd1'|'d2'|'d3', src: '' }] } // 3 个 Q版装饰槽
 ```
-用户已填入真实内容（5 部动漫 + 4 个角色，均带图带文），**勿重置**。deco 三槽目前为空。
+### 留言（云表 public.guestbook / 本地 guestbook.json）
+云端 `{ id(自增), name, text, created_at }` → 前端映射 `{ id:'sb'+id, name, text, date(本地时区) }`；本地 `{ id, name, text, date }`。
 
-### 留言（guestbook.json + 第七轮起可选 Supabase 云表，见 §7 第七轮）
-`{ id, name, text, date }`
+**双语约定**：任何文本字段都可能有 `*Zh` 孪生；`Koyome.loc(item,'title')` 按当前语言取值、空则回退英文。
 
-## 6. 本地 API 一览（server.js）
+## 附录 B 本地 API 一览（server.js）
 
 | 方法 | 路径 | 作用 |
 |---|---|---|
-| GET | `/api/content` | 全部条目 |
-| POST | `/api/content` | 新建条目（可带 `files:[{file:dataURL,filename}]`） |
-| PUT | `/api/content?id=` | 改文本字段（body 对所有类型开放；text 类型 body 不能清空） |
-| DELETE | `/api/content?id=` | 删条目（**不删 assets 文件**） |
-| POST | `/api/media` | 给条目加素材：`{id, files:[{file,filename,title?,coverFile?}]}`，音频支持 title+coverFile |
-| PUT | `/api/media?id=&index=` | 改第 index 个素材的 `caption/captionZh`（音频还可改 `title`） |
-| DELETE | `/api/media?id=&index=` | 删条目里第 index 个素材 |
-| GET/POST | `/api/profile` | 读/改首页信息（POST 支持 `avatarFile` dataURL） |
-| GET/POST | `/api/hobbies` | 读/整页覆写爱好页数据 `{intro,introZh,sections[],deco[]}`（POST 会做字段裁剪） |
-| POST | `/api/hobbies/upload` | 爱好页图片上传 `{file:dataURL,filename}` → 返回 `{src}`（条目图与 Q版装饰共用） |
-| GET/POST/DELETE | `/api/guestbook` | 留言增删查 |
+| GET/POST | `/api/content` | 全部条目 / 新建（可带 `files:[{file:dataURL,filename}]`） |
+| PUT/DELETE | `/api/content?id=` | 改文本字段 / 删条目（**不删 assets 文件**） |
+| POST | `/api/media` | 条目加素材（音频支持 title+coverFile） |
+| PUT/DELETE | `/api/media?id=&index=` | 改/删第 index 个素材（caption/captionZh、音频 title） |
+| GET/POST | `/api/profile` | 读/改首页信息（支持 avatarFile dataURL） |
+| GET/POST | `/api/hobbies` | 读/整页覆写爱好数据（POST 字段裁剪） |
+| POST | `/api/hobbies/upload` | 爱好图片上传 `{file:dataURL,filename}` → `{src}` |
+| GET/POST/DELETE | `/api/guestbook` | 本地留言增删查（云模式下仅兜底） |
 
-- 上传一律用 **dataURL base64**，`saveDataUrl()` 落盘到 `assets/时间戳_文件名.ext`，BODY_LIMIT 200MB。
-- 音频 MIME 已支持：mp3/wav/ogg/flac/m4a。
+上传一律 dataURL base64 → `assets/时间戳_文件名.ext`；BODY_LIMIT 200MB；音频 MIME：mp3/wav/ogg/flac/m4a。
 
-## 7. 前端约定
+## 附录 C 用户内容红线清单（2026-09-21 实盘点，勿删勿重置）
 
-- 两个全局对象：`window.Koyome`（data.js，数据层）和 `window.I18N`（i18n.js，`t(key)` 取词、`lang` 当前语言）。
-- HTML 里用 `data-i18n="key"` / `data-i18n-ph="key"`（placeholder）声明文案，JS 动态内容用 `t('key')`。
-- 取双语字段统一用 `Koyome.loc(item, 'title')`（自动按当前语言选 titleZh/title，空则回退英文）。
-- 详情页音频渲染为 `.track-card`（封面 + 曲名 + `<audio controls>`）；无封面时用内联 SVG 兜底。
-- 图片/视频条目的 body 渲染为 `.entry-note`（NOTE/手記 标签 + 正文），与素材相辅相成——这是用户明确要求的设计，改动时保持这个调性。
-- 设计语言参考：浅纸色底、衬线标题、等宽小标签、红色 accent（`--accent: #9e2b25`），参考 1uvng.me 的安静极简风。
+- `t1 電台`：10 首 MP3 全带封面（含未推送的 4 首新歌）。
+- `i1 旅行紀錄`：8 图，5 张东京行照片已填中文描绘（东京塔/东大/你的名字取景地/新宿/涩谷）。
+- `t2 關於 Koyome`：用户亲笔双语。
+- `v1 私人剪輯視頻`：9 个视频（含未推送的 5 个）。
+- 爱好页：8 部动漫 + 5 个角色（图+文）；Q版装饰槽已用 2/3。
+- 首页：头像 `1789835827804_avatar.png`，intro 用户亲笔。
+- 云表留言：欢迎留言（id=2）+ 此后访客真实留言。
+- assets 重复文件（早期 2 个同曲 MP3、本次 2 个同名 JPG）——**是否删由用户决定**。
 
-### 2026-09-20 第二轮新增（本机已验证，未 push）
-- **目录页 kinetic title index**（catalog.js）：逐字模糊上浮入场、行级 IntersectionObserver reveal、悬停渐变扫光+下划线绘制+箭头、ghost 序号滚动视差；站长模式（API 存活时）**双击标题内联改名**（PUT 仅传当前语言字段）。
-- **详情页素材描绘**（entry.js）：每个素材旁 `.media-cap`（CAPTION/描繪 标签 + 双语 caption），站长模式双击编辑（PUT /api/media）；条目标题/简介同样双击即改。
-- **素材多样布局**：`.media-stack` 改 12 列网格，lay-a/b/c/d/wide/track 类循环指派（错落、偏移、宽窄混搭），音频恒通栏；素材框加红色角标 tick。
-- **爱好页** `hobbies.html` + `hobbies.js` + `data/hobbies.json` + `/api/hobbies`：错落卡片 + 循环几何 SVG 图腾，全字段双击编辑、可增删；导航菜单已接入（header.js PAGES，nav_hobbies 词条）。
-- **动态装饰** `deco.js`（全站挂载）：8 种不规则线框几何形按页面预置 2–3 个，正弦漂移 + 慢旋转 + 鼠标反向视差；`pointer-events:none`、内容 z-index 之上层叠为 1、移动端/减少动态偏好自动关闭。
-- reveal/入场统一缓动 `cubic-bezier(.22,.8,.3,1)`（借鉴 1uvng.me 的 .reveal/signal-in）；所有 reveal 元素完成后加 `.settled` 清零 transition-delay 保证悬停即时响应。
+## 附录 D 开发教训（血泪，请继承）
 
-### 2026-09-20 第五轮：游客/管理员条件渲染（游客纯只读）
-- 角色判定沿用既有机制：本地 API 存活 = 管理员（站长机），静态托管（GitHub Pages）= 游客。
-- **header.js**：菜单不再静态渲染「管理」链接；`maybeRevealAdmin()` 轮询等 Koyome 就绪 → `apiAvailable()` 为真才追加 admin 链接（编号 05），游客永远没有该入口。
-- **admin.html/admin.js**：两个 `.admin-wrap` 默认 `hidden`；admin.js 顶部 `gate()` 非管理员 `location.replace('index.html')`，通过才揭开。
-- **entry.html/entry.js**：`#ownerTools` 默认 `hidden`（之前对游客可见！），canEdit 才显示；`.media-del` 删除按钮仅 canEdit 渲染；无 caption 的素材游客不再渲染 `.media-cap` 空块。
-- **guestbook.js**：`.gb-del` 仅 canEdit 渲染（之前所有访客可见删除按钮）。
-- **hobbies.js**：空图框的 "+" 路径仅 canEdit 渲染（游客只看圆圈）；空分区文案分角色——游客 `hob_empty_guest`（"Nothing here yet."），管理员仍是添加引导。
-- 验证：test 双视角 34 项全过（游客 6 页零编辑痕迹 + 管理员全功能）；静态回归 22 项全过（期望值已同步用户当前真实内容：t1 分类 Music/音乐、zh 标题「電台」、body 含 playlist/歌單）。
-- 注意：静态模式下 admin 页 gate 会触发 jsdom "Not implemented: navigation" 噪音——预期行为（游客被重定向）。
-
-### 2026-09-20 第七轮：首页爱好引导区 + 留言板上云准备（Supabase）
-- **首页新增「Hobbies」引导区**（index.html `.home-hobbies`，位于目录区与六芒星之间）：main.js `renderHobbies()` 从两个爱好分区交错挑最多 4 个有图的条目渲染 `.hh-card`（拍立得式 ±1.6° 倾斜 + 红色角标 tick，与全站设计语言一致）；下方 `.hh-links` 双链接「BROWSE MY HOBBIES → / LEAVE A NOTE →」夹一句 `.hh-bridge` 过渡文案引导访客去留言。名称为空时回退另一语言（爱好名多为专有名词），都不存在才显示 Untitled。i18n 键 `hh_*` 双语已加。移动端卡片 33% 宽三列换行。
-- **留言板云后端（Supabase PostgREST，无 SDK 纯 fetch）**：
-  - `docs/js/gb-config.js`（新文件，已上线但**凭据为空**）：`window.GB_CLOUD = { url, anonKey }`。填好后全站任何设备访客共享同一留言板；空着则自动回退旧逻辑（本地 API → localStorage）。
-  - `data.js`：`gbCloud()` / `loadGuestbookCloud()`（GET `/rest/v1/guestbook?select=...&order=created_at.desc`，带 `apikey` + `Authorization: Bearer` 头，行映射 `id→'sb'+id`）/ `postGuestbookCloud()`（POST，`Prefer: return=minimal`，失败抛错）；`loadGuestbook()` 链改为 云 → API → localStorage → 内置 JSON → 种子。
-  - `guestbook.js`：发送链同样云优先；**蜜罐字段** `#gbSite`（CSS 移出屏幕而非 display:none，机器人填了则假成功真丢弃）；**20 秒限流**（localStorage `koyome_gb_last_sent`，提示键 `gb_slow`）；云模式下隐藏删除按钮（anon key 无 DELETE 权限，站长去 Supabase 仪表盘删）。
-  - **✅ 已完成（2026-09-20，提交 `1575278`）**：项目 `hvywwgbzzqrwjrxiwfhx`，gb-config.js 已填 URL + `sb_publishable_` 新版密钥；云端首条数据=原欢迎留言（id=2）；留言板现全站共享。删留言只能去 Supabase 仪表盘（Table Editor）操作，或 SQL `delete from public.guestbook where id=…`。
-  - 踩坑：用户手抄 JWT 密钥两次都串字符（401 Invalid API key）——**让对方用 dashboard 的 Copy 按钮复制，或直接用 `sb_publishable_` 短密钥**；建表前 GET 报 PGRST205 "Could not find the table"；验证 INSERT 权限可不落数据——故意违反 check 约束，返回 23514 即权限正常（401/42501 才是策略缺失）。建表 SQL（已执行，存档）：
-    ```sql
-    create table public.guestbook (
-      id bigint generated always as identity primary key,
-      name text not null check (char_length(name) <= 40),
-      text text not null check (char_length(text) <= 2000),
-      created_at timestamptz not null default now()
-    );
-    alter table public.guestbook enable row level security;
-    create policy "anon read"  on public.guestbook for select to anon using (true);
-    create policy "anon write" on public.guestbook for insert to anon with check (true);
-    -- 不给 update/delete —— anon key 天生只能读和写，无法篡改或删除
-    ```
-- 端到端验证（CDP，提交 `442c869` 前）：首页 4 卡渲染 + 图全加载 + 移动端三列无横向滚动；留言板蜜罐拦截 ✓、API 提交 ✓、刷新持久 ✓、限流拦截 ✓、游客模式无删除按钮 ✓；测试留言已清理。
-- 曾评估 WorkBuddy Cloud Service 做后端——不可行：publishableKey 强制 Origin 匹配自家分享域名，浏览器从 koyome.github.io 调用会被拒。
-
-### 2026-09-20 第三轮：爱好页重构（动漫主题）+ 首页目录区
-- **爱好页推倒重做**：旧的四分类卡片废弃，改为固定两分区「喜歡的動漫 anime / 動漫角色 chars」，数据驱动（结构见 §5）。每个条目=图+文流动布局：页面中央虚线「河流」，条目左右交错排布、交汇处红节点，图片轻微倾斜悬停回正；图片框点击上传（/api/hobbies/upload），名称/介绍双击编辑，条目可增删。
-- **Q版人物装饰槽**：页面 3 个虚线圆圈槽位（deco d1/d2/d3），点击放入图片后缓慢漂浮，悬停可替换/移除；移动端隐藏，不挡内容。
-- **首页目录区**：hero 与六芒星之间新增「目錄 CATALOG」索引区（条目大字列表 + 查看全部链接，逐行 reveal），main.js renderCatalog() 渲染。
-- 用户反馈记录：不要预设爱好分类内容（上一版的音樂/繪畫等占位被否），爱好=动漫向，编辑自由度优先。
-
-### 2026-09-20 第四轮：页面过渡动画 —— 已应用户要求全部拆除
-- 曾两版实现（v1 淡入淡出被反馈"卡、不完整"；v2 几何薄纱+缓冲进度条+百分比修好后用户仍决定**不要任何页面间过渡**），现已全部移除：无 `.pt-*/.pv-*` markup/CSS、无 `js/transitions.js`、无相关 i18n 词条，grep 零残留；6 页冒烟 + 22 项静态回归全过。
-- 全站唯一加载动画 = 首页原始 `.loader`，保持原样勿动。
-- 教训存档：① infinite CSS 动画只挂可见态选择器，否则隐藏时仍耗合成；② 出场动画时长必须 < 跳转延迟；③ jsdom fromURL 在 deferred 脚本执行前 resolve，断言要等 DOMContentLoaded。
-
-## 8. 本机运行
-
-- Node 运行时：`C:\Users\Public\koyome-node\node.exe`（绿色版副本；用系统 node 也行，无依赖）。
-- 启动：双击 `start-koyome.bat`，或 `PORT=80 node server.js`（端口被占自动回退 8080）。
-- **开机自启（2026-09-20 配置）**：`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\koyome-site.vbs` 登录时隐藏窗口启动 server.js（__dirname 寻址，无 cwd 依赖）。手动启动同款：`start-hidden.vbs`（仓库根，双击无声无窗口）。取消自启=删启动文件夹里那个文件；停服务=任务管理器结束 node.exe。
-- **⚠️ AI 无法在沙箱里代起持久进程**（2026-09-20 实测）：WorkBuddy 沙箱拉黑 schtasks/wscript/cmd，且会话结束会回收整棵进程树——`run_in_background`、detached+unref spawn、PowerShell Start-Process 全部随会话死亡。**要"关掉 WorkBuddy 还能访问"，只能由用户双击 start-hidden.vbs 或重新登录触发自启**；AI 代开的服务仅当前会话有效。
-- hosts 已配置 `127.0.0.1 Koyome.me`（setup-koyome-me.bat 跑的，只需一次）。
-- 重启服务：杀掉占用 80 端口的 node 进程再启动（API 代码改动必须重启才生效；docs/ 下前端改动刷新即可）。
-
-## 9. 部署到线上
-
-Pages 从 `main` 分支 `/docs` 自动重建（push 后约 1 分钟），无构建步骤。
-
-### 9.0 首选：SSH 原生推送（2026-09-20 已打通，最可靠）
-- 本机 `github.com:22` 与 `ssh.github.com:443` 的 SSH 均可直连（git smart-HTTP 反而被丢包）。
-- 密钥：`tools/deploy-key` + `tools/deploy-key.pub`（均已 gitignore），公钥已登记在用户 GitHub 账号（Settings → SSH keys，标题 koyome-deploy 或 koyome-deploy-20260920）。**私钥绝不外发、绝不入库。**
-- 推送命令模板：
-```bash
-GIT_SSH_COMMAND='"<PortableGit>/usr/bin/ssh.exe" -i "C:\Users\Public\koyome-site\tools\deploy-key" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' \
-git push git@github.com:Koyome/koyome.github.io.git main:main
-```
-- 2026-09-20 曾用 `--force-with-lease` 覆盖远端 `0b52fbd`（历史遗留的 API 分叉提交），之后本地/远端历史完全一致，普通 push 即可。
-- **坑：`origin` remote 是 HTTPS 地址，而本机 PortableGit 精简版没有 remote-https helper**，`git push origin main` 会报 `'remote-https' is not a git command`——必须像上面模板那样显式写 SSH 地址 `git@github.com:Koyome/koyome.github.io.git`。
-- 手机版适配已完成（2026-09-20，提交 `6d03695`）：页头 sticky + z-index 100（修三点菜单被图片遮挡）；`deco.js` 不再对 ≤720px 直接 return，改渲染 2 个缩小图形；Q 版装饰层手机端缩小显示；验证方式见工作区 `mobile-verify.js` 思路（Edge headless + CDP，`Emulation.setDeviceMetricsOverride` 375×812 + `elementFromPoint` 命中测试）。
-- 备用 token（REST 用）：`tools/gh-token.txt`（gitignore，scope=repo）。撤销入口：GitHub Settings → Applications → Authorized OAuth Apps。
-
-### 9.1 本机网络现状（2026-09-20 实测，重要）
-- **`github.com` 的 git smart-HTTP 基本不可用**：TCP SYN 约九成被丢包（`Failed to connect after 21s` / 偶发 `expected flush after ref listing`），重试 10 次全部失败；但 **SSH(22/443) 畅通**，推送一律走 §9.0。
-- **`api.github.com` 畅通**：node fetch 与 PowerShell Invoke-RestMethod 均稳定 200。REST 推送（§9.2）可作 SSH 失效时的备胎，但 **blob API 实测上限约 37MB 原始文件**（37.1MB 成功 / 46.8MB 返回 422 too large，即 base64 后 ~50MB 封顶）。
-- 跑任何网络脚本前清空全部代理环境变量：`http_proxy https_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY all_proxy`（本机残留过已死的 `127.0.0.1:61928`，git 会静默走它报 502；`ALL_PROXY` 是最隐蔽的元凶）。
-- `github.com` 网页/登录端点偶发可达（设备授权码一次成功一次 40 次重试），授权脚本要带重试。
-- 可达性备忘：`uploads.github.com`、`objects.githubusercontent.com`、`raw.githubusercontent.com`、`codeload.github.com` 均可达。
-
-### 9.2 备选：REST API 推送（SSH 失效时）
-```powershell
-# 1) 授权（如 tools/gh-token.txt 已存在可跳过；生成它的脚本带重试）
-powershell -ExecutionPolicy Bypass -File tools\gh-device-auth.ps1
-# 2) 推送（走 REST Git Data API，幂等 + 断点续传，进度存 tools/push-state.json）
-node tools/push-via-api.js
-```
-- `push-via-api.js` 把本地 `main` 上远端缺失的提交**原样重放**（blob→tree→commit，保留 message/author/committer），更新 `refs/heads/main`，并用 `git commit-tree` 在本机重建相同对象对齐 SHA（有校验）。
-- **blob >37MB 会被 GitHub 拒（422 too large）**，脚本会跳过并记入 `push-state.json` 的 `tooLarge`，这些文件只能走 SSH（§9.0）。
-- **token 绝不写进 git 历史/remote URL**；泄露即删文件 + 提醒用户去 GitHub Settings → Applications 撤销。
-
-### 9.3 如果 REST 也不通（兜底）
-GitHub Contents API 逐文件 PUT（`PUT /repos/Koyome/koyome.github.io/contents/<path>`，base64，branch=main，单文件 <1MB）。会产生大量碎 commit 且哈希分叉，仅应急。
-
-### 9.4 推送后验证
-1. `git ls-remote git@github.com:Koyome/koyome.github.io.git main` = 本地 HEAD。
-2. 轮询 https://koyome.github.io/ 直到出现新内容（约 1 分钟）。
-3. 抽查关键资源 200：`hobbies.html`、`js/hobbies.js`、`data/hobbies.json`、大文件素材各一。
-
-## 10. 当前状态快照（2026-09-20 凌晨，部署完成）
-
-### Git / 部署
-- **✅ 部署已完成**：最新推送 `1575278`（留言板 Supabase 凭据 + 云端时间本地化）已上线；全新无状态浏览器实测：云模式激活、欢迎留言从云端渲染、时间显示访客本地时区、无删除按钮、蜜罐在位、首页爱好区 4 卡正常。
-- 历史分叉已用 `--force-with-lease` 一次性抹平（远端 `0b52fbd` 被覆盖）；此后普通 `git push`（SSH，§9.0）即可。
-- 推送通道：SSH 密钥 `tools/deploy-key`（公钥已登记用户账号）；备用 REST token `tools/gh-token.txt`。两者均 gitignore。
-
-### 用户内容（全部真实数据，红线勿动）
-- `t1 電台`：6 首 MP3 全带封面（Reynard Silva、mixed matches、kuudere existence、palefire Not on ur way、Kanye Only One、Come to Life）。
-- `i1 旅行紀錄`：8 图，其中 5 张东京行照片**已填描绘**（东京塔/东京大学/你的名字取景地/新宿/涩谷十字路口，目前只填了中文）。
-- `t2 關於`、`v1 私人剪輯`（4 视频，最大 46.8MB 已经 SSH 推送上线）。
-- 爱好页：5 部动漫（Clannad/物语系列/命运石之门/Re:0/无职转生）+ 4 个角色（爱蜜莉亚/泉此方/艾莉丝/夏娜），图+文已填；3 个 Q版装饰槽仍空。
-- 首页：头像已换 `1789835827804_avatar.png`，intro 双语为用户亲笔。
-- assets 里 `1789830681xxx` 与 `1789830788xxx` 是同一首歌的两次上传（重复）——是否清理由用户决定，不要自行删。
-
-### 功能状态
-- 全站游客纯只读（第五轮）：管理入口/编辑按钮/上传区/占位提示仅站长机（本地 API 存活）可见；34 项双视角测试 + 22 项静态回归全过。
-- 页面间无过渡动画（用户明确要求，已拆除干净）；唯余首页原始 loader。
-- 本地服务器可能未运行：双击 `start-koyome.bat` 即可（端口 80）。
-
-### 环境备忘（本机）
-- PowerShell 工具 stdout 偶发不回显——关键输出写文件再 Read。
-- git 用 PortableGit：`C:\Users\杨坤\.workbuddy\binaries\PortableGit\versions\1.2.0\mingw64\bin\git.exe`；SSH 工具在同包 `usr\bin\ssh.exe` / `ssh-keygen.exe`。
-- `ssh -T git@github.com` 报 "Could not create directory '/c/Users/...'“ 无害（中文用户名路径），看到 `Hi Koyome!` 即认证成功。
-- jsdom 在 `C:\Users\杨坤\.workbuddy\binaries\node\workspace\node_modules`（NODE_PATH 指过去跑测试）。
-- 已知小毛病：本仓库 `git fetch` 后 `refs/remotes/origin/main` 偶不持久化（junction 路径所致），用 `git update-ref` 手动补即可（纯美观问题）。
-
-## 11. 测试
-
-- `tools/test-static.js`：起本地静态服务器 + jsdom 跑双语渲染回归（首页/目录/详情/留言/管理页）。用法：
-  `NODE_PATH=<全局node_modules含jsdom> node tools/test-static.js`
-- jsdom 安装在 `C:\Users\杨坤\.workbuddy\binaries\node\workspace\node_modules`。
-- 改 API 后用 curl/fetch 直接打 `http://Koyome.me/api/...` 验证，记得建临时条目测完删掉。
-
-## 12. 开发教训（血泪，请继承）
-
-1. 本环境 Edit 工具偶发静默失败——**关键改动后必须搜索标记串验证落盘**。
-2. 内联 `node -e "..."` 在 bash 里转义地狱——复杂脚本**写成临时 .js 文件再跑**。
-3. grep 管道会吞掉 git 的错误输出——调试 git 时看原始输出。
-4. token/密钥出现过就必须假设已泄露：删本地文件 + 提醒用户 revoke。
-5. 用户的数据文件（§2）是红线，测试一律用临时条目，测完清理并验证用户数据原样。
-6. **代理环境变量要全清**（含 `ALL_PROXY`/`all_proxy`）——只清 http_proxy 不够，残留的 dead proxy 会让 git 走 502 且难以排查。
-7. 本机 `github.com` 与 `api.github.com` 可达性完全两回事：前者被运营商级丢包，后者畅通。需要 GitHub 写操作时直接放弃 git 协议，用 REST Git Data API 重放提交（blob/tree/commit SHA 可精确复现，见 tools/push-via-api.js）。
-8. `git commit-tree` 配合 `GIT_AUTHOR_*/GIT_COMMITTER_*` 环境变量可以逐比特复刻一个 commit（SHA 相同）——本地/远端对齐就靠它。
-9. jsdom 的 `fromURL` 会在 deferred 脚本执行前 resolve——页面级测试的断言要等 DOMContentLoaded 或显式 sleep。
+1. 用户数据文件（§0.5 硬规则）是红线：测试一律用临时条目，测完清理并验证原样。
+2. 本环境 Edit 偶发静默失败——关键改动后必须验证落盘。
+3. 代理环境变量要全清（含 `ALL_PROXY`）——残留 dead proxy 让 git 静默 502，极难排查。
+4. `github.com` 与 `api.github.com` 可达性是两回事：前者被丢包，后者畅通；SSH 又另是一路（畅通）。
+5. token/密钥出现过就假设已泄露：删文件 + 提醒用户 revoke。
+6. jsdom `fromURL` 在 deferred 脚本执行前 resolve——页面断言要等 DOMContentLoaded 或显式 sleep。
+7. 让用户复制密钥/长字符串：必须让其用界面的 **Copy 按钮**（用户手抄 JWT 两次串字符，401 排查一轮）；优先选短密钥（`sb_publishable_`）。
+8. 验证云端 INSERT 权限可不落数据：故意违反 check 约束，返回 23514 即权限正常（401/42501 才是策略缺失）。
+9. infinite CSS 动画只挂可见态选择器；出场动画时长必须 < 跳转延迟。（过渡动画已全拆，存档备用）
+10. AI 沙箱起不了持久进程（§4.2）——需要"用户关机重启后仍在"的服务，给用户可双击的脚本，别自己扛。
