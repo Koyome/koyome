@@ -68,12 +68,17 @@
   const spots = PLACE[page] || PLACE.home;
 
   /* mobile variant: two shapes max, ~55% size, gentler drift, no mouse depth,
-     and nudged inward so nothing is cropped off the narrow screen */
+     and nudged inward so nothing is cropped off the narrow screen.
+     on the home page the wobbly circle (top-right) collides with the
+     planet sculpture on phones — drop it there (owner's call, R11) */
   const effective = MOBILE
-    ? spots.slice(0, 2).map(([si, x, y, size, tint, amp, spin]) => [
-        si, Math.min(Math.max(x, 8), 78), y, Math.round(size * 0.55),
-        tint, Math.max(amp * 0.5, 6), spin, 0,
-      ])
+    ? spots
+        .filter(([si]) => !(page === 'home' && si === 0))
+        .slice(0, 2)
+        .map(([si, x, y, size, tint, amp, spin]) => [
+          si, Math.min(Math.max(x, 8), 78), y, Math.round(size * 0.55),
+          tint, Math.max(amp * 0.5, 6), spin, 0,
+        ])
     : spots;
 
   const COLORS = { line: '#b4b2a9', accent: '#9e2b25' };

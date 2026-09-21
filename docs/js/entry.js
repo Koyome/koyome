@@ -624,7 +624,12 @@
     cv.setAttribute('aria-hidden', 'true');
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
-    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    /* phones: full-screen canvas repaints were fighting the scroll
+     * compositor — drop to DPR 1 and a 30fps cadence there (R11) */
+    const MOBILE = !!(window.matchMedia && (
+      window.matchMedia('(max-width: 720px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches));
+    const DPR = MOBILE ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
     let W = 0, H = 0, stars = [], threads = [], meteors = [];
     let colStar = '#7d8798', colLine = 'rgba(110,118,132,0.32)', colMeteor = '#9e2b25';
@@ -680,28 +685,33 @@
       threads.forEach(([a, b]) => {
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
       });
+      /* small square stars: one flat-alpha pass — per-star alpha changes
+         were the main paint cost on phones, and the tiny shimmer was
+         barely visible on them anyway */
+      ctx.globalAlpha = mood.alpha * 0.62;
+      ctx.fillStyle = colStar;
       stars.forEach((s) => {
+        if (!s.cross) ctx.fillRect(s.x - s.r / 2, s.y - s.r / 2, s.r, s.r);
+      });
+      /* plus-shaped stars keep their slow shimmer */
+      stars.forEach((s) => {
+        if (!s.cross) return;
         const tw = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph))) * mood.alpha;
         ctx.globalAlpha = tw;
         ctx.strokeStyle = colStar;
         ctx.lineWidth = 1;
-        if (s.cross) {
-          const r = s.r * 2.1;
-          ctx.beginPath();
-          ctx.moveTo(s.x - r, s.y); ctx.lineTo(s.x + r, s.y);
-          ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x, s.y + r);
-          ctx.stroke();
-          /* a tiny diamond core on the brightest crosses */
-          if (tw > mood.alpha * 0.85) {
-            ctx.fillStyle = colStar;
-            ctx.beginPath();
-            ctx.moveTo(s.x, s.y - 1.6); ctx.lineTo(s.x + 1.6, s.y);
-            ctx.lineTo(s.x, s.y + 1.6); ctx.lineTo(s.x - 1.6, s.y);
-            ctx.closePath(); ctx.fill();
-          }
-        } else {
+        const r = s.r * 2.1;
+        ctx.beginPath();
+        ctx.moveTo(s.x - r, s.y); ctx.lineTo(s.x + r, s.y);
+        ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x, s.y + r);
+        ctx.stroke();
+        /* a tiny diamond core on the brightest crosses */
+        if (tw > mood.alpha * 0.85) {
           ctx.fillStyle = colStar;
-          ctx.fillRect(s.x - s.r / 2, s.y - s.r / 2, s.r, s.r);
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y - 1.6); ctx.lineTo(s.x + 1.6, s.y);
+          ctx.lineTo(s.x, s.y + 1.6); ctx.lineTo(s.x - 1.6, s.y);
+          ctx.closePath(); ctx.fill();
         }
       });
       ctx.globalAlpha = 1;
@@ -722,26 +732,32 @@
       });
     }
 
+    let dtDraw = 0;
     function tick(now) {
       requestAnimationFrame(tick);
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
-      if (!visible) return;
+      if (!visible) { dtDraw = 0; return; }
       frame++;
       if (frame % 45 === 0) themeColors();   /* pick up day/night flips */
+      dtDraw += dt;
+      /* phones: repaint at ~30fps — the sky is calm enough that nobody
+         can tell, and scrolling stays butter-smooth */
+      if (MOBILE && dtDraw < 1 / 30) return;
+      const step = dtDraw; dtDraw = 0;
       const time = now / 1000;
       drawStatic(time);
 
-      nextMeteor -= dt;
+      nextMeteor -= step;
       if (nextMeteor <= 0) {
         spawnMeteor();
         nextMeteor = mood.meteorEvery[0] + Math.random() * (mood.meteorEvery[1] - mood.meteorEvery[0]);
       }
       meteors = meteors.filter((m) => m.life < m.ttl && m.y < H + 80);
       meteors.forEach((m) => {
-        m.life += dt;
-        m.x += m.vx * dt;
-        m.y += m.vy * dt;
+        m.life += step;
+        m.x += m.vx * step;
+        m.y += m.vy * step;
         const fade = Math.sin((m.life / m.ttl) * Math.PI) * mood.meteorAlpha;
         const tailLen = m.big ? 0.42 : 0.3;
         const tx = m.x - m.vx * tailLen, ty = m.y - m.vy * tailLen;

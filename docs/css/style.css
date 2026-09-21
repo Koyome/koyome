@@ -20,6 +20,13 @@
   --star-line: rgba(110, 118, 132, 0.32);
   --meteor: #9e2b25;
   --frame-mark: #b3b0aa;
+  /* home sigil line tones (light paper) — dark theme re-tunes them
+     below so the weave stays quiet on black paper */
+  --sigil-dash: #b3b0aa;
+  --sigil-ring: #c6c3bd;
+  --sigil-chord: #cdcac2;
+  --sigil-tri: #a3a09a;
+  --sigil-node: #c9c7c2;
 }
 
 /* ---------- Night mode ----------
@@ -39,6 +46,13 @@
   --star-line: rgba(196, 206, 224, 0.30);
   --meteor: #f2efe9;
   --frame-mark: #54514c;
+  /* sigil at night: same geometry, dimmer & more uniform lines so the
+     chords stop looking tangled against the black paper */
+  --sigil-dash: #45423d;
+  --sigil-ring: #3c3a36;
+  --sigil-chord: #33312d;
+  --sigil-tri: #55524c;
+  --sigil-node: #45423d;
 }
 /* photos stop blending into paper at night — multiply would bury them */
 [data-theme="dark"] .hh-fig img,
@@ -304,6 +318,8 @@ img { max-width: 100%; display: block; }
 }
 @keyframes slow-spin-rev { to { transform: rotate(-360deg); } }
 .sigil-pulse { animation: pulse 3.2s ease-in-out infinite; }
+/* at night the chord weave reads as clutter — hush it, keep the geometry */
+[data-theme="dark"] .sigil-chords { opacity: 0.5; }
 @keyframes pulse {
   0%, 100% { opacity: 1; r: 4; }
   50% { opacity: 0.35; r: 6; }
@@ -1185,7 +1201,15 @@ img { max-width: 100%; display: block; }
 .sat-c { animation: slow-spin 70s linear infinite; }
 .orbit-dash { animation: orbit-march 26s linear infinite; }
 @keyframes orbit-march { to { stroke-dashoffset: -460; } }
-@media (max-width: 880px) { .hero-orbit { right: -90px; top: -60px; opacity: 0.4; } }
+/* phones: pull the whole sculpture back inside the screen (it used to
+   hang 90px off the right edge, cropping the outer ring & satellites) */
+@media (max-width: 880px) {
+  .hero-orbit {
+    right: -10px; top: -14px;
+    width: min(60vw, 250px); height: min(60vw, 250px);
+    opacity: 0.38;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .sat-a, .sat-b, .sat-c, .orbit-dash { animation: none; }
 }
@@ -1382,12 +1406,15 @@ img { max-width: 100%; display: block; }
 .hh-compass {
   position: absolute; right: -6px; top: 26px; width: 170px; height: 170px;
   opacity: 0.6; pointer-events: none;
+  filter: drop-shadow(0 10px 16px rgba(60, 58, 54, 0.13));
 }
 .hh-compass .hh-compass-word {
   font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.42em;
   fill: var(--muted); text-anchor: middle;
 }
 .hh-compass .sweep { transform-box: view-box; transform-origin: 100px 100px; animation: slow-spin 60s linear infinite; }
-[data-theme="dark"] .hh-compass { opacity: 0.75; }
-@media (max-width: 880px) { .hh-compass { width: 100px; height: 100px; top: 18px; opacity: 0.45; } }
+[data-theme="dark"] .hh-compass { opacity: 0.8; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.5)); }
+/* phones: keep the badge fully on-screen (it used to bleed 6px off
+   the right edge) */
+@media (max-width: 880px) { .hh-compass { width: 96px; height: 96px; top: 14px; right: 2px; opacity: 0.5; } }
 @media (prefers-reduced-motion: reduce) { .hh-compass .sweep { animation: none; } }
