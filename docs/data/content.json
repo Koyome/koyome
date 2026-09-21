@@ -32,7 +32,7 @@
         "src": "assets/1789845577073_kuudere_utumiyqcom_-_existence_feat._utu.mp3",
         "title": "kuudere,utumiyqcom - existence (feat. utumiyqcom)",
         "cover": "assets/1789845577081_kuudere_utumiyqcom_-_existence_feat._utu.jpg",
-        "captionZh": "写给妈妈的   旋律好听"
+        "captionZh": "做这些是为了独一无二的你"
       },
       {
         "type": "audio",
@@ -101,15 +101,18 @@
     "media": [
       {
         "type": "image",
-        "src": "assets/opt/1789827413545_C22FA9D2AC86DC60465FB447FBE77D74.jpg"
+        "src": "assets/opt/1789827413545_C22FA9D2AC86DC60465FB447FBE77D74.jpg",
+        "captionZh": "城山日出峰"
       },
       {
         "type": "image",
-        "src": "assets/opt/1789827439977_77B16F1FE3D306E9A9A529EC595A1C9F.jpg"
+        "src": "assets/opt/1789827439977_77B16F1FE3D306E9A9A529EC595A1C9F.jpg",
+        "captionZh": "城山日出峰（另一侧）"
       },
       {
         "type": "image",
-        "src": "assets/opt/1789827463648_7948611B08EF56A717495E7FF2E3FEAA.jpg"
+        "src": "assets/opt/1789827463648_7948611B08EF56A717495E7FF2E3FEAA.jpg",
+        "captionZh": ""
       },
       {
         "type": "image",
@@ -138,7 +141,17 @@
       }
     ],
     "body": "",
-    "bodyZh": "下次的旅行预告：北海道"
+    "bodyZh": "下次的旅行预告：北海道",
+    "mapPins": {
+      "jeju": [
+        {
+          "x": 514,
+          "y": 117,
+          "zh": "牛岛",
+          "en": ""
+        }
+      ]
+    }
   },
   {
     "id": "t2",
