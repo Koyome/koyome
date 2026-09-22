@@ -427,7 +427,10 @@
       }, true, true);
     }
 
-    /* the maps drive the pile: lift a named print straight to the top */
+    /* the maps drive the pile: lift a named print straight to the top,
+       or lift a whole PLACE — every print shot there rises to the top
+       layers together (seq order = viewing order), staying on top
+       while the pin pages through them */
     i1DeckCtl = {
       toTop(mi) {
         const at = order.indexOf(mi);
@@ -435,6 +438,12 @@
           order.splice(at, 1);
           order.unshift(mi);
         }
+        applyDepth();
+      },
+      liftGroup(seq) {
+        const wanted = seq.filter((mi) => order.includes(mi));
+        const rest = order.filter((mi) => !wanted.includes(mi));
+        order.splice(0, order.length, ...wanted, ...rest);
         applyDepth();
       },
       scroll() {
@@ -784,26 +793,22 @@
     const media = $('entryMedia');
     media.parentNode.insertBefore(box, media);
 
-    /* photo pin (and linked owner pin) → glide to its photographs.
-       A pin owns EVERY print whose caption names its place; each click
-       pages to the next one, looping back to the first after the last.
-       When the photo deck is on stage, the chosen print rises to top */
-    const jumpTo = (mi) => {
-      if (i1DeckCtl) {
-        i1DeckCtl.toTop(mi);
-        i1DeckCtl.scroll();
-        return;
-      }
-      const block = document.querySelectorAll('#entryMedia .media-block')[mi];
-      if (block) block.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
-    };
     box.querySelectorAll('.tm-node, .tm-upin.tm-linked').forEach((node) => {
       const mis = String(node.dataset.mis || '').split(',').map(Number).filter((x) => !Number.isNaN(x));
       let cursor = -1;
       const jump = () => {
         if (!mis.length) return;
         cursor = (cursor + 1) % mis.length;
-        jumpTo(mis[cursor]);
+        /* the whole place rises to the top layers (all of its prints),
+           rotated so the next unviewed one is on top */
+        const seq = mis.slice(cursor).concat(mis.slice(0, cursor));
+        if (i1DeckCtl) {
+          i1DeckCtl.liftGroup(seq);
+          i1DeckCtl.scroll();
+          return;
+        }
+        const block = document.querySelectorAll('#entryMedia .media-block')[seq[0]];
+        if (block) block.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
       };
       node.addEventListener('click', (e) => {
         if (e.target.closest('.tm-upin-x')) return;
