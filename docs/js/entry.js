@@ -479,9 +479,25 @@
     towers: '<path d="M-9.5 11 V-4 H-3.5 V11 M-1.5 11 V-10 H4.5 V11 M6.5 11 V-1 H10.5 V11 M-7.5 -1 h1.2 M-7.5 3 h1.2 M0.5 -7 h1.2 M0.5 -3 h1.2 M0.5 1 h1.2 M7.5 3 h1.2"/>',
     /* Shibuya: the scramble — a boxed X crossing with a centre dot */
     crossing: '<path d="M-8 -8 H8 V8 H-8 Z M-8 -8 L8 8 M8 -8 L-8 8 M0 -1.4 V1.4 M-1.4 0 H1.4"/>',
+    /* a peak with a snow cap — mountains, volcano craters */
+    mountain: '<path d="M-10 10 L-3 -7 L1 1 L5 -6 L11 10 Z M-5 -3.5 L-3 -7 L-1 -3.5 M3.5 -2.5 L5 -6 L6.5 -2.5"/>',
+    /* three rolling waves — seasides, straits, beaches */
+    wave: '<path d="M-10 -4 Q-6.5 -8 -3 -4 Q0.5 0 4 -4 Q7.5 -8 11 -4 M-10 2 Q-6.5 -2 -3 2 Q0.5 6 4 2 Q7.5 -2 11 2 M-10 8 Q-6.5 4 -3 8 Q0.5 12 4 8 Q7.5 4 11 8"/>',
+    /* a five-petal sakura blossom */
+    sakura: '<path d="M0 -9 C2.5 -5 2.5 -2 0 -0.5 C-2.5 -2 -2.5 -5 0 -9 Z M8.6 -2.8 C4.9 -1.6 2.4 -0.4 0.6 0.4 C0.9 2.8 3.2 4.4 7.6 5.4 C8.3 1.6 8.5 -0.7 8.6 -2.8 Z M5.3 7.6 C2.2 4.8 0.7 2.7 0.2 0.8 C-1.9 2.1 -2.8 4.8 -4.1 8.9 C-0.7 9.2 3.1 8.7 5.3 7.6 Z M-5.3 7.6 C-7.1 4.2 -6.9 1.1 -6.1 -1.1 C-2.9 -0.4 -0.6 0.4 0.6 1.1 C-0.3 3.7 -2.3 5.8 -5.3 7.6 Z M-8.6 -2.8 C-5.4 -3.6 -2.8 -2.9 -1 -1.9 C-3.3 -0.1 -6.1 0.9 -9.9 1 C-9.7 -0.6 -9.2 -1.8 -8.6 -2.8 Z"/>',
+    /* a little castle keep — shrines, castles, old towns */
+    castle: '<path d="M-9 10 V1 H9 V10 M-9 1 L0 -6 L9 1 M-7 -1 V-5 M7 -1 V-5 M-7 -5 H-4 M4 -5 H7 M-2.5 10 V5 A2.5 2.5 0 0 1 2.5 5 V10"/>',
+    /* a paper lantern — night markets, festivals */
+    lantern: '<path d="M-3 -11 H3 M0 -11 V-8 M-6 -8 Q-8 0 -6 8 H6 Q8 0 6 -8 Z M-6 -3 H6 M-6 3 H6 M-2.5 -8 Q-4 0 -2.5 8 M2.5 -8 Q4 0 2.5 8 M-2 11 H2 M0 8 V11"/>',
     /* generic map pin for owner-marked places */
     pin: '<path d="M0 -10 A6.5 6.5 0 0 1 6.5 -3.5 C6.5 2 0 11 0 11 C0 11 -6.5 2 -6.5 -3.5 A6.5 6.5 0 0 1 0 -10 Z M0 -5.4 A1.9 1.9 0 1 0 0 -1.6 A1.9 1.9 0 1 0 0 -5.4 Z"/>',
   };
+
+  /* the styles offered when the owner names a new spot */
+  const PIN_ICON_CHOICES = [
+    'pin', 'torii', 'tower', 'campus', 'towers', 'crossing',
+    'mountain', 'wave', 'sakura', 'castle', 'lantern',
+  ];
 
   /* faint survey grid — the digitized-map backbone */
   function graticule(w, h, step) {
@@ -494,7 +510,7 @@
   /* one labelled pin: a badge with the landmark sigil hovering over
      the exact point on a hairline stem, labels beside the badge.
      Near the top edge the badge hangs below the point instead. */
-  function pinMarkup(p, cls, extra, icon, xMark) {
+  function pinMarkup(p, cls, extra, icon, xMark, count) {
     const flip = p.y < 58;
     const by = flip ? p.y + 28 : p.y - 28;
     const leftSide = p.x > 420;
@@ -507,33 +523,38 @@
         <circle class="tm-badge" cx="${p.x}" cy="${by}" r="12"/>
         <g class="tm-icon" transform="translate(${p.x} ${by}) scale(0.85)">${icon || SPOT_ICONS.pin}</g>
         <circle class="core" cx="${p.x}" cy="${p.y}" r="3"/>
+        ${count > 1 ? `<circle class="tm-count-bg" cx="${p.x + 11}" cy="${flip ? by + 11 : by - 11}" r="6.5"/>
+        <text class="tm-count" x="${p.x + 11}" y="${(flip ? by + 11 : by - 11) + 2.6}" text-anchor="middle">${count}</text>` : ''}
         <text class="tm-zh" x="${lx}" y="${by}" text-anchor="${anchor}">${esc(p.zh)}</text>
         ${p.en ? `<text class="tm-en" x="${lx}" y="${by + 12}" text-anchor="${anchor}">${esc(p.en)}</text>` : ''}
         ${xMark ? `<text class="tm-upin-x" x="${p.x}" y="${flip ? by + 27 : by - 19}" text-anchor="middle">✕</text>` : ''}
       </g>`;
   }
 
-  /* an owner-placed pin: if its name shows up in a photo caption it
-     becomes a jump button (tm-linked, carries data-mi); the owner also
-     gets a small ✕ beside it for removal — the pin itself never deletes */
-  function upinLink(p) {
+  /* an owner-placed pin: every photo whose caption mentions the pin's
+     name (zh or en, ≥2 chars) belongs to it — the pin pages through
+     the whole set, one print per click. The owner also gets a small ✕
+     beside it for removal — the pin itself never deletes */
+  function upinLinks(p) {
     const names = [p.zh, p.en]
       .map((s) => String(s || '').trim().toLowerCase())
       .filter((s) => s.length >= 2);
-    if (!names.length) return -1;
-    return entry.media.findIndex((m) => {
+    if (!names.length) return [];
+    const mis = [];
+    entry.media.forEach((m, mi) => {
       const cz = String(m.captionZh || '').toLowerCase();
       const ce = String(m.caption || '').toLowerCase();
-      return names.some((n) => cz.includes(n) || ce.includes(n));
+      if (names.some((n) => cz.includes(n) || ce.includes(n))) mis.push(mi);
     });
+    return mis;
   }
 
   function upinMarkup(p, i) {
-    const li = upinLink(p);
-    const cls = 'tm-upin' + (li >= 0 ? ' tm-linked' : '');
-    const extra = `data-upin="${i}"` + (li >= 0
-      ? ` data-mi="${li}" tabindex="0" role="button" aria-label="${esc(p.zh)}"` : '');
-    return pinMarkup(p, cls, extra, SPOT_ICONS.pin, canEdit);
+    const mis = upinLinks(p);
+    const cls = 'tm-upin' + (mis.length ? ' tm-linked' : '');
+    const extra = `data-upin="${i}"` + (mis.length
+      ? ` data-mis="${mis.join(',')}" tabindex="0" role="button" aria-label="${esc(p.zh)}"` : '');
+    return pinMarkup(p, cls, extra, SPOT_ICONS[p.icon] || SPOT_ICONS.pin, canEdit, mis.length);
   }
 
   /* cartographer's furniture: a north rose and a scale bar,
@@ -606,8 +627,9 @@
         ${mapFurniture(400, '5 KM')}
         ${stops.map((st) => pinMarkup(
           { x: st.spot.x, y: st.spot.y, zh: st.zh, en: st.spot.en },
-          'tm-node', `data-mi="${st.mi}" tabindex="0" role="button" aria-label="${esc(st.zh)}"`,
-          SPOT_ICONS[st.spot.icon]
+          'tm-node',
+          `data-mis="${st.mis.join(',')}" tabindex="0" role="button" aria-label="${esc(st.zh)}"`,
+          SPOT_ICONS[st.spot.icon], false, st.mis.length
         )).join('')}
         ${pins.map((p, i) => upinMarkup(p, i)).join('')}
       </svg>`);
@@ -737,16 +759,18 @@
     const old = document.querySelector('.travel-maps');
     if (old) old.remove();
 
-    /* photo pins: pair each known spot with the media item whose
-       caption names it (first match wins) */
+    /* photo pins: gather EVERY media item whose caption names a known
+       spot — several prints can share one place, the pin pages through
+       them one by one */
     const stops = [];
     entry.media.forEach((m, mi) => {
       const cap = String(m.captionZh || m.caption || '');
       if (!cap) return;
       const spot = TOKYO_SPOTS.find((s) => cap.includes(s.key));
-      if (spot && !stops.some((st) => st.spot === spot)) {
-        stops.push({ spot, mi, zh: cap.trim() });
-      }
+      if (!spot) return;
+      const st = stops.find((x) => x.spot === spot);
+      if (st) st.mis.push(mi);
+      else stops.push({ spot, mis: [mi], zh: cap.trim() });
     });
 
     const allPins = (entry.mapPins && typeof entry.mapPins === 'object') ? entry.mapPins : {};
@@ -760,8 +784,10 @@
     const media = $('entryMedia');
     media.parentNode.insertBefore(box, media);
 
-    /* photo pin (and linked owner pin) → glide to its photograph;
-       when the photo deck is on stage, bring that print to the top */
+    /* photo pin (and linked owner pin) → glide to its photographs.
+       A pin owns EVERY print whose caption names its place; each click
+       pages to the next one, looping back to the first after the last.
+       When the photo deck is on stage, the chosen print rises to top */
     const jumpTo = (mi) => {
       if (i1DeckCtl) {
         i1DeckCtl.toTop(mi);
@@ -772,7 +798,13 @@
       if (block) block.scrollIntoView({ behavior: RM ? 'auto' : 'smooth', block: 'center' });
     };
     box.querySelectorAll('.tm-node, .tm-upin.tm-linked').forEach((node) => {
-      const jump = () => jumpTo(parseInt(node.dataset.mi, 10));
+      const mis = String(node.dataset.mis || '').split(',').map(Number).filter((x) => !Number.isNaN(x));
+      let cursor = -1;
+      const jump = () => {
+        if (!mis.length) return;
+        cursor = (cursor + 1) % mis.length;
+        jumpTo(mis[cursor]);
+      };
       node.addEventListener('click', (e) => {
         if (e.target.closest('.tm-upin-x')) return;
         jump();
@@ -815,15 +847,23 @@
     });
   }
 
-  /* floating name-card for a fresh pin, positioned where clicked */
+  /* floating name-card for a fresh pin, positioned where clicked.
+     The owner also picks a landmark sigil for the pin (R13). */
   function openPinForm(panel, mapId, x, y, vb) {
     const form = document.createElement('div');
     form.className = 'tm-pinform';
     form.style.left = (x / vb.width * 100) + '%';
     form.style.top = (y / vb.height * 100) + '%';
+    let icon = 'pin';
     form.innerHTML = `
       <input type="text" data-fzh maxlength="40" placeholder="${esc(t('tm_pin_zh_ph'))}">
       <input type="text" data-fen maxlength="40" placeholder="${esc(t('tm_pin_en_ph'))}">
+      <span class="tm-pinlabel">${esc(t('tm_pin_icon'))}</span>
+      <div class="tm-iconpick">
+        ${PIN_ICON_CHOICES.map((k) => `
+          <button type="button" data-icon="${k}" class="${k === icon ? 'on' : ''}" title="${k}"
+            ><svg viewBox="-14 -14 28 28"><g transform="scale(0.95)">${SPOT_ICONS[k]}</g></svg></button>`).join('')}
+      </div>
       <div class="tm-pinrow">
         <button type="button" data-ok>${esc(t('tm_pin_add'))}</button>
         <button type="button" data-no>${esc(t('tm_pin_cancel'))}</button>
@@ -834,13 +874,20 @@
     const en = form.querySelector('[data-fen]');
     const msg = form.querySelector('.tm-pinmsg');
     zh.focus();
+    form.querySelectorAll('.tm-iconpick button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        icon = btn.dataset.icon;
+        form.querySelectorAll('.tm-iconpick button').forEach((b) =>
+          b.classList.toggle('on', b === btn));
+      });
+    });
     const close = () => form.remove();
     form.querySelector('[data-no]').addEventListener('click', close);
     form.querySelector('[data-ok]').addEventListener('click', async () => {
       const name = zh.value.trim();
       if (!name && !en.value.trim()) { zh.focus(); return; }
       const arr = Array.isArray(entry.mapPins?.[mapId]) ? entry.mapPins[mapId].slice() : [];
-      arr.push({ x, y, zh: name, en: en.value.trim() });
+      arr.push({ x, y, zh: name, en: en.value.trim(), icon });
       entry.mapPins = { ...(entry.mapPins || {}), [mapId]: arr };
       try {
         await putContent({ mapPins: entry.mapPins });

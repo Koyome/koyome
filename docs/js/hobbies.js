@@ -30,7 +30,14 @@
      the header. CSS hides the slots beyond each tier's count. */
   const VW = window.innerWidth || 1280;
   const DECO_POS = VW <= 720 ? [
-    { top: '86px', right: '8px' },          /* the one safe corner on a phone */
+    /* phones: every filled chibi gets its own perch in a slim vertical
+       rail down the right edge — all of them fully on show (R13) */
+    { top: '86px', right: '10px' },
+    { top: '140px', right: '10px' },
+    { top: '194px', right: '10px' },
+    { top: '248px', right: '10px' },
+    { top: '302px', right: '10px' },
+    { top: '356px', right: '10px' },
   ] : VW < 1400 ? [
     { top: '86px', right: '10px' },         /* under the header, right corner */
     { bottom: '90px', left: '10px' },       /* above the footer, left corner */

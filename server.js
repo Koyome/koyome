@@ -233,6 +233,8 @@ const server = http.createServer(async (req, res) => {
               y: Math.max(0, Math.min(400, Math.round(Number(p.y) || 0))),
               zh: str(p.zh, 60),
               en: str(p.en, 60),
+              /* landmark sigil key (R13) — lowercase letters/dashes only */
+              icon: /^[a-z-]{1,20}$/.test(String(p.icon || '')) ? String(p.icon) : '',
             })).filter((p) => p.zh || p.en);
           }
         }
