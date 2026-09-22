@@ -1348,6 +1348,10 @@ img { max-width: 100%; display: block; }
   font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.2em; fill: var(--muted);
 }
 .tm-geo .tm-sea { font-style: italic; opacity: 0.85; }
+/* city fabric (R14): building footprints & side lanes */
+.tm-blocks rect { fill: var(--bg); stroke: var(--line); stroke-width: 0.6; opacity: 0.9; }
+.tm-lane path { stroke: var(--line); stroke-width: 0.5; fill: none; opacity: 0.85; }
+[data-theme="dark"] .tm-blocks rect { fill: var(--panel); }
 
 /* pins: photo pins in accent, owner-named pins in ink — no lines between them.
    each pin is a sigil badge hovering over its point on a hairline stem */

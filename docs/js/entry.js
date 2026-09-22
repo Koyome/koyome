@@ -516,6 +516,19 @@
     return `<g class="tm-grat">${g}</g>`;
   }
 
+  /* city fabric: little building-footprint blocks stamped in rows —
+     a seeded skip pattern leaves alleys, organic yet render-stable (R14) */
+  function blocks(x0, y0, cols, rows, w, h, gap) {
+    let g = '';
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if ((r * 7 + c * 13 + Math.round(x0)) % 5 === 0) continue;   /* the alley */
+        g += `<rect x="${x0 + c * (w + gap)}" y="${y0 + r * (h + gap)}" width="${w}" height="${h}"/>`;
+      }
+    }
+    return `<g class="tm-blocks">${g}</g>`;
+  }
+
   /* one labelled pin: a badge with the landmark sigil hovering over
      the exact point on a hairline stem, labels beside the badge.
      Near the top edge the badge hangs below the point instead. */
@@ -601,6 +614,14 @@
        </g>`,
       /* the Sumida, winding down to the bay */
       `<path class="tm-river" d="M406 -6 C412 56 402 118 420 172 C432 214 450 246 468 268 L460 276 C442 252 424 220 412 176 C396 122 404 56 398 -6 Z"/>`,
+      /* city fabric: Shinjuku, Shibuya, Ginza, Asakusa — footprints & lanes */
+      blocks(74, 140, 4, 3, 8, 6, 4),
+      blocks(96, 318, 5, 3, 8, 6, 4),
+      blocks(318, 224, 4, 3, 9, 6, 4),
+      blocks(388, 26, 4, 2, 9, 7, 4),
+      `<g class="tm-lane">
+         <path d="M60 206 H296 M64 226 H236 M236 120 V300 M160 62 V162 M362 100 V240 M300 280 H420"/>
+       </g>`,
       /* green: Imperial Palace grounds, Ueno, Shinjuku Gyoen */
       `<g class="tm-park">
          <ellipse cx="274" cy="196" rx="31" ry="21"/>
@@ -666,6 +687,12 @@
       `<g class="tm-station">
          <circle cx="274" cy="112" r="3"/><circle cx="282" cy="292" r="3"/>
        </g>`,
+      /* city fabric: Jeju-si & Seogwipo footprints, lanes off the ring */
+      blocks(246, 96, 4, 2, 9, 6, 4),
+      blocks(254, 286, 4, 2, 9, 6, 4),
+      `<g class="tm-lane">
+         <path d="M274 118 V160 M282 286 V252 M200 130 V162 M380 142 V172 M140 250 L180 270"/>
+       </g>`,
       `<g class="tm-geo">
          <text x="282" y="230" text-anchor="middle">HALLASAN · 1,947M</text>
          <text x="454" y="136" text-anchor="middle">SEONGSAN</text>
@@ -704,16 +731,18 @@
   }
 
   /* the line-drawn street elevation that opens the travel board —
-     same stroke dialect as the planet and the compass */
+     same stroke dialect as the planet and the compass. R14 widened
+     the lane: the dwellings are now joined by signature landmarks —
+     Tokyo Tower, a five-storey pagoda and a torii gate */
   function housesStrip() {
     return `
     <div class="i1-houses" aria-hidden="true">
-      <svg viewBox="0 0 560 132" fill="none">
-        <text class="hs-word" x="540" y="16" text-anchor="end">DWELLINGS · 住まい</text>
+      <svg viewBox="0 0 760 132" fill="none">
+        <text class="hs-word" x="740" y="16" text-anchor="end">DWELLINGS · 住まい</text>
         <text class="hs-word hs-alt" x="20" y="16">FIELD RECORD — 01</text>
         <!-- ground -->
-        <path class="hs-ground" d="M20 104 H540"/>
-        <path class="hs-dash" d="M20 112 H540"/>
+        <path class="hs-ground" d="M20 104 H740"/>
+        <path class="hs-dash" d="M20 112 H740"/>
         <!-- house A: gabled, round window -->
         <g class="hs-ink">
           <path d="M42 104 V54 L78 28 L114 54 V104"/>
@@ -752,13 +781,34 @@
           <path d="M424 104 V66 L452 46 L480 66 V104"/>
           <path d="M444 104 V84 H460 V104"/>
         </g>
-        <!-- construction verticals -->
-        <path class="hs-dash" d="M78 28 V8 M256 32 V8 M452 46 V8"/>
-        <g class="hs-ink hs-ticks">
-          <path d="M74 8 h8 M252 8 h8 M448 8 h8"/>
+        <!-- Tokyo Tower: tapering lattice legs, braces, observatory, antenna -->
+        <g class="hs-ink">
+          <path d="M506 104 L524 34 M554 104 L536 34"/>
+          <path d="M513 82 H547 M518 64 H542 M522 48 H538"/>
+          <path d="M511 90 H549"/>
+          <path d="M530 34 V16 M525 22 H535"/>
         </g>
-        <!-- surveyor's spark -->
-        <path class="hs-accent-line" d="M516 86 v10 M511 91 h10"/>
+        <path class="hs-accent-line" d="M530 40 V48"/>
+        <!-- five-storey pagoda: shrinking roofs and a spire -->
+        <g class="hs-ink">
+          <path d="M580 104 H628 M584 92 H624 M588 80 H620 M592 68 H616 M596 56 H612"/>
+          <path d="M580 92 L604 84 L628 92 M584 80 L604 73 L624 80 M588 68 L604 62 L620 68 M592 56 L604 51 L616 56 M596 44 L604 40 L612 44"/>
+          <path d="M604 40 V24 M600 28 H608"/>
+          <path d="M600 104 V96 M608 104 V96"/>
+        </g>
+        <!-- torii gate at the end of the lane -->
+        <g class="hs-ink">
+          <path d="M650 62 Q676 54 702 62"/>
+          <path d="M656 72 H696"/>
+          <path d="M663 62 V104 M689 62 V104"/>
+          <path d="M658 104 H668 M684 104 H694"/>
+        </g>
+        <path class="hs-accent-line" d="M716 86 v10 M711 91 h10"/>
+        <!-- construction verticals -->
+        <path class="hs-dash" d="M78 28 V8 M256 32 V8 M452 46 V8 M530 34 V8 M604 40 V8 M676 58 V8"/>
+        <g class="hs-ink hs-ticks">
+          <path d="M74 8 h8 M252 8 h8 M448 8 h8 M526 8 h8 M600 8 h8 M672 8 h8"/>
+        </g>
       </svg>
     </div>`;
   }
@@ -793,7 +843,7 @@
     const media = $('entryMedia');
     media.parentNode.insertBefore(box, media);
 
-    box.querySelectorAll('.tm-node, .tm-upin.tm-linked').forEach((node) => {
+    box.querySelectorAll('.tm-node' + (canEdit ? '' : ', .tm-upin.tm-linked')).forEach((node) => {
       const mis = String(node.dataset.mis || '').split(',').map(Number).filter((x) => !Number.isNaN(x));
       let cursor = -1;
       const jump = () => {
@@ -820,6 +870,22 @@
     });
 
     if (!canEdit) return;   /* visitors read the maps, never alter them */
+
+    /* owner: clicking a self-made pin opens its edit card (rename,
+       switch sigil, delete, or page its photos) */
+    box.querySelectorAll('.tm-upin').forEach((node) => {
+      node.addEventListener('click', (e) => {
+        if (e.target.closest('.tm-upin-x')) return;
+        e.stopPropagation();
+        const svg = node.closest('svg');
+        const mapId = svg.dataset.map;
+        const idx = parseInt(node.dataset.upin, 10);
+        const p = (entry.mapPins?.[mapId] || [])[idx];
+        if (!p) return;
+        openPinForm(box.querySelector(`.travel-map[data-panel="${mapId}"]`),
+          mapId, p.x, p.y, svg.viewBox.baseVal, idx);
+      });
+    });
 
     /* owner: only the small ✕ beside a self-made pin removes it */
     box.querySelectorAll('.tm-upin-x').forEach((x) => {
@@ -852,17 +918,23 @@
     });
   }
 
-  /* floating name-card for a fresh pin, positioned where clicked.
-     The owner also picks a landmark sigil for the pin (R13). */
-  function openPinForm(panel, mapId, x, y, vb) {
+  /* floating name-card for a pin, positioned where clicked.
+     Add mode: blank fields, icon picker defaults to the plain pin.
+     Edit mode (editIdx given): prefilled from the existing pin — the
+     owner can rename it, switch its sigil, or delete it (R14). */
+  function openPinForm(panel, mapId, x, y, vb, editIdx) {
+    const editing = editIdx != null
+      ? (entry.mapPins?.[mapId] || [])[editIdx] : null;
     const form = document.createElement('div');
     form.className = 'tm-pinform';
     form.style.left = (x / vb.width * 100) + '%';
     form.style.top = (y / vb.height * 100) + '%';
-    let icon = 'pin';
+    let icon = (editing && SPOT_ICONS[editing.icon]) ? editing.icon : 'pin';
     form.innerHTML = `
-      <input type="text" data-fzh maxlength="40" placeholder="${esc(t('tm_pin_zh_ph'))}">
-      <input type="text" data-fen maxlength="40" placeholder="${esc(t('tm_pin_en_ph'))}">
+      <input type="text" data-fzh maxlength="40" placeholder="${esc(t('tm_pin_zh_ph'))}"
+        value="${editing ? esc(editing.zh || '') : ''}">
+      <input type="text" data-fen maxlength="40" placeholder="${esc(t('tm_pin_en_ph'))}"
+        value="${editing ? esc(editing.en || '') : ''}">
       <span class="tm-pinlabel">${esc(t('tm_pin_icon'))}</span>
       <div class="tm-iconpick">
         ${PIN_ICON_CHOICES.map((k) => `
@@ -870,7 +942,9 @@
             ><svg viewBox="-14 -14 28 28"><g transform="scale(0.95)">${SPOT_ICONS[k]}</g></svg></button>`).join('')}
       </div>
       <div class="tm-pinrow">
-        <button type="button" data-ok>${esc(t('tm_pin_add'))}</button>
+        <button type="button" data-ok>${esc(editing ? t('tm_pin_save') : t('tm_pin_add'))}</button>
+        ${editing ? `<button type="button" data-del>${esc(t('tm_pin_del'))}</button>` : ''}
+        ${editing && upinLinks(editing).length ? `<button type="button" data-view>${esc(t('tm_pin_view'))} ×${upinLinks(editing).length}</button>` : ''}
         <button type="button" data-no>${esc(t('tm_pin_cancel'))}</button>
       </div>
       <span class="tm-pinmsg"></span>`;
@@ -888,18 +962,33 @@
     });
     const close = () => form.remove();
     form.querySelector('[data-no]').addEventListener('click', close);
+    const persist = async (arr) => {
+      entry.mapPins = { ...(entry.mapPins || {}), [mapId]: arr };
+      await putContent({ mapPins: entry.mapPins });
+      close();
+      renderMaps();
+    };
     form.querySelector('[data-ok]').addEventListener('click', async () => {
       const name = zh.value.trim();
       if (!name && !en.value.trim()) { zh.focus(); return; }
       const arr = Array.isArray(entry.mapPins?.[mapId]) ? entry.mapPins[mapId].slice() : [];
-      arr.push({ x, y, zh: name, en: en.value.trim(), icon });
-      entry.mapPins = { ...(entry.mapPins || {}), [mapId]: arr };
-      try {
-        await putContent({ mapPins: entry.mapPins });
-        close();
-        renderMaps();
-      } catch (_) {
-        msg.textContent = t('tm_pin_fail');
+      if (editing) arr[editIdx] = { x, y, zh: name, en: en.value.trim(), icon };
+      else arr.push({ x, y, zh: name, en: en.value.trim(), icon });
+      try { await persist(arr); } catch (_) { msg.textContent = t('tm_pin_fail'); }
+    });
+    const delBtn = form.querySelector('[data-del]');
+    if (delBtn) delBtn.addEventListener('click', async () => {
+      const arr = Array.isArray(entry.mapPins?.[mapId]) ? entry.mapPins[mapId].slice() : [];
+      arr.splice(editIdx, 1);
+      try { await persist(arr); } catch (_) { msg.textContent = t('tm_pin_fail'); }
+    });
+    const viewBtn = form.querySelector('[data-view]');
+    if (viewBtn) viewBtn.addEventListener('click', () => {
+      const mis = upinLinks(editing);
+      close();
+      if (mis.length && i1DeckCtl) {
+        i1DeckCtl.liftGroup(mis);
+        i1DeckCtl.scroll();
       }
     });
     form.addEventListener('keydown', (e) => {
