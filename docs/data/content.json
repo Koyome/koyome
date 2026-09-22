@@ -82,6 +82,55 @@
         "title": "Drake,GIVĒON - Chicago Freestyle",
         "cover": "assets/1789911277748_Drake_GIV_ON_-_Chicago_Freestyle.mp3.jpg",
         "captionZh": "风城随笔"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057317878_胡彦斌_-_你要的全拿走.mp3",
+        "title": "胡彦斌 - 你要的全拿走",
+        "cover": "assets/1790057317895_胡彦斌_-_你要的全拿走.mp3.jpg",
+        "captionZh": "你要的全拿走"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057351694_郭顶_-_水星记.mp3",
+        "title": "郭顶 - 水星记",
+        "cover": "assets/1790057351703_郭顶_-_水星记.mp3.jpg",
+        "captionZh": "18年的忧郁    爱而不得"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057363864_SawanoHiroyuki_nZk_瑞葵_mizuki_-_Avid.mp3",
+        "title": "SawanoHiroyuki[nZk],瑞葵(mizuki) - Avid",
+        "cover": "assets/1790057363873_SawanoHiroyuki_nZk_瑞葵_mizuki_-_Avid.mp3.jpg",
+        "captionZh": "86不存在的战区 神插入之神曲"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057375481_Pop_Smoke_-_What_You_Know_Bout_Love.mp3",
+        "title": "Pop Smoke - What You Know Bout Love",
+        "cover": "assets/1790057375486_Pop_Smoke_-_What_You_Know_Bout_Love.mp3.jpg",
+        "captionZh": "What u know bout LOVE？ R.I.P POP Smoke"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057396587_mixed_matches_-_Allends.mp3",
+        "title": "mixed matches - Allends",
+        "cover": "assets/1790057396591_mixed_matches_-_Allends.mp3.jpg",
+        "captionZh": "迷幻风格    看鱼的视频认识的mm"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057776064_nyamura_-_7月_天使_邂逅_記録.mp3",
+        "title": "nyamura - 7月、天使との邂逅とその記録",
+        "cover": "assets/1790057776067_nyamura_-_7月_天使_邂逅_記録.mp3.jpg",
+        "captionZh": "7月与天使邂逅"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790057785791_February_-_World_Egg.mp3",
+        "title": "February - World Egg",
+        "cover": "assets/1790057785799_February_-_World_Egg.mp3.jpg",
+        "captionZh": "完全个人品味 亚文化风格"
       }
     ],
     "src": "assets/1789830788692_Reynard_Silva_-_The_Way_I_Still_Love_You.mp3"
@@ -138,15 +187,88 @@
         "type": "image",
         "src": "assets/opt/1789846017533_BDF0294A58CC3F78A62AA38255BDD0E8.jpg",
         "captionZh": "涩谷十字路口"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056373025_2EFAD108C333B4F1CB69F6BBF9AC975B.jpg",
+        "captionZh": "你的名字"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056382709_64ACCCD972FB2D212E25EA0E7FEE88FD.jpg",
+        "captionZh": "浅草寺"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056385979_683C8C2DAEB1B1E96B7F9B4997C26400.jpg",
+        "captionZh": "浅草寺"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056390700_986D4F8842CE2CB75BACC852C3A15E81.jpg",
+        "captionZh": "秋叶原"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056395739_D3A247F7F018A10606B955A02703260C.jpg",
+        "captionZh": "歌舞伎町"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056404910_DA6897191CAEFEA4F1AFED374B993CD9.jpg",
+        "captionZh": "东京大学"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056655664_609119E19084466AE08E8B45577E44DB.jpg",
+        "captionZh": "东京大学"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056786049_4ADE2431C41D4542BE16418967DFE09B.jpg"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056793260_58BB2DF977D9AC0A2AA71DC78E58CEAA.jpg",
+        "captionZh": "牛岛"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056799342_414DED47B9273B0ED10DBEA0013085C8.jpg",
+        "captionZh": "牛岛内部"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790056805217_347820EBB99A6C05A69ED8852F7658D0.jpg"
       }
     ],
     "body": "",
     "bodyZh": "下次的旅行预告：北海道",
     "mapPins": {
+      "tokyo": [
+        {
+          "x": 389,
+          "y": 51,
+          "zh": "浅草寺",
+          "en": ""
+        },
+        {
+          "x": 361,
+          "y": 141,
+          "zh": "秋叶原",
+          "en": ""
+        },
+        {
+          "x": 124,
+          "y": 169,
+          "zh": "歌舞伎町",
+          "en": ""
+        }
+      ],
       "jeju": [
         {
-          "x": 514,
-          "y": 117,
+          "x": 512,
+          "y": 108,
           "zh": "牛岛",
           "en": ""
         }
