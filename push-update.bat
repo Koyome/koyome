@@ -2,11 +2,12 @@
 rem ============================================
 rem  Koyome.me - one-click site update push
 rem  Double-click: detect changes, commit, push.
-rem  The window stays open so you can read the result.
-rem  NOTE: keep this file ASCII-only (Chinese paths
-rem  would garble). All logic lives in tools/push-update.js
+rem  Success: window closes itself in 10 seconds.
+rem  Failure: window STAYS OPEN with the reason.
+rem  Keep this file ASCII-only. Logic: tools/push-update.js
 rem ============================================
 chcp 65001 >nul
+title Koyome One-Click Push
 cd /d "%~dp0"
 
 set "NODE="

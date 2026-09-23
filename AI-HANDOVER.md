@@ -282,7 +282,7 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 
 **📌 常驻授权（2026-09-21 用户亲授）**：AI 可随时推送上线，无需逐次请示——内容/功能改动 commit 后直接 push 即可。
 
-**⭐ 一键脚本（2026-09-23 新增，站长自用）**：`push-update.bat`（Windows 双击）/ `push-update.sh`（macOS/Linux）→ 核心 `tools/push-update.js`（跨平台）。自动：检测改动 → commit（时间戳消息）→ SSH push（非快进时自动 `pull --rebase` 一次）→ `ls-remote` 核对；失败按 网络/认证/冲突/超时/身份未配置 分类显示原因+建议；窗口保持不关闭。支持 `--dry-run` 演练。内部已做：ASCII junction 根路径、清代理变量、显式 SSH URL。站长日常更新首选此脚本；脚本失效时 AI 再按下面手动流程。
+**⭐ 一键脚本（2026-09-23 新增，站长自用）**：**站长日常入口 = 桌面上的 `push-update.bat`**（薄启动器，call 项目根的正主 `C:\Users\Public\koyome-site\push-update.bat` → 核心 `tools/push-update.js`）。**桌面副本绝不能放完整脚本**——完整脚本靠 `%~dp0` 定位项目，离开项目目录必废（用户踩过：把旧版完整 bat 拷到桌面，运行即"找不到模块+假死"）。自动：检测改动 → commit（时间戳消息）→ SSH push（非快进时自动 `pull --rebase` 一次）→ `ls-remote` 核对；失败按 网络/认证/冲突/超时/身份未配置 分类显示原因+建议；**成功 10 秒自动关窗（exit 0），失败 pause 保持窗口（exit 1）**。支持 `--dry-run` 演练。内部已做：ASCII junction 根路径、清代理变量、显式 SSH URL。仅 Windows（用户明确只要这个系统）。脚本失效时 AI 再按下面手动流程。
 
 **首选 SSH**（本机 SSH 畅通，git smart-HTTP 九成丢包）：
 ```bash

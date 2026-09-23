@@ -131,6 +131,20 @@
         "title": "February - World Egg",
         "cover": "assets/1790057785799_February_-_World_Egg.mp3.jpg",
         "captionZh": "完全个人品味 亚文化风格"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790150579705_mixed_matches_-_Iknewyou.mp3",
+        "title": "mixed matches - Iknewyou",
+        "cover": "assets/1790150579717_mixed_matches_-_Iknewyou.mp3.jpg",
+        "captionZh": "I know u"
+      },
+      {
+        "type": "audio",
+        "src": "assets/1790150606015_Drake_-_In_My_Feelings.mp3",
+        "title": "Drake - In My Feelings",
+        "cover": "assets/1790150606024_Drake_-_In_My_Feelings.mp3.jpg",
+        "captionZh": "嘉豪歌"
       }
     ],
     "src": "assets/1789830788692_Reynard_Silva_-_The_Way_I_Still_Love_You.mp3"
