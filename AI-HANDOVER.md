@@ -179,6 +179,8 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 ├─ server.js                          本地服务器 + 全部 API（零依赖；__dirname 寻址，无 cwd 依赖）
 ├─ start-koyome.bat                   双击启动本机网站（带窗口，端口 80）
 ├─ start-hidden.vbs                   ★ 双击后台静默启动（无窗口，独立于任何会话）
+├─ push-update.bat                    ★ 双击一键推送更新（commit+push+核对，站长自用）
+├─ push-update.sh                     macOS/Linux 同款启动器（.command 可双击）
 ├─ setup-koyome-me.bat                一次性配置：hosts 映射 + 代理绕过（需管理员，已跑过）
 ├─ AI-HANDOVER.md                     本文档
 ├─ .gitignore                         含 tools/deploy-key*、gh-token.txt、*.log、server.pid
@@ -211,6 +213,7 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 │  └─ assets/                         ★ 全部素材（用户上传的图/视频/MP3/封面，勿动）
 └─ tools/                             开发辅助（不进网站）
    ├─ deploy-key / deploy-key.pub     ★ SSH 部署密钥（gitignore；公钥已登记 GitHub 账号）
+   ├─ push-update.js                  ★ 一键推送核心逻辑（被根目录 bat/sh 调用，--dry-run 可演练）
    ├─ gh-token.txt                    REST 备用 token（gitignore，scope=repo）
    ├─ gh-device-auth.ps1              GitHub 设备授权脚本（带重试）
    ├─ push-via-api.js                 REST 推送：重放提交保 SHA、断点续传 push-state.json
@@ -278,6 +281,8 @@ C:\Users\Public\koyome-site\          ← 项目根（= git 仓库根）
 ### 4.3 部署到线上（push 后 Pages 约 1 分钟自动重建）
 
 **📌 常驻授权（2026-09-21 用户亲授）**：AI 可随时推送上线，无需逐次请示——内容/功能改动 commit 后直接 push 即可。
+
+**⭐ 一键脚本（2026-09-23 新增，站长自用）**：`push-update.bat`（Windows 双击）/ `push-update.sh`（macOS/Linux）→ 核心 `tools/push-update.js`（跨平台）。自动：检测改动 → commit（时间戳消息）→ SSH push（非快进时自动 `pull --rebase` 一次）→ `ls-remote` 核对；失败按 网络/认证/冲突/超时/身份未配置 分类显示原因+建议；窗口保持不关闭。支持 `--dry-run` 演练。内部已做：ASCII junction 根路径、清代理变量、显式 SSH URL。站长日常更新首选此脚本；脚本失效时 AI 再按下面手动流程。
 
 **首选 SSH**（本机 SSH 畅通，git smart-HTTP 九成丢包）：
 ```bash
