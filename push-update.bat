@@ -31,6 +31,7 @@ if %errorlevel%==0 (
   echo  SUCCESS - this window closes by itself.
   echo --------------------------------------------
   timeout /t 10 >nul 2>&1
+  exit /b 0
 ) else (
   echo.
   echo --------------------------------------------
@@ -38,4 +39,5 @@ if %errorlevel%==0 (
   echo  This window stays open for review.
   echo --------------------------------------------
   pause
+  exit /b 1
 )
