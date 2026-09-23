@@ -518,12 +518,29 @@
 
   /* city fabric: little building-footprint blocks stamped in rows —
      a seeded skip pattern leaves alleys, organic yet render-stable (R14) */
+  /* city fabric: seeded building footprints — stable between renders,
+     but with variety now: taller/wider blocks, little annexes tucked
+     into the alleys, and courtyard dots on some plots (R15) */
   function blocks(x0, y0, cols, rows, w, h, gap) {
     let g = '';
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         if ((r * 7 + c * 13 + Math.round(x0)) % 5 === 0) continue;   /* the alley */
-        g += `<rect x="${x0 + c * (w + gap)}" y="${y0 + r * (h + gap)}" width="${w}" height="${h}"/>`;
+        const x = x0 + c * (w + gap), y = y0 + r * (h + gap);
+        const v = (r * 11 + c * 17 + Math.round(x0)) % 7;
+        if (v === 1) {
+          g += `<rect x="${x}" y="${y - 2}" width="${w}" height="${h + 2}"/>`;          /* taller */
+        } else if (v === 3) {
+          g += `<rect x="${x - 1}" y="${y}" width="${w + 3}" height="${h}"/>`;          /* wider */
+        } else if (v === 5) {
+          g += `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+          g += `<rect x="${x + w - 3}" y="${y + h + 1}" width="3" height="2.4"/>`;      /* the annex */
+        } else {
+          g += `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+        }
+        if ((r * 5 + c * 3 + Math.round(x0)) % 6 === 2) {
+          g += `<circle class="tm-yard" cx="${x + w / 2}" cy="${y + h / 2}" r="0.9"/>`; /* courtyard */
+        }
       }
     }
     return `<g class="tm-blocks">${g}</g>`;
@@ -605,8 +622,9 @@
          <path d="M0 366 C140 306 268 238 428 52"/>
          <path d="M0 58 C122 118 246 182 466 334"/>
        </g>`,
-      /* Tokyo Bay — open water to the southeast */
+      /* Tokyo Bay — open water to the southeast, with a depth contour */
       `<path class="tm-water" d="M560 56 C518 88 492 122 480 172 C468 222 464 262 472 302 C482 348 522 376 560 390 Z"/>
+       <path class="tm-depth" d="M560 96 C528 122 508 152 500 194 C492 236 490 272 498 306 C508 344 534 366 560 376"/>
        <g class="tm-waves">
          <path d="M508 210 q7 -6 14 0 q7 6 14 0"/>
          <path d="M496 268 q7 -6 14 0 q7 6 14 0"/>
@@ -622,11 +640,16 @@
       `<g class="tm-lane">
          <path d="M60 206 H296 M64 226 H236 M236 120 V300 M160 62 V162 M362 100 V240 M300 280 H420"/>
        </g>`,
-      /* green: Imperial Palace grounds, Ueno, Shinjuku Gyoen */
+      /* green: Imperial Palace grounds, Ueno, Shinjuku Gyoen — with tree dots */
       `<g class="tm-park">
          <ellipse cx="274" cy="196" rx="31" ry="21"/>
          <rect x="318" y="94" width="42" height="26"/>
          <rect x="140" y="222" width="46" height="26"/>
+       </g>
+       <g class="tm-treedot">
+         <circle cx="264" cy="190" r="1.1"/><circle cx="278" cy="200" r="1.1"/><circle cx="286" cy="190" r="1.1"/><circle cx="268" cy="204" r="1.1"/>
+         <circle cx="328" cy="102" r="1.1"/><circle cx="342" cy="110" r="1.1"/><circle cx="350" cy="100" r="1.1"/>
+         <circle cx="150" cy="230" r="1.1"/><circle cx="164" cy="238" r="1.1"/><circle cx="176" cy="230" r="1.1"/>
        </g>`,
       /* Chuo line — the straight east-west cut */
       `<path class="tm-rail" d="M112 178 C186 188 282 192 354 196"/>`,
@@ -675,13 +698,21 @@
       `<ellipse class="tm-island" cx="510" cy="112" rx="17" ry="10"/>`,
       /* route 1132 — the coastal ring road */
       `<path class="tm-ring" d="M130 172 C136 122 216 96 300 98 C384 100 446 132 452 182 C458 232 424 282 348 298 C272 314 172 300 140 252 C124 224 122 196 130 172 Z"/>`,
-      /* Hallasan at the heart, Seongsan's crater on the east cape,
-         Sanbangsan alone in the southwest */
+      /* Hallasan at the heart (with summit contours), Seongsan's crater
+         on the east cape, Sanbangsan alone in the southwest */
       `<g class="tm-peak">
          <path d="M270 208 L282 184 L294 208 Z"/>
          <path d="M278 194 L282 188 L286 194"/>
          <path d="M446 162 L454 146 L462 162 Z"/>
          <path d="M124 292 L132 276 L140 292 Z"/>
+       </g>
+       <g class="tm-contour">
+         <ellipse cx="282" cy="203" rx="24" ry="12"/>
+         <ellipse cx="282" cy="200" rx="15" ry="7"/>
+       </g>
+       <g class="tm-treedot">
+         <circle cx="230" cy="170" r="1.1"/><circle cx="330" cy="150" r="1.1"/><circle cx="380" cy="220" r="1.1"/>
+         <circle cx="240" cy="260" r="1.1"/><circle cx="330" cy="270" r="1.1"/><circle cx="180" cy="220" r="1.1"/>
        </g>`,
       /* the two cities */
       `<g class="tm-station">
@@ -743,71 +774,148 @@
         <!-- ground -->
         <path class="hs-ground" d="M20 104 H740"/>
         <path class="hs-dash" d="M20 112 H740"/>
-        <!-- house A: gabled, round window -->
+
+        <!-- house A: machiya townhouse — tiled gable, noren, round window -->
         <g class="hs-ink">
-          <path d="M42 104 V54 L78 28 L114 54 V104"/>
-          <path d="M64 104 V78 H86 V104"/>
-          <circle cx="96" cy="62" r="6"/>
+          <path d="M38 58 L78 30 L118 58"/>
+          <path d="M44 104 V58 H112 V104"/>
+          <path d="M78 30 V27"/>
         </g>
-        <!-- house B: flat roof, three floors -->
+        <g class="hs-thin">
+          <path d="M47 52 L78 33 L109 52"/>
+          <path d="M56 104 V82 H74 V104 M56 82 H74 M65 82 V104"/>
+          <path d="M86 66 H100 M88 66 V74 M94 66 V74 M98 66 V74"/>
+          <circle cx="99" cy="47" r="4.5"/>
+          <path d="M99 42.5 V51.5 M94.5 47 H103.5"/>
+          <path d="M44 100 H112"/>
+        </g>
+
+        <!-- house B: apartment block — parapet, framed windows, entrance canopy -->
         <g class="hs-ink">
-          <path d="M136 104 V34 H192 V104"/>
-          <path d="M136 58 H192 M136 81 H192"/>
-          <path d="M148 46 h10 M160 46 h10 M172 46 h10 M148 70 h10 M172 70 h10 M148 92 h10 M160 92 h10 M172 92 h10"/>
+          <path d="M138 104 V36 H192 V104"/>
+          <path d="M136 36 H194"/>
         </g>
-        <path class="hs-dash" d="M136 26 H192 M136 22 v8 M192 22 v8"/>
-        <!-- house C: the long gable, accent window -->
+        <g class="hs-thin">
+          <path d="M141 32 H189"/>
+          <path d="M138 58 H192 M138 80 H192"/>
+          <rect x="146" y="43" width="9" height="10"/>
+          <rect x="161" y="43" width="9" height="10"/>
+          <rect x="176" y="43" width="9" height="10"/>
+          <rect x="146" y="65" width="9" height="10"/>
+          <rect x="176" y="65" width="9" height="10"/>
+          <path d="M161 104 V88 H173 V104 M158 86 H176"/>
+        </g>
+        <path class="hs-dash" d="M138 26 H192 M138 22 v6 M192 22 v6"/>
+
+        <!-- house C: the long gable — chimney with smoke, accent window, fence -->
         <g class="hs-ink">
-          <path d="M214 104 V58 L256 32 L298 58 V104"/>
-          <path d="M282 44 V28 H292 V50"/>
-          <rect x="240" y="66" width="12" height="12" class="hs-accent"/>
-          <path d="M262 104 V80 H278 V104"/>
+          <path d="M210 62 L256 34 L302 62"/>
+          <path d="M216 104 V62 H296 V104"/>
+          <path d="M283 44 V26 H293 V50"/>
         </g>
-        <!-- the tall one: gridded apartments -->
+        <g class="hs-thin">
+          <path d="M218 57 L256 37 L294 57"/>
+          <path d="M262 104 V82 H280 V104 M262 82 H280 M271 82 V104"/>
+          <rect x="238" y="70" width="15" height="15"/>
+          <path d="M238 77.5 H253 M245.5 70 V85"/>
+          <path d="M220 104 V94 M230 104 V94 M240 104 V94 M218 96 H242"/>
+        </g>
+        <rect x="241" y="73" width="9" height="9" class="hs-accent"/>
+        <path class="hs-dash" d="M288 20 V12"/>
+
+        <!-- the tall one: gridded apartments with rooftop antenna -->
         <g class="hs-ink">
-          <path d="M330 104 V26 H392 V104"/>
-          <path d="M345 38 h8 M361 38 h8 M377 38 h8 M345 54 h8 M361 54 h8 M377 54 h8
-                   M345 70 h8 M361 70 h8 M377 70 h8 M345 86 h8 M361 86 h8 M377 86 h8"/>
-          <path d="M361 26 V14 M355 14 h12" class="hs-accent-line"/>
+          <path d="M332 104 V28 H390 V104"/>
+          <path d="M330 28 H392"/>
         </g>
+        <g class="hs-thin">
+          <rect x="340" y="36" width="9" height="9"/>
+          <rect x="357" y="36" width="9" height="9"/>
+          <rect x="374" y="36" width="9" height="9"/>
+          <rect x="340" y="52" width="9" height="9"/>
+          <rect x="357" y="52" width="9" height="9"/>
+          <rect x="374" y="52" width="9" height="9"/>
+          <rect x="340" y="68" width="9" height="9"/>
+          <rect x="357" y="68" width="9" height="9"/>
+          <rect x="374" y="68" width="9" height="9"/>
+          <path d="M356 104 V92 H366 V104 M352 90 H370"/>
+        </g>
+        <path class="hs-accent-line" d="M361 28 V14 M355 14 H367"/>
         <path class="hs-dash" d="M330 118 H392"/>
+
         <!-- tree between them -->
         <g class="hs-ink">
-          <path d="M312 104 V86"/>
-          <circle cx="312" cy="78" r="9"/>
+          <path d="M312 104 V88 M312 93 L306 85 M312 91 L318 83"/>
+          <circle cx="312" cy="76" r="10"/>
         </g>
+        <g class="hs-thin">
+          <path d="M305 74 a7 7 0 0 1 6 -3 M312 81 a6 6 0 0 0 6 -4"/>
+        </g>
+
         <!-- small gable on the right -->
         <g class="hs-ink">
-          <path d="M424 104 V66 L452 46 L480 66 V104"/>
-          <path d="M444 104 V84 H460 V104"/>
+          <path d="M420 68 L452 46 L484 68"/>
+          <path d="M426 104 V68 H478 V104"/>
         </g>
-        <!-- Tokyo Tower: tapering lattice legs, braces, observatory, antenna -->
-        <g class="hs-ink">
-          <path d="M506 104 L524 34 M554 104 L536 34"/>
-          <path d="M513 82 H547 M518 64 H542 M522 48 H538"/>
-          <path d="M511 90 H549"/>
-          <path d="M530 34 V16 M525 22 H535"/>
+        <g class="hs-thin">
+          <path d="M444 104 V86 H460 V104 M444 86 H460"/>
+          <rect x="466" y="76" width="8" height="8"/>
         </g>
-        <path class="hs-accent-line" d="M530 40 V48"/>
-        <!-- five-storey pagoda: shrinking roofs and a spire -->
+
+        <!-- TOKYO TOWER — four splayed lattice legs, cross-braces,
+             main observatory deck, top observatory, antenna spire -->
         <g class="hs-ink">
-          <path d="M580 104 H628 M584 92 H624 M588 80 H620 M592 68 H616 M596 56 H612"/>
-          <path d="M580 92 L604 84 L628 92 M584 80 L604 73 L624 80 M588 68 L604 62 L620 68 M592 56 L604 51 L616 56 M596 44 L604 40 L612 44"/>
-          <path d="M604 40 V24 M600 28 H608"/>
-          <path d="M600 104 V96 M608 104 V96"/>
+          <path d="M504 104 L522 52 M556 104 L538 52"/>
+          <path d="M514 104 L527 52 M546 104 L533 52"/>
+          <path d="M522 52 L525 40 M538 52 L535 40"/>
+          <path d="M527 33 L529 20 M533 33 L531 20"/>
         </g>
-        <!-- torii gate at the end of the lane -->
+        <g class="hs-thin">
+          <path d="M508 90 L548 68 M552 90 L512 68"/>
+          <path d="M510 79 H550"/>
+          <path d="M516 63 L544 52 M544 63 L516 52"/>
+          <path d="M502 104 H510 M550 104 H558"/>
+          <path d="M520 39 v4 M530 39 v4 M540 39 v4"/>
+        </g>
         <g class="hs-ink">
-          <path d="M650 62 Q676 54 702 62"/>
-          <path d="M656 72 H696"/>
-          <path d="M663 62 V104 M689 62 V104"/>
+          <path d="M514 32 H546 V40 H514 Z"/>
+          <path d="M526 14 H534 V20 H526 Z"/>
+          <path d="M530 14 V4"/>
+        </g>
+        <circle cx="530" cy="4" r="1.3" class="hs-accent"/>
+        <path class="hs-accent-line" d="M530 22 V30"/>
+
+        <!-- five-storey pagoda: curved eaves, balcony rails, sorin spire -->
+        <g class="hs-ink">
+          <path d="M578 94 Q604 88 630 94 M583 82 Q604 77 625 82 M587 70 Q604 66 621 70 M591 58 Q604 55 617 58 M595 46 Q604 43 613 46"/>
+          <path d="M604 104 V42"/>
+          <path d="M592 104 V97 M616 104 V97 M586 104 H622"/>
+        </g>
+        <g class="hs-thin">
+          <path d="M578 94 l-2 -3 M630 94 l2 -3 M583 82 l-2 -3 M625 82 l2 -3 M587 70 l-2 -3 M621 70 l2 -3 M591 58 l-2 -3 M617 58 l2 -3 M595 46 l-2 -3 M613 46 l2 -3"/>
+          <path d="M584 89 H624 M588 77 H620 M592 65 H616 M596 53 H612"/>
+          <path d="M604 42 V22 M599 36 H609 M600 31 H608 M601 26 H607"/>
+        </g>
+        <circle cx="604" cy="21" r="1.3" class="hs-accent"/>
+
+        <!-- torii gate: swept kasagi, tie beam, centre plaque -->
+        <g class="hs-ink">
+          <path d="M646 60 Q676 50 706 60"/>
+          <path d="M663 64 L662 104 M689 64 L690 104"/>
           <path d="M658 104 H668 M684 104 H694"/>
         </g>
+        <g class="hs-thin">
+          <path d="M650 65 Q676 56 702 65"/>
+          <path d="M646 60 l-2 -4 M706 60 l2 -4"/>
+          <path d="M656 74 H696 M656 74 l-3 2 M696 74 l3 2"/>
+        </g>
+        <rect x="672" y="65" width="8" height="7" class="hs-accent"/>
+
         <path class="hs-accent-line" d="M716 86 v10 M711 91 h10"/>
         <!-- construction verticals -->
-        <path class="hs-dash" d="M78 28 V8 M256 32 V8 M452 46 V8 M530 34 V8 M604 40 V8 M676 58 V8"/>
+        <path class="hs-dash" d="M78 30 V8 M256 34 V8 M452 46 V8 M604 22 V8 M676 50 V8"/>
         <g class="hs-ink hs-ticks">
-          <path d="M74 8 h8 M252 8 h8 M448 8 h8 M526 8 h8 M600 8 h8 M672 8 h8"/>
+          <path d="M74 8 h8 M252 8 h8 M448 8 h8 M600 8 h8 M672 8 h8"/>
         </g>
       </svg>
     </div>`;
@@ -998,10 +1106,17 @@
   }
 
   /* ================= starfield (entry t2 — About Koyome) =================
-     Geometric night sky behind the page: plus-shaped stars, a few
-     faint constellation threads, and a meteor sweeping by now and
-     then. Retina-crisp (devicePixelRatio aware), calmer in day mode,
-     richer at night; reduced motion gets a single static frame. */
+     Geometric night sky behind the page: five-pointed stars, a few
+     faint constellation threads, and a star-headed meteor sweeping
+     by now and then.
+     Performance model (R15): the quiet majority — far stars and
+     threads — is baked into an offscreen canvas once per seed/theme,
+     so each frame costs ONE drawImage blit plus a handful of sprite
+     draws for the twinkling bright stars and any meteor. On phones
+     the loop additionally FREEZES while the user is actively
+     scrolling (the sky is calm, nobody can tell), which keeps the
+     main thread and the texture uploader out of the compositor's
+     way — that fight was the scroll jank. */
   function renderStarfield() {
     if (entry.id !== 't2') return;
     const cv = document.createElement('canvas');
@@ -1009,18 +1124,66 @@
     cv.setAttribute('aria-hidden', 'true');
     document.body.appendChild(cv);
     const ctx = cv.getContext('2d');
-    /* phones: full-screen canvas repaints were fighting the scroll
-     * compositor — drop to DPR 1 and a 30fps cadence there (R11) */
     const MOBILE = !!(window.matchMedia && (
       window.matchMedia('(max-width: 720px)').matches ||
       window.matchMedia('(pointer: coarse)').matches));
     const DPR = MOBILE ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
-    let W = 0, H = 0, stars = [], threads = [], meteors = [];
+    let W = 0, H = 0, farStars = [], glowStars = [], threads = [], meteors = [];
     let colStar = '#7d8798', colLine = 'rgba(110,118,132,0.32)', colMeteor = '#9e2b25';
     /* mood: day = sparse & whisper-quiet, night = dense & bright */
-    let mood = { density: 22000, alpha: 0.5, meteorEvery: [7, 14], meteorAlpha: 0.55 };
+    let mood = { density: 22000, alpha: 0.72, meteorEvery: [6, 12], meteorAlpha: 0.8 };
     let frame = 0, visible = !document.hidden, nextMeteor = 4, last = performance.now();
+    let scrolling = false, scrollTimer = null;
+    let themeSig = '';
+
+    const sky = document.createElement('canvas');   /* baked static layer */
+    let sprites = null;                             /* five-star sprites by size */
+    let meteorSprite = null;
+
+    /* one crisp five-pointed star path, point-up */
+    function fiveStar(g, cx, cy, R) {
+      const r = R * 0.46;
+      g.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 === 0 ? R : r;
+        const a = -Math.PI / 2 + i * Math.PI / 5;
+        const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad;
+        if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      }
+      g.closePath();
+    }
+
+    /* a glowing five-star prerendered once, then blitted per frame —
+       path-drawing hundreds of stars per frame was the phone killer */
+    function makeSprite(R, glowR, color) {
+      const pad = Math.ceil(glowR * 2.2) + 1;
+      const c = document.createElement('canvas');
+      c.width = c.height = Math.ceil(pad * 2 * DPR);
+      const g = c.getContext('2d');
+      g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      const halo = g.createRadialGradient(pad, pad, 0, pad, pad, glowR * 2);
+      halo.addColorStop(0, color);
+      halo.addColorStop(0.3, color);
+      halo.addColorStop(1, 'transparent');
+      g.globalAlpha = 0.45;
+      g.fillStyle = halo;
+      g.beginPath(); g.arc(pad, pad, glowR * 2, 0, Math.PI * 2); g.fill();
+      g.globalAlpha = 1;
+      g.fillStyle = color;
+      fiveStar(g, pad, pad, R);
+      g.fill();
+      return c;
+    }
+
+    function buildSprites() {
+      sprites = {
+        s: makeSprite(1.7, 2.8, colStar),
+        m: makeSprite(2.6, 4.4, colStar),
+        l: makeSprite(3.7, 6.4, colStar),
+      };
+      meteorSprite = makeSprite(3.4, 6.5, colMeteor);
+    }
 
     function themeColors() {
       const cs = getComputedStyle(document.documentElement);
@@ -1029,8 +1192,10 @@
       colMeteor = (cs.getPropertyValue('--meteor') || colMeteor).trim();
       const dark = document.documentElement.dataset.theme === 'dark';
       mood = dark
-        ? { density: 13000, alpha: 1, meteorEvery: [3.5, 8], meteorAlpha: 0.95 }
-        : { density: 22000, alpha: 0.5, meteorEvery: [7, 14], meteorAlpha: 0.55 };
+        ? { density: 12500, alpha: 1, meteorEvery: [3.5, 8], meteorAlpha: 1 }
+        : { density: 22000, alpha: 0.72, meteorEvery: [6, 12], meteorAlpha: 0.8 };
+      const sig = colStar + '|' + colLine + '|' + colMeteor + '|' + dark + '|' + mood.density;
+      if (sig !== themeSig) { themeSig = sig; buildSprites(); bakeSky(); }
     }
 
     function seed() {
@@ -1040,66 +1205,57 @@
       cv.height = Math.round(H * DPR);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
       const n = Math.round((W * H) / mood.density);
-      stars = Array.from({ length: n }, () => ({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        r: Math.random() < 0.74 ? 0.8 + Math.random() * 1 : 2.4 + Math.random() * 2,
-        cross: Math.random() >= 0.74,           /* big ones are plus-shaped */
-        ph: Math.random() * Math.PI * 2,        /* twinkle phase */
-        sp: 0.25 + Math.random() * 0.55,        /* slow, calm shimmer */
-      }));
+      farStars = [];
+      glowStars = [];
+      for (let i = 0; i < n; i++) {
+        const s = {
+          x: Math.random() * W,
+          y: Math.random() * H,
+          ph: Math.random() * Math.PI * 2,
+          sp: 0.3 + Math.random() * 0.7,
+        };
+        if (Math.random() < 0.68) {
+          s.r = 1 + Math.random() * 1.3;            /* quiet backdrop stars */
+          farStars.push(s);
+        } else {
+          const u = Math.random();                  /* the twinkling few */
+          s.k = u < 0.55 ? 's' : (u < 0.88 ? 'm' : 'l');
+          glowStars.push(s);
+        }
+      }
       /* constellation threads: link a few close neighbours */
+      const all = farStars.concat(glowStars);
       threads = [];
-      for (let i = 0; i < stars.length && threads.length < 8; i += 7) {
-        const a = stars[i];
+      for (let i = 0; i < all.length && threads.length < 8; i += 7) {
+        const a = all[i];
         let best = null, bd = 1e9;
-        for (let j = i + 1; j < Math.min(i + 24, stars.length); j++) {
-          const b = stars[j];
+        for (let j = i + 1; j < Math.min(i + 24, all.length); j++) {
+          const b = all[j];
           const d = (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
           if (d < bd) { bd = d; best = b; }
         }
         if (best && bd < 240 * 240) threads.push([a, best]);
       }
+      bakeSky();
     }
 
-    function drawStatic(time) {
-      ctx.clearRect(0, 0, W, H);
-      ctx.strokeStyle = colLine;
-      ctx.lineWidth = 0.6;
-      ctx.globalAlpha = mood.alpha * 0.8;
+    /* the whole calm sky painted ONCE — afterwards a frame is one blit */
+    function bakeSky() {
+      if (!W || !H) return;
+      sky.width = cv.width;
+      sky.height = cv.height;
+      const g = sky.getContext('2d');
+      g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      g.strokeStyle = colLine;
+      g.lineWidth = 0.6;
+      g.globalAlpha = mood.alpha * 0.8;
       threads.forEach(([a, b]) => {
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
       });
-      /* small square stars: one flat-alpha pass — per-star alpha changes
-         were the main paint cost on phones, and the tiny shimmer was
-         barely visible on them anyway */
-      ctx.globalAlpha = mood.alpha * 0.62;
-      ctx.fillStyle = colStar;
-      stars.forEach((s) => {
-        if (!s.cross) ctx.fillRect(s.x - s.r / 2, s.y - s.r / 2, s.r, s.r);
-      });
-      /* plus-shaped stars keep their slow shimmer */
-      stars.forEach((s) => {
-        if (!s.cross) return;
-        const tw = (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph))) * mood.alpha;
-        ctx.globalAlpha = tw;
-        ctx.strokeStyle = colStar;
-        ctx.lineWidth = 1;
-        const r = s.r * 2.1;
-        ctx.beginPath();
-        ctx.moveTo(s.x - r, s.y); ctx.lineTo(s.x + r, s.y);
-        ctx.moveTo(s.x, s.y - r); ctx.lineTo(s.x, s.y + r);
-        ctx.stroke();
-        /* a tiny diamond core on the brightest crosses */
-        if (tw > mood.alpha * 0.85) {
-          ctx.fillStyle = colStar;
-          ctx.beginPath();
-          ctx.moveTo(s.x, s.y - 1.6); ctx.lineTo(s.x + 1.6, s.y);
-          ctx.lineTo(s.x, s.y + 1.6); ctx.lineTo(s.x - 1.6, s.y);
-          ctx.closePath(); ctx.fill();
-        }
-      });
-      ctx.globalAlpha = 1;
+      g.globalAlpha = mood.alpha * 0.7;
+      g.fillStyle = colStar;
+      farStars.forEach((s) => { fiveStar(g, s.x, s.y, s.r); g.fill(); });
+      g.globalAlpha = 1;
     }
 
     function spawnMeteor() {
@@ -1117,21 +1273,63 @@
       });
     }
 
+    function drawMeteor(m, fade) {
+      const tailLen = m.big ? 0.42 : 0.3;
+      const tx = m.x - m.vx * tailLen, ty = m.y - m.vy * tailLen;
+      /* tapered tail: a wide faint stroke under a thin bright one */
+      const g = ctx.createLinearGradient(m.x, m.y, tx, ty);
+      g.addColorStop(0, colMeteor);
+      g.addColorStop(1, 'transparent');
+      ctx.strokeStyle = g;
+      ctx.globalAlpha = fade * 0.5;
+      ctx.lineWidth = m.big ? 3.2 : 2.2;
+      ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.globalAlpha = fade;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.vx * tailLen * 0.6, m.y - m.vy * tailLen * 0.6); ctx.stroke();
+      /* a little sister-star sparkles mid-tail */
+      if (meteorSprite) {
+        const half = (meteorSprite.width / (2 * DPR)) * 0.45;
+        ctx.globalAlpha = fade * 0.55;
+        ctx.drawImage(meteorSprite, m.x - m.vx * tailLen * 0.45 - half, m.y - m.vy * tailLen * 0.45 - half, half * 2, half * 2);
+      }
+      /* five-star head, glowing */
+      if (meteorSprite) {
+        const scale = m.big ? 1.5 : 1;
+        const half = (meteorSprite.width / (2 * DPR)) * scale;
+        ctx.globalAlpha = fade;
+        ctx.drawImage(meteorSprite, m.x - half, m.y - half, half * 2, half * 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
     let dtDraw = 0;
     function tick(now) {
       requestAnimationFrame(tick);
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
-      if (!visible) { dtDraw = 0; return; }
+      /* frozen while hidden or mid-scroll: the sky waits, the page glides */
+      if (!visible || scrolling) { dtDraw = 0; return; }
       frame++;
       if (frame % 45 === 0) themeColors();   /* pick up day/night flips */
       dtDraw += dt;
-      /* phones: repaint at ~30fps — the sky is calm enough that nobody
-         can tell, and scrolling stays butter-smooth */
-      if (MOBILE && dtDraw < 1 / 30) return;
+      if (MOBILE && dtDraw < 1 / 30) return;   /* 30fps cadence on phones */
       const step = dtDraw; dtDraw = 0;
       const time = now / 1000;
-      drawStatic(time);
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(sky, 0, 0, sky.width, sky.height, 0, 0, W, H);
+
+      /* the twinkling few — sprite blits, no path work */
+      if (sprites) {
+        glowStars.forEach((s) => {
+          const spr = sprites[s.k];
+          const half = spr.width / (2 * DPR);
+          ctx.globalAlpha = (0.38 + 0.62 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph))) * mood.alpha;
+          ctx.drawImage(spr, s.x - half, s.y - half, half * 2, half * 2);
+        });
+      }
+      ctx.globalAlpha = 1;
 
       nextMeteor -= step;
       if (nextMeteor <= 0) {
@@ -1143,29 +1341,7 @@
         m.life += step;
         m.x += m.vx * step;
         m.y += m.vy * step;
-        const fade = Math.sin((m.life / m.ttl) * Math.PI) * mood.meteorAlpha;
-        const tailLen = m.big ? 0.42 : 0.3;
-        const tx = m.x - m.vx * tailLen, ty = m.y - m.vy * tailLen;
-        /* tapered tail: a wide faint stroke under a thin bright one */
-        const g = ctx.createLinearGradient(m.x, m.y, tx, ty);
-        g.addColorStop(0, colMeteor);
-        g.addColorStop(1, 'transparent');
-        ctx.strokeStyle = g;
-        ctx.globalAlpha = fade * 0.45;
-        ctx.lineWidth = m.big ? 3.2 : 2.2;
-        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tx, ty); ctx.stroke();
-        ctx.globalAlpha = fade;
-        ctx.lineWidth = 1.1;
-        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.vx * tailLen * 0.6, m.y - m.vy * tailLen * 0.6); ctx.stroke();
-        /* glowing head */
-        const hr = m.big ? 7 : 4.5;
-        const halo = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, hr);
-        halo.addColorStop(0, colMeteor);
-        halo.addColorStop(1, 'transparent');
-        ctx.globalAlpha = fade * 0.8;
-        ctx.fillStyle = halo;
-        ctx.beginPath(); ctx.arc(m.x, m.y, hr, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1;
+        drawMeteor(m, Math.sin((m.life / m.ttl) * Math.PI) * mood.meteorAlpha);
       });
     }
 
@@ -1177,8 +1353,30 @@
       resizeTimer = setTimeout(seed, 180);   /* debounce: don't re-seed per pixel */
     }, { passive: true });
     document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
+    /* phones: freeze the sky while the finger is on the glass */
+    if (MOBILE) {
+      window.addEventListener('scroll', () => {
+        scrolling = true;
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => { scrolling = false; }, 160);
+      }, { passive: true });
+    }
 
-    if (RM) { drawStatic(1); return; }   /* one calm frame, no motion */
+    if (RM) {
+      /* one calm frame, no motion */
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(sky, 0, 0, sky.width, sky.height, 0, 0, W, H);
+      if (sprites) {
+        glowStars.forEach((s) => {
+          const spr = sprites[s.k];
+          const half = spr.width / (2 * DPR);
+          ctx.globalAlpha = mood.alpha * 0.9;
+          ctx.drawImage(spr, s.x - half, s.y - half, half * 2, half * 2);
+        });
+        ctx.globalAlpha = 1;
+      }
+      return;
+    }
     requestAnimationFrame(tick);
   }
 

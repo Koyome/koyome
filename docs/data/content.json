@@ -246,7 +246,8 @@
       },
       {
         "type": "image",
-        "src": "assets/1790056786049_4ADE2431C41D4542BE16418967DFE09B.jpg"
+        "src": "assets/1790056786049_4ADE2431C41D4542BE16418967DFE09B.jpg",
+        "captionZh": "去往牛岛的船"
       },
       {
         "type": "image",
@@ -260,7 +261,28 @@
       },
       {
         "type": "image",
-        "src": "assets/1790056805217_347820EBB99A6C05A69ED8852F7658D0.jpg"
+        "src": "assets/1790056805217_347820EBB99A6C05A69ED8852F7658D0.jpg",
+        "captionZh": "牛岛"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790156310113_B6EEB7A137D4385E4CE406234FA24ED3.jpg",
+        "captionZh": "东京塔天气之子打卡点"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790156315829_67EBCA8B9E8EF06BAC031CBFE749A03A.jpg",
+        "captionZh": "秋叶原"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790156328290_A3EE75F8FE02FC155F1D312572A7AE97.png",
+        "captionZh": "天气之子打卡点"
+      },
+      {
+        "type": "image",
+        "src": "assets/1790156335221_9444CD437D2E7C1DD0A56A5A94317AC3.png",
+        "captionZh": "天气之子打卡"
       }
     ],
     "body": "",
@@ -271,19 +293,29 @@
           "x": 389,
           "y": 51,
           "zh": "浅草寺",
-          "en": ""
+          "en": "",
+          "icon": "castle"
         },
         {
           "x": 361,
           "y": 141,
           "zh": "秋叶原",
-          "en": ""
+          "en": "",
+          "icon": "lantern"
         },
         {
           "x": 124,
           "y": 169,
           "zh": "歌舞伎町",
-          "en": ""
+          "en": "",
+          "icon": ""
+        },
+        {
+          "x": 244,
+          "y": 115,
+          "zh": "天气之子打卡点",
+          "en": "",
+          "icon": "sakura"
         }
       ],
       "jeju": [
@@ -291,7 +323,8 @@
           "x": 512,
           "y": 108,
           "zh": "牛岛",
-          "en": ""
+          "en": "",
+          "icon": ""
         }
       ]
     }

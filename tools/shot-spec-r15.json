@@ -1,0 +1,8 @@
+[
+  { "url": "http://Koyome.me/entry.html?id=i1", "theme": "light", "w": 1280, "h": 860, "wait": 4000, "name": "i1-strip-light" },
+  { "url": "http://Koyome.me/entry.html?id=i1", "theme": "light", "w": 1280, "h": 860, "wait": 4000, "scrollY": 640, "name": "i1-map-tokyo" },
+  { "url": "http://Koyome.me/entry.html?id=i1", "theme": "light", "w": 1280, "h": 860, "wait": 4000, "scrollY": 1300, "name": "i1-map-jeju" },
+  { "url": "http://Koyome.me/entry.html?id=t2", "theme": "dark", "w": 1280, "h": 860, "wait": 4500, "name": "t2-stars-night" },
+  { "url": "http://Koyome.me/entry.html?id=t2", "theme": "light", "w": 1280, "h": 860, "wait": 4500, "name": "t2-stars-day" },
+  { "url": "http://Koyome.me/entry.html?id=t2", "theme": "dark", "w": 390, "h": 780, "wait": 4500, "name": "t2-stars-mobile" }
+]
