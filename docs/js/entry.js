@@ -1154,35 +1154,41 @@
       g.closePath();
     }
 
-    /* a glowing five-star prerendered once, then blitted per frame —
-       path-drawing hundreds of stars per frame was the phone killer */
+    /* a five-star prerendered once, then blitted per frame.
+       The glow is painted with shadowBlur ALONG THE STAR PATH, so the
+       light clings to the five points (rim glow) instead of bleeding
+       out as a detached disc — the old radial-gradient halo read as a
+       mouldy ring in daylight and as fog scatter at night. */
     function makeSprite(R, glowR, color) {
-      const pad = Math.ceil(glowR * 2.2) + 1;
+      const pad = Math.ceil(glowR * 2.4) + 2;
       const c = document.createElement('canvas');
       c.width = c.height = Math.ceil(pad * 2 * DPR);
       const g = c.getContext('2d');
       g.setTransform(DPR, 0, 0, DPR, 0, 0);
-      const halo = g.createRadialGradient(pad, pad, 0, pad, pad, glowR * 2);
-      halo.addColorStop(0, color);
-      halo.addColorStop(0.3, color);
-      halo.addColorStop(1, 'transparent');
-      g.globalAlpha = 0.45;
-      g.fillStyle = halo;
-      g.beginPath(); g.arc(pad, pad, glowR * 2, 0, Math.PI * 2); g.fill();
-      g.globalAlpha = 1;
       g.fillStyle = color;
+      /* two soft passes hug the shape's edges, then a crisp core on top */
+      g.shadowColor = color;
+      g.shadowBlur = glowR;
       fiveStar(g, pad, pad, R);
+      g.fill();
+      g.shadowBlur = glowR * 0.55;
+      g.fill();
+      g.shadowBlur = 0;
       g.fill();
       return c;
     }
 
     function buildSprites() {
+      /* night carries a wider rim; daylight keeps just a soft edge so
+         the stars stay clean against the paper */
+      const dark = document.documentElement.dataset.theme === 'dark';
+      const k = dark ? 1.9 : 1.05;
       sprites = {
-        s: makeSprite(1.7, 2.8, colStar),
-        m: makeSprite(2.6, 4.4, colStar),
-        l: makeSprite(3.7, 6.4, colStar),
+        s: makeSprite(1.7, 2.2 * k, colStar),
+        m: makeSprite(2.6, 3.2 * k, colStar),
+        l: makeSprite(3.7, 4.6 * k, colStar),
       };
-      meteorSprite = makeSprite(3.4, 6.5, colMeteor);
+      meteorSprite = makeSprite(3.4, 4.8 * k, colMeteor);
     }
 
     function themeColors() {
@@ -1212,10 +1218,16 @@
           x: Math.random() * W,
           y: Math.random() * H,
           ph: Math.random() * Math.PI * 2,
-          sp: 0.3 + Math.random() * 0.7,
+          sp: 0.25 + Math.random() * 1.1,
+          /* per-star brightness seat & sway — no two stars breathe alike */
+          base: 0.5 + Math.random() * 0.3,
+          amp: 0.16 + Math.random() * 0.24,
         };
         if (Math.random() < 0.68) {
-          s.r = 1 + Math.random() * 1.3;            /* quiet backdrop stars */
+          /* quiet backdrop stars: mostly pin-pricks, a few chunkier;
+             each keeps its own resting brightness baked into the sky */
+          s.r = 0.8 + Math.pow(Math.random(), 1.8) * 1.6;
+          s.a = 0.35 + Math.random() * 0.5;
           farStars.push(s);
         } else {
           const u = Math.random();                  /* the twinkling few */
@@ -1246,15 +1258,28 @@
       sky.height = cv.height;
       const g = sky.getContext('2d');
       g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      /* a whisper of altitude: the top of the viewport sits a touch
+         deeper so the star field melts into the page instead of
+         floating on a flat sheet */
+      const dark = document.documentElement.dataset.theme === 'dark';
+      const wash = g.createLinearGradient(0, 0, 0, H * 0.62);
+      wash.addColorStop(0, colStar);
+      wash.addColorStop(1, 'transparent');
+      g.globalAlpha = dark ? 0.055 : 0.02;
+      g.fillStyle = wash;
+      g.fillRect(0, 0, W, H * 0.62);
       g.strokeStyle = colLine;
       g.lineWidth = 0.6;
       g.globalAlpha = mood.alpha * 0.8;
       threads.forEach(([a, b]) => {
         g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
       });
-      g.globalAlpha = mood.alpha * 0.7;
+      /* backdrop stars keep their own resting brightness */
       g.fillStyle = colStar;
-      farStars.forEach((s) => { fiveStar(g, s.x, s.y, s.r); g.fill(); });
+      farStars.forEach((s) => {
+        g.globalAlpha = mood.alpha * s.a;
+        fiveStar(g, s.x, s.y, s.r); g.fill();
+      });
       g.globalAlpha = 1;
     }
 
@@ -1276,26 +1301,27 @@
     function drawMeteor(m, fade) {
       const tailLen = m.big ? 0.42 : 0.3;
       const tx = m.x - m.vx * tailLen, ty = m.y - m.vy * tailLen;
-      /* tapered tail: a wide faint stroke under a thin bright one */
+      /* a single tapered thread — the light lives in the head and the
+         thin bright core, not in a wide wash behind it */
       const g = ctx.createLinearGradient(m.x, m.y, tx, ty);
       g.addColorStop(0, colMeteor);
       g.addColorStop(1, 'transparent');
       ctx.strokeStyle = g;
-      ctx.globalAlpha = fade * 0.5;
-      ctx.lineWidth = m.big ? 3.2 : 2.2;
+      ctx.globalAlpha = fade * 0.32;
+      ctx.lineWidth = m.big ? 1.8 : 1.3;
       ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(tx, ty); ctx.stroke();
-      ctx.globalAlpha = fade;
-      ctx.lineWidth = 1.1;
+      ctx.globalAlpha = fade * 0.9;
+      ctx.lineWidth = 0.7;
       ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x - m.vx * tailLen * 0.6, m.y - m.vy * tailLen * 0.6); ctx.stroke();
       /* a little sister-star sparkles mid-tail */
       if (meteorSprite) {
-        const half = (meteorSprite.width / (2 * DPR)) * 0.45;
-        ctx.globalAlpha = fade * 0.55;
+        const half = (meteorSprite.width / (2 * DPR)) * 0.42;
+        ctx.globalAlpha = fade * 0.4;
         ctx.drawImage(meteorSprite, m.x - m.vx * tailLen * 0.45 - half, m.y - m.vy * tailLen * 0.45 - half, half * 2, half * 2);
       }
-      /* five-star head, glowing */
+      /* five-star head, rim-glow only */
       if (meteorSprite) {
-        const scale = m.big ? 1.5 : 1;
+        const scale = m.big ? 1.4 : 1;
         const half = (meteorSprite.width / (2 * DPR)) * scale;
         ctx.globalAlpha = fade;
         ctx.drawImage(meteorSprite, m.x - half, m.y - half, half * 2, half * 2);
@@ -1320,13 +1346,23 @@
       ctx.clearRect(0, 0, W, H);
       ctx.drawImage(sky, 0, 0, sky.width, sky.height, 0, 0, W, H);
 
-      /* the twinkling few — sprite blits, no path work */
+      /* the twinkling few — sprite blits, no path work.
+         Two detuned sines per star read as organic scintillation
+         instead of a metronome; the largest few also breathe a
+         whisper of scale. */
       if (sprites) {
         glowStars.forEach((s) => {
           const spr = sprites[s.k];
           const half = spr.width / (2 * DPR);
-          ctx.globalAlpha = (0.38 + 0.62 * (0.5 + 0.5 * Math.sin(time * s.sp + s.ph))) * mood.alpha;
-          ctx.drawImage(spr, s.x - half, s.y - half, half * 2, half * 2);
+          const tw = 0.62 * Math.sin(time * s.sp + s.ph) +
+                     0.38 * Math.sin(time * s.sp * 2.63 + s.ph * 1.71);
+          ctx.globalAlpha = Math.max(0, Math.min(1, s.base + s.amp * tw)) * mood.alpha;
+          if (s.k === 'l') {
+            const sc = 1 + 0.07 * Math.sin(time * s.sp * 0.6 + s.ph);
+            ctx.drawImage(spr, s.x - half * sc, s.y - half * sc, half * 2 * sc, half * 2 * sc);
+          } else {
+            ctx.drawImage(spr, s.x - half, s.y - half, half * 2, half * 2);
+          }
         });
       }
       ctx.globalAlpha = 1;

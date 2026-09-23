@@ -263,10 +263,15 @@
     if (hasAPI) {
       const viaApi = await tryApi('api/hobbies');
       if (ok(viaApi)) return normalizeHobbies(viaApi);
-      const local = readLS(LS_HOBBIES);
-      if (ok(local)) return normalizeHobbies(local);
+      /* static hosting (GitHub Pages): visitors are read-only, so a
+         localStorage snapshot can only be STALE (a fossil from an old
+         edit). The baked JSON always carries the newest uploads —
+         it must win, otherwise freshly added pictures never reach the
+         homepage TODAY'S PICKS pool. LS stays as the last resort. */
       const baked = await fetchJson('data/hobbies.json');
       if (ok(baked)) return normalizeHobbies(baked);
+      const local = readLS(LS_HOBBIES);
+      if (ok(local)) return normalizeHobbies(local);
       return normalizeHobbies(JSON.parse(JSON.stringify(HOBBIES_SEED)));
     }
     const local = readLS(LS_HOBBIES);

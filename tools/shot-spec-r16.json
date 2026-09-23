@@ -1,0 +1,6 @@
+[
+  { "url": "http://Koyome.me/entry.html?id=t2", "theme": "dark", "w": 1280, "h": 860, "wait": 4500, "name": "r16-stars-night" },
+  { "url": "http://Koyome.me/entry.html?id=t2", "theme": "light", "w": 1280, "h": 860, "wait": 4500, "name": "r16-stars-day" },
+  { "url": "http://Koyome.me/entry.html?id=t2", "theme": "dark", "w": 390, "h": 780, "wait": 4500, "name": "r16-stars-mobile" },
+  { "url": "http://Koyome.me/", "theme": "light", "w": 1280, "h": 860, "wait": 4000, "scrollY": 1400, "name": "r16-home-picks" }
+]
