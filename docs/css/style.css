@@ -188,10 +188,6 @@ img { max-width: 100%; display: block; }
   min-height: 60vh;
 }
 .portrait { position: relative; }
-.portrait-dot {
-  position: absolute; left: -5px; top: -5px; width: 9px; height: 9px; border-radius: 50%;
-  background: var(--accent);
-}
 .portrait figcaption {
   margin-top: 14px; font-family: var(--mono); font-size: 9.5px;
   letter-spacing: 0.3em; color: var(--muted);
@@ -1232,58 +1228,28 @@ img { max-width: 100%; display: block; }
   .sat-a, .sat-b, .sat-c, .orbit-dash { animation: none; }
 }
 
-/* ---------- Home portrait: ink figure pinned to its drafting sheet ---------- */
+/* ---------- Home portrait: ink figure, bare — the cutout itself IS
+   the design (user call: no backdrop sheet, no register ticks) ---------- */
 .portrait { position: relative; }
-/* the sheet behind the figure: a faint surveying grid on panel paper,
-   tilted a breath off-square, with a dashed inner register frame —
-   the same measurement dialect as the travel maps, so the ink figure
-   no longer floats in a void */
-.portrait::before {
-  content: ""; position: absolute; inset: 5% -7% 9% -7%;
-  background:
-    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 100% 26px,
-    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 26px 100%,
-    var(--panel);
-  border: 1px solid var(--line);
-  outline: 1px dashed var(--frame-mark); outline-offset: -9px;
-  transform: rotate(-1.7deg);
-  opacity: 0.5;
-}
-/* two red register ticks on the sheet, echoing the accent thread */
-.portrait::after {
-  content: ""; position: absolute; inset: 5% -7% 9% -7%;
-  transform: rotate(-1.7deg);
-  background:
-    linear-gradient(var(--accent), var(--accent)) left 0 top 0 / 14px 1.5px,
-    linear-gradient(var(--accent), var(--accent)) left 0 top 0 / 1.5px 14px,
-    linear-gradient(var(--accent), var(--accent)) right 0 bottom 0 / 14px 1.5px,
-    linear-gradient(var(--accent), var(--accent)) right 0 bottom 0 / 1.5px 14px;
-  background-repeat: no-repeat;
-  opacity: 0.85;
-}
 .portrait-cutout {
   position: relative; z-index: 1; width: 100%;
   mix-blend-mode: multiply;               /* ink prints onto the page */
   filter: drop-shadow(0 16px 26px rgba(60, 58, 54, 0.16));
-  /* idle motion, hand-drawn style: a handful of tiny poses HELD, then
-     jumped between (steps = frame-stepped, like limited animation).
-     Amplitudes stay under a degree / a pixel — a breath, not a dance */
-  animation: portrait-idle 4.8s steps(1, end) infinite;
+  /* idle sway: one slow, smooth breath — sub-degree rotation around
+     the feet, sub-pixel drift. No stepping, no jitter */
+  animation: portrait-idle 6.4s ease-in-out infinite;
   transform-origin: 50% 92%;
 }
 @keyframes portrait-idle {
-  0%   { transform: rotate(0deg)     translate(0, 0); }
-  20%  { transform: rotate(-0.55deg) translate(-0.5px, -1px); }
-  40%  { transform: rotate(0.4deg)   translate(0.5px, 0); }
-  60%  { transform: rotate(-0.25deg) translate(0, 0.5px); }
-  80%  { transform: rotate(0.45deg)  translate(-0.5px, -0.5px); }
-  100% { transform: rotate(0deg)     translate(0, 0); }
+  0%, 100% { transform: rotate(0deg)     translate(0, 0); }
+  25%      { transform: rotate(-0.5deg)  translate(-0.5px, -1px); }
+  50%      { transform: rotate(0.35deg)  translate(0.5px, 0); }
+  75%      { transform: rotate(-0.2deg)  translate(0, 0.5px); }
 }
 [data-theme="dark"] .portrait-cutout {
   mix-blend-mode: normal;
   filter: invert(0.92) drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
 }
-[data-theme="dark"] .portrait::before { opacity: 0.35; }
 @media (prefers-reduced-motion: reduce) { .portrait-cutout { animation: none; } }
 .portrait-note {
   margin-top: 10px; font-family: var(--serif); font-style: italic;
