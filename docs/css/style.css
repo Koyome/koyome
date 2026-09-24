@@ -306,7 +306,30 @@ img { max-width: 100%; display: block; }
   max-width: 1080px; margin: 0 auto;
   padding: 10px 40px 90px;
   display: flex; flex-direction: column; align-items: center; gap: 44px;
+  position: relative;
 }
+/* the pencil angel: the homepage's closing emblem, drifting a breath
+   behind the sigil. Present in daylight; after dark she turns pale
+   ink with a soft halo — the page's quiet apotheosis */
+.home-angel {
+  position: absolute; left: 50%; top: 50%;
+  translate: -50% -50%;
+  width: min(540px, 88vw);
+  opacity: 0.2; pointer-events: none;
+  mix-blend-mode: multiply;
+  animation: angel-drift 9s ease-in-out infinite;
+}
+@keyframes angel-drift {
+  0%, 100% { translate: -50% -50%; }
+  50%      { translate: -50% calc(-50% - 8px); }
+}
+[data-theme="dark"] .home-angel {
+  mix-blend-mode: normal;
+  opacity: 0.42;
+  filter: invert(0.92) drop-shadow(0 0 22px rgba(235, 233, 229, 0.22));
+}
+@media (max-width: 720px) { .home-angel { width: min(340px, 92vw); } }
+@media (prefers-reduced-motion: reduce) { .home-angel { animation: none; } }
 .sigil-rule { width: min(340px, 60vw); height: 1px; background: var(--line); position: relative; }
 .sigil-rule::before, .sigil-rule::after {
   content: ""; position: absolute; top: -2.5px; width: 5px; height: 5px;
@@ -1262,35 +1285,58 @@ img { max-width: 100%; display: block; }
   .about-figure { width: 44%; margin: 2px 0 14px 16px; }
 }
 
-/* ---------- owner-provided line-art emblems (R18) ----------
-   three quiet watermarks, one per page, all printed in site ink:
-   chapel → guestbook · constellation → catalog · angel → hobbies.
-   Daylight: multiply onto the paper; night: inverted to pale ink. */
-.gb-chapel, .cat-stars, .hob-angel {
+/* ---------- owner-provided line-art emblems (R18/R19) ----------
+   line art printed in site ink, one quiet emblem per page:
+   chapel → guestbook · constellation → catalog · angel → home finale.
+   Daylight: multiply onto the paper; night: per-emblem treatment below. */
+.gb-chapel, .cat-stars {
   position: absolute; pointer-events: none;
   mix-blend-mode: multiply;
 }
-[data-theme="dark"] .gb-chapel,
-[data-theme="dark"] .cat-stars,
-[data-theme="dark"] .hob-angel { mix-blend-mode: normal; filter: invert(0.92); }
 
-/* a small chapel with a shining spire, watching over the notes */
-.gb-chapel { top: 0; right: 0; width: 225px; opacity: 0.2; z-index: -1; }
-[data-theme="dark"] .gb-chapel { opacity: 0.32; }
+/* a small chapel watching over the notes — the spire star is a
+   separate accent-red layer that wakes up after dark with a soft,
+   slow-breathing glow (visible, never harsh) */
+.gb-chapel {
+  position: absolute; top: 0; right: 0; width: 225px;
+  opacity: 0.2; z-index: -1; pointer-events: none;
+  mix-blend-mode: multiply;
+}
+.gb-chapel img { width: 100%; display: block; }
+.gb-chapel-star { position: absolute; inset: 0; }
+[data-theme="dark"] .gb-chapel { mix-blend-mode: normal; opacity: 0.42; }
+[data-theme="dark"] .gb-chapel img:first-child { filter: invert(0.92); }
+[data-theme="dark"] .gb-chapel-star {
+  mix-blend-mode: screen;
+  filter: brightness(1.55) drop-shadow(0 0 10px rgba(212, 96, 79, 0.75)) drop-shadow(0 0 26px rgba(212, 96, 79, 0.4));
+  animation: chapel-star-breathe 5.2s ease-in-out infinite;
+}
+@keyframes chapel-star-breathe {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"] .gb-chapel-star { animation: none; }
+}
 
-/* a compass rose ringed by constellations — the index's night sky */
+/* a compass rose ringed by constellations — the index's night sky;
+   after dark it catches a faint stellar sheen of its own */
 .section { position: relative; }
 .cat-stars { top: 16px; right: 16px; width: 285px; opacity: 0.17; }
-[data-theme="dark"] .cat-stars { opacity: 0.26; }
+[data-theme="dark"] .cat-stars {
+  mix-blend-mode: normal;
+  opacity: 0.4;
+  filter: invert(0.92) drop-shadow(0 0 9px rgba(235, 233, 229, 0.28));
+}
 
-/* a pencil angel drifting behind the things I love */
-.hob-angel { top: 200px; right: -8px; width: 315px; opacity: 0.13; z-index: -1; }
-[data-theme="dark"] .hob-angel { opacity: 0.2; }
+/* the pencil angel's home is the homepage finale — see .home-sigil */
 
 @media (max-width: 880px) {
   .gb-chapel { width: 125px; opacity: 0.16; }
   .cat-stars { width: 150px; top: 12px; right: 10px; opacity: 0.13; }
-  .hob-angel { width: 150px; top: 130px; left: -14px; right: auto; opacity: 0.09; }
+}
+@media (max-width: 880px) {
+  [data-theme="dark"] .cat-stars { opacity: 0.3; }
 }
 .portrait-note {
   margin-top: 10px; font-family: var(--serif); font-style: italic;

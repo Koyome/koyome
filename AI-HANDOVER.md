@@ -1,8 +1,18 @@
 # Koyome.me — 项目交接文档（AI Handover）
 
 > 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
-> 最后更新：2026-09-24（第十八轮：新人物形象 t2 页入画 + 三张线稿素材抠图分发三页）**本轮未推送，由用户一键脚本自行上线**
+> 最后更新：2026-09-24（第十九轮：夜间发光质感——教堂星光呼吸 / 天使移驻主页底部 / 星座微光）**本轮未推送，由用户一键脚本自行上线**
 > 仓库 HEAD：`ffcf7bf`（第十六轮已 commit，线上待用户推送）｜ ⚠️ 常驻推送授权**已于 2026-09-23 取消**：AI 推送前必须逐次征得用户同意（§4.3）
+
+---
+
+## 0.17 第十九轮速览（2026-09-24）
+
+- **教堂尖顶发光（用户点名）**：`tools/split-chapel.py` 把教堂拆成同尺寸双层——建筑（墨色）+ 尖顶星光（**烘焙 accent 红 #9e2b25**，软混合带藏接缝）→ `deco_chapel.webp` + `deco_chapel_star.webp`。guestbook.html 改 `.gb-chapel` 为双层叠放 span；白天红星配墨建筑（贴合全站红色 accent 方言），夜间星光层 `mix-blend:screen + brightness(1.55) + 双层 drop-shadow 红晕`，加 5.2s 柔和呼吸（chapel-star-breathe，RM 静止）；建筑层夜间 invert(0.92)，整体 opacity 升至 .42。
+- **天使移驻主页底部（用户指定）**：从爱好页移除，移至**首页六芒星区**（.home-sigil 第一子元素，垫在六芒星之下居中，width min(540px,88vw)）——白天 opacity .2 multiply 印纸，9s 极缓漂浮（angel-drift，±8px，用独立 `translate` 属性写 keyframes）；夜间 invert(0.92) 转淡墨 + 柔和光晕（drop-shadow 22px, .22），opacity .42。移动端 min(340px,92vw)。RM 全程静止。
+- **星座罗盘夜间微光**：`.cat-stars` 夜间 opacity .4 + invert + 淡白 drop-shadow（9px, .28）。
+- **教训记录**：通用规则块（`.gb-chapel,.cat-stars,.hob-angel` 的 dark invert）会与夜间专项发光规则冲突——专项规则要显式重置 `mix-blend-mode`。
+- **验证**：jsdom 24/24 绿；未截图（用户要求本地自验）。**本轮代码未推送**（用户一键脚本自行上线，§4.3）。
 
 ---
 
