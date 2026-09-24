@@ -9,9 +9,9 @@
 ## 0.17 第十九轮速览（2026-09-24）
 
 - **教堂尖顶发光（用户点名）**：`tools/split-chapel.py` 把教堂拆成同尺寸双层——建筑（墨色）+ 尖顶星光（**烘焙 accent 红 #9e2b25**，软混合带藏接缝）→ `deco_chapel.webp` + `deco_chapel_star.webp`。guestbook.html 改 `.gb-chapel` 为双层叠放 span；白天红星配墨建筑（贴合全站红色 accent 方言），夜间星光层 `mix-blend:screen + brightness(1.55) + 双层 drop-shadow 红晕`，加 5.2s 柔和呼吸（chapel-star-breathe，RM 静止）；建筑层夜间 invert(0.92)，整体 opacity 升至 .42。
-- **天使移驻主页底部（用户指定）**：从爱好页移除，移至**首页六芒星区**（.home-sigil 第一子元素，垫在六芒星之下居中，width min(540px,88vw)）——白天 opacity .2 multiply 印纸，9s 极缓漂浮（angel-drift，±8px，用独立 `translate` 属性写 keyframes）；夜间 invert(0.92) 转淡墨 + 柔和光晕（drop-shadow 22px, .22），opacity .42。移动端 min(340px,92vw)。RM 全程静止。
+- **天使定稿（历经三版，用户逐项裁定）**：R18 爱好页水印 → R19 六芒星背后（用户否：与六芒星线条冲突、太大）→ **最终：六芒星下方独立展位** `.home-angel-sec > .home-angel-plate`——`FIG. 02 — THE ANGEL` 标注与首页人像 FIG.01 呼应（i18n 键 `home_fig2`）；尺寸 268px（移动 220px）不再压场；质感=月晕光盘 `.ha-halo`（白天暖红 .05 / 夜间淡白 .11，6.5s 呼吸）+ contrast(1.04) + 落地投影，夜间 invert + 双层光晕；动画=**三频复合**（`.ha-float` 7.5s 漂浮 ±9px + img `angel-sway` 10.5s 微摆 ±0.9° 支点 50% 45% + halo 呼吸，周期互质不同步→生动不机械）。RM 全静止。
 - **星座罗盘夜间微光**：`.cat-stars` 夜间 opacity .4 + invert + 淡白 drop-shadow（9px, .28）。
-- **教训记录**：通用规则块（`.gb-chapel,.cat-stars,.hob-angel` 的 dark invert）会与夜间专项发光规则冲突——专项规则要显式重置 `mix-blend-mode`。
+- **教训记录**：① 通用规则块（dark invert）会与夜间专项发光规则冲突——专项规则要显式重置 `mix-blend-mode`；② 线稿装饰叠在线条图形（六芒星）背后=线条打架，装饰要独立展位。
 - **验证**：jsdom 24/24 绿；未截图（用户要求本地自验）。**本轮代码未推送**（用户一键脚本自行上线，§4.3）。
 
 ---

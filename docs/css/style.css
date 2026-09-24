@@ -308,28 +308,49 @@ img { max-width: 100%; display: block; }
   display: flex; flex-direction: column; align-items: center; gap: 44px;
   position: relative;
 }
-/* the pencil angel: the homepage's closing emblem, drifting a breath
-   behind the sigil. Present in daylight; after dark she turns pale
-   ink with a soft halo — the page's quiet apotheosis */
-.home-angel {
-  position: absolute; left: 50%; top: 50%;
-  translate: -50% -50%;
-  width: min(540px, 88vw);
-  opacity: 0.2; pointer-events: none;
-  mix-blend-mode: multiply;
-  animation: angel-drift 9s ease-in-out infinite;
+/* the pencil angel — her own exhibit plate below the sigil (FIG. 02,
+   answering the portrait's FIG. 01). Sized to accompany, not to cover;
+   nothing overlaps the hexagram anymore */
+.home-angel-sec { max-width: 1080px; margin: 0 auto; padding: 0 40px 84px; }
+.home-angel-plate { position: relative; margin: 0; text-align: center; }
+/* moonlight disc she hovers against — whisper-warm by day, pale by night */
+.ha-halo {
+  position: absolute; left: 50%; top: 44%; translate: -50% -50%;
+  width: 330px; height: 330px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(158, 43, 37, 0.05), transparent 64%);
+  animation: halo-breathe 6.5s ease-in-out infinite;
 }
-@keyframes angel-drift {
-  0%, 100% { translate: -50% -50%; }
-  50%      { translate: -50% calc(-50% - 8px); }
+[data-theme="dark"] .ha-halo {
+  background: radial-gradient(circle, rgba(235, 233, 229, 0.11), transparent 60%);
+}
+.ha-float { display: inline-block; animation: angel-float 7.5s ease-in-out infinite; }
+.home-angel {
+  width: min(268px, 56vw);
+  mix-blend-mode: multiply;
+  filter: contrast(1.04) drop-shadow(0 20px 30px rgba(60, 58, 54, 0.16));
+  transform-origin: 50% 45%;
+  animation: angel-sway 10.5s ease-in-out infinite;
 }
 [data-theme="dark"] .home-angel {
   mix-blend-mode: normal;
-  opacity: 0.42;
-  filter: invert(0.92) drop-shadow(0 0 22px rgba(235, 233, 229, 0.22));
+  filter: invert(0.92) drop-shadow(0 0 18px rgba(235, 233, 229, 0.24)) drop-shadow(0 14px 24px rgba(0, 0, 0, 0.5));
 }
-@media (max-width: 720px) { .home-angel { width: min(340px, 92vw); } }
-@media (prefers-reduced-motion: reduce) { .home-angel { animation: none; } }
+.home-angel-plate figcaption {
+  margin-top: 18px; font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.3em; color: var(--muted);
+}
+/* three incommensurate clocks — drift, sway and breathing light never
+   sync up, so the motion reads as alive rather than looping */
+@keyframes angel-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes angel-sway { 0%, 100% { transform: rotate(-0.9deg); } 50% { transform: rotate(0.9deg); } }
+@keyframes halo-breathe { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
+@media (max-width: 720px) {
+  .home-angel { width: min(220px, 60vw); }
+  .ha-halo { width: 260px; height: 260px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ha-float, .home-angel, .ha-halo { animation: none; }
+}
 .sigil-rule { width: min(340px, 60vw); height: 1px; background: var(--line); position: relative; }
 .sigil-rule::before, .sigil-rule::after {
   content: ""; position: absolute; top: -2.5px; width: 5px; height: 5px;
