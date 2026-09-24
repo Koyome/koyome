@@ -104,9 +104,11 @@
     </div>
 
     <figure class="portrait">
-      <img id="portraitImg" class="portrait-cutout" src="assets/avatar_cutout.webp" data-dark-src="assets/avatar_cutout_dark.webp" alt="Koyome" fetchpriority="high" decoding="async" />
+      <img id="portraitImg" class="portrait-cutout" src="assets/avatar_cutout.webp" data-dark-src="assets/avatar_cutout_dark.webp" data-light-src="assets/avatar_cutout.webp" alt="Koyome" fetchpriority="high" decoding="async" />
       <script>/* dark-mode asset swap must happen before first paint — iOS Safari
-          cannot be trusted to repaint filter changes on this animated img */
+          cannot be trusted to repaint filter changes on this animated img.
+          NOTE: the data-light-src attribute above is mandatory — without it
+          header.js would cache this (already dark) src as the light variant. */
         if(document.documentElement.dataset.theme==='dark'){
           document.getElementById('portraitImg').src='assets/avatar_cutout_dark.webp';
         }</script>

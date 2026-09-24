@@ -84,9 +84,14 @@
     const dark = document.documentElement.dataset.theme === 'dark';
     document.querySelectorAll('img[data-dark-src]').forEach((img) => {
       /* explicit data-light-src wins — a dynamically inserted img may
-         already carry the dark variant as its src (see entry.js t2) */
-      if (!img.dataset.lightSrc) img.dataset.lightSrc = img.getAttribute('src');
-      img.src = dark ? img.dataset.darkSrc : img.dataset.lightSrc;
+         already carry the dark variant as its src (see entry.js t2).
+         Never cache a src that already IS the dark variant as "light"
+         (index.html's first-paint inline guard hits exactly this case). */
+      if (!img.dataset.lightSrc) {
+        const cur = img.getAttribute('src');
+        if (cur && cur !== img.dataset.darkSrc) img.dataset.lightSrc = cur;
+      }
+      img.src = dark ? img.dataset.darkSrc : (img.dataset.lightSrc || img.getAttribute('src'));
     });
   }
   window.KoyomeSwapCutouts = swapCutouts;
