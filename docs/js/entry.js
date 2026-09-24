@@ -56,9 +56,27 @@
     document.title = `${title} · Koyome`;
     renderHead(title);
     renderBody();
+    renderAboutFigure();
     renderMedia();
     renderMaps();
     renderStarfield();
+  }
+
+  /* t2 (About Koyome): a second ink portrait keeps the words company —
+     floated into the prose so the text wraps around her, printed onto
+     the page with the exact same treatment as the home portrait
+     (multiply ink, drop shadow, dark-mode invert, the same idle sway) */
+  function renderAboutFigure() {
+    if (entry.id !== 't2') return;
+    const body = $('entryBody');
+    if (!body || !body.firstChild) return;
+    const img = document.createElement('img');
+    img.src = 'assets/figure_tanya_rifle.webp';
+    img.alt = '';
+    img.setAttribute('aria-hidden', 'true');
+    img.decoding = 'async';
+    img.className = 'about-figure portrait-cutout';
+    body.prepend(img);
   }
 
   function renderHead(title) {

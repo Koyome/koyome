@@ -1251,6 +1251,47 @@ img { max-width: 100%; display: block; }
   filter: invert(0.92) drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
 }
 @media (prefers-reduced-motion: reduce) { .portrait-cutout { animation: none; } }
+
+/* ---------- t2 About page: the second ink figure, woven into the prose ---------- */
+.about-figure {
+  float: right;
+  width: min(235px, 36%);
+  margin: 4px 0 20px 28px;
+}
+@media (max-width: 720px) {
+  .about-figure { width: 44%; margin: 2px 0 14px 16px; }
+}
+
+/* ---------- owner-provided line-art emblems (R18) ----------
+   three quiet watermarks, one per page, all printed in site ink:
+   chapel → guestbook · constellation → catalog · angel → hobbies.
+   Daylight: multiply onto the paper; night: inverted to pale ink. */
+.gb-chapel, .cat-stars, .hob-angel {
+  position: absolute; pointer-events: none;
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .gb-chapel,
+[data-theme="dark"] .cat-stars,
+[data-theme="dark"] .hob-angel { mix-blend-mode: normal; filter: invert(0.92); }
+
+/* a small chapel with a shining spire, watching over the notes */
+.gb-chapel { top: 0; right: 0; width: 225px; opacity: 0.2; z-index: -1; }
+[data-theme="dark"] .gb-chapel { opacity: 0.32; }
+
+/* a compass rose ringed by constellations — the index's night sky */
+.section { position: relative; }
+.cat-stars { top: 16px; right: 16px; width: 285px; opacity: 0.17; }
+[data-theme="dark"] .cat-stars { opacity: 0.26; }
+
+/* a pencil angel drifting behind the things I love */
+.hob-angel { top: 200px; right: -8px; width: 315px; opacity: 0.13; z-index: -1; }
+[data-theme="dark"] .hob-angel { opacity: 0.2; }
+
+@media (max-width: 880px) {
+  .gb-chapel { width: 125px; opacity: 0.16; }
+  .cat-stars { width: 150px; top: 12px; right: 10px; opacity: 0.13; }
+  .hob-angel { width: 150px; top: 130px; left: -14px; right: auto; opacity: 0.09; }
+}
 .portrait-note {
   margin-top: 10px; font-family: var(--serif); font-style: italic;
   font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em;
