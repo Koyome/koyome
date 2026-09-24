@@ -1,0 +1,17 @@
+﻿[main 388a2c6] R21: fix iOS theme-toggle portrait glitch (prebaked dark assets, no runtime invert) + add Simplified Chinese mode
+ 25 files changed, 998 insertions(+), 27 deletions(-)
+ create mode 100644 docs/assets/avatar_cutout_dark.webp
+ create mode 100644 docs/assets/deco_chapel_dark.webp
+ create mode 100644 docs/assets/deco_constellation_dark.webp
+ create mode 100644 docs/assets/figure_tanya_rifle_dark.webp
+ create mode 100644 tools/_t2s_cases.json
+ create mode 100644 tools/_t2s_data.txt
+ create mode 100644 tools/_zhcn_block.txt
+ create mode 100644 tools/build-zhcn.py
+ create mode 100644 tools/gen-t2s-cases.py
+ create mode 100644 tools/inject-t2s.py
+ create mode 100644 tools/make-dark-cutout.py
+ create mode 100644 tools/test-t2s.js
+388a2c6 R21: fix iOS theme-toggle portrait glitch (prebaked dark assets, no runtime invert) + add Simplified Chinese mode
+a0c2ce6 Round 20: harden one-click push 鈥?version-stamp css/js refs in HTML (kills Pages 10-min cache mixed-version chaos), poll live until the new stamp is served
+6a916d1 Round 19c: retire the pencil angel entirely per owner 鈥?exhibit plate, styles, i18n key and derived asset removed
