@@ -1161,10 +1161,26 @@
     let frame = 0, visible = !document.hidden, nextMeteor = 4, last = performance.now();
     let scrolling = false, scrollTimer = null;
     let themeSig = '';
+    let seededW = 0, seededH = 0;
+    let rebakeTimer = null;
 
-    const sky = document.createElement('canvas');   /* baked static layer */
+    const sky0 = document.createElement('canvas');   /* baked static layer */
+    let sky = sky0;
     let sprites = null;                             /* five-star sprites by size */
     let meteorSprite = null;
+
+    /* theme double-buffer: skies/sprites keyed by theme signature. A
+       theme round-trip (dark -> light -> dark) swaps buffers INSTANTLY
+       instead of rebaking a full-screen canvas mid-flip (that sync
+       rebake, racing the page's own CSS var flip, was the toggle jank). */
+    const skyCache = new Map();
+    const SKY_CACHE_MAX = 40 * 1024 * 1024;   /* bytes — don't hoard 4K buffers */
+    function stashBuffers(sig, bufs) {
+      if (!sig || bufs.sky.width * bufs.sky.height * 4 > SKY_CACHE_MAX) return;
+      skyCache.delete(sig);
+      skyCache.set(sig, bufs);
+      while (skyCache.size > 2) skyCache.delete(skyCache.keys().next().value);
+    }
 
     /* one crisp five-pointed star path, point-up */
     function fiveStar(g, cx, cy, R) {
@@ -1226,12 +1242,32 @@
         ? { density: 12500, alpha: 1, meteorEvery: [3.5, 8], meteorAlpha: 1 }
         : { density: 22000, alpha: 0.72, meteorEvery: [6, 12], meteorAlpha: 0.8 };
       const sig = colStar + '|' + colLine + '|' + colMeteor + '|' + dark + '|' + mood.density;
-      if (sig !== themeSig) { themeSig = sig; buildSprites(); bakeSky(); }
+      if (sig === themeSig) return;
+      const prevSig = themeSig;
+      const prevBufs = { sky, sprites, meteorSprite };
+      themeSig = sig;
+      /* round-trip hit: adopt the cached buffers, zero rebake */
+      const hit = skyCache.get(sig);
+      if (hit) {
+        skyCache.delete(sig);
+        sky = hit.sky; sprites = hit.sprites; meteorSprite = hit.meteorSprite;
+        stashBuffers(prevSig, prevBufs);
+        return;
+      }
+      buildSprites();
+      /* bake into a FRESH canvas — bakeSky() resets whatever `sky` points
+         at, and repainting the live canvas here would corrupt the very
+         buffer we are about to stash for the previous theme */
+      sky = document.createElement('canvas');
+      bakeSky();
+      stashBuffers(prevSig, prevBufs);
     }
 
     function seed() {
       W = window.innerWidth;
       H = window.innerHeight;
+      seededW = W; seededH = H;
+      skyCache.clear();   /* geometry changed — cached skies no longer fit */
       cv.width = Math.round(W * DPR);
       cv.height = Math.round(H * DPR);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1424,7 +1460,7 @@
       /* frozen while hidden or mid-scroll: the sky waits, the page glides */
       if (!visible || scrolling) { dtDraw = 0; return; }
       frame++;
-      if (frame % 45 === 0) themeColors();   /* pick up day/night flips */
+      if (frame % 240 === 0) themeColors();   /* rare safety poll; flips arrive via observer below */
       dtDraw += dt;
       if (MOBILE && dtDraw < 1 / 30) return;   /* 30fps cadence on phones */
       const step = dtDraw; dtDraw = 0;
@@ -1470,10 +1506,28 @@
 
     themeColors();
     seed();
+    /* theme flips: observe the attribute directly, then DEFER the rebake
+       a breath — the page's own restyle paints first, and a round-trip
+       back hits the double-buffer (instant). Rebaking synchronously in
+       the flip frame was the toggle jank. */
+    new MutationObserver(() => {
+      clearTimeout(rebakeTimer);
+      rebakeTimer = setTimeout(themeColors, 70);
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(seed, 180);   /* debounce: don't re-seed per pixel */
+      resizeTimer = setTimeout(() => {
+        /* phones: the URL bar collapsing/expanding fires resize on EVERY
+           scroll direction change — a full reseed + rebake there was the
+           scroll jank (worse now the sky paints a milky way). Only
+           reseed for real geometry changes: width flips (rotation) or a
+           big height delta. The canvas CSS stretches a few px to cover
+           the slack — invisible on a sky. */
+        const w = window.innerWidth, h = window.innerHeight;
+        if (MOBILE && w === seededW && Math.abs(h - seededH) < 120) return;
+        seed();
+      }, 180);
     }, { passive: true });
     document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
     /* phones: freeze the sky while the finger is on the glass */
