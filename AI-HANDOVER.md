@@ -1,8 +1,19 @@
 # Koyome.me — 项目交接文档（AI Handover）
 
 > 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
-> 最后更新：2026-09-23（第十六轮：星空边缘发光重写+质感打磨 / 今日推荐数据链修复）**本轮未推送，由用户一键脚本自行上线**
-> 仓库 HEAD：`3fe654e`（线上已同步）｜ ⚠️ 常驻推送授权**已于 2026-09-23 取消**：AI 推送前必须逐次征得用户同意（§4.3）
+> 最后更新：2026-09-24（第十七轮：首页人物融合+图纸背板 / 移动端星球移位 / 指南针归位目录区 / 人物抽帧微动）**本轮未推送，由用户一键脚本自行上线**
+> 仓库 HEAD：`ffcf7bf`（第十六轮已 commit，线上待用户推送）｜ ⚠️ 常驻推送授权**已于 2026-09-23 取消**：AI 推送前必须逐次征得用户同意（§4.3）
+
+---
+
+## 0.15 第十七轮速览（2026-09-24）
+
+- **人物形象融合（index.html + style.css）**：人像是黑白手绘线稿，multiply 印纸方向正确但"悬空无锚点"——现给 `.portrait` 加**测绘图纸背板**（`.portrait::before`：细网格 + panel 纸底 + 虚线内框 dashed outline + 微倾 -1.7°，与旅行地图同一测量方言），`.portrait::after` 加两个红色对位角标（accent 呼应）。夜间背板 opacity 降至 0.35。
+- **人物微动效（抽帧 + wiggle）**：`.portrait-cutout` 加 `portrait-idle 4.8s steps(1,end) infinite`——5 个微姿态（≤0.55° / ≤1px）逐帧**跳切**（steps=抽帧，手绘有限动画感），transform-origin 50% 92%（站立支点）；纯 CSS 零资源零监听；`prefers-reduced-motion` 全程静止。
+- **移动端星球移位**：≤880px 时 `.hero-orbit` 从右上（与人物同屏互抢）移到**文字区后下方**（`top:auto; bottom:-34px; right:-16px; min(46vw,200px); opacity .26`）——退成背景衬，不再与人物抢第一屏。
+- **指南针归位**：`.hh-compass` 从爱好区移到**目录区**（语义：指南针=方向/索引，与 INDEX 匹配；爱好区与其无关）。桌面端目录列表让出右栏（`.home-catalog-list { margin-right: clamp(0,16vw,190px) }`）；移动端无栏可让，缩至 72px 放右下角（bottom:30px, opacity .42）不压条目。
+- **新增装饰元素**：区块分隔线（`.home-catalog/.home-hobbies` 的 ::before=两端渐隐发丝线 + ::after=中央红色菱形，位于 section 上方 -42px）；今日推荐标签改**胶囊展品签**（`.hh-daily:not([hidden])` inline-flex + 细框圆角 + panel 底）。
+- **验证**：jsdom 24/24 绿；未截图（用户要求本地自验）。**本轮代码未推送**（用户一键脚本自行上线，§4.3）。
 
 ---
 
