@@ -150,15 +150,43 @@ function classify(out) {
     advice: ['先重新运行一次本脚本。', '仍失败请把上面【错误详情】截图发给维护 AI。'] };
 }
 
+/* ---------------- 版本戳（防“推送后页面全乱”） ----------------
+   病根：Pages 给所有静态资源 10 分钟浏览器缓存。部署后 HTML 是新的、
+   浏览器却可能继续用旧的 css/js（或反过来），新旧混排 = 页面全乱。
+   解法：每次有改动要推送时，把 docs/*.html 里对 css/js 的引用统一打上
+   本次时间戳 ?v=YYYYmmddHHMM——部署后浏览器必须拉取新资源，
+   新旧混排从此不可能。幂等：已有 ?v= 会被替换为最新戳。 */
+function stampVersions() {
+  const dir = path.join(ROOT, 'docs');
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  const v = '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + p(d.getHours()) + p(d.getMinutes());
+  const touched = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith('.html')) continue;
+    const fp = path.join(dir, f);
+    const before = fs.readFileSync(fp, 'utf8');
+    const after = before.replace(
+      /((?:href|src)="(?:css\/style\.css|js\/[a-z0-9-]+\.js))(?:\?v=\d+)?"/g,
+      '$1?v=' + v + '"'
+    );
+    if (after !== before) {
+      if (!DRY_RUN) fs.writeFileSync(fp, after);
+      touched.push(f);
+    }
+  }
+  return { v, touched };
+}
+
 /* ---------------- 主流程 ---------------- */
-function main() {
+async function main() {
   console.log(LINE);
   console.log('  Koyome.me 一键推送更新');
   console.log(LINE);
   if (DRY_RUN) console.log('  （演练模式：只检测与比对，不提交、不推送）');
 
   /* 1. 环境检查 */
-  step(1, 5, '检查运行环境…');
+  step(1, 6, '检查运行环境…');
   GIT = findGit();
   if (!GIT) {
     return fail('找不到 Git', '', [
@@ -183,7 +211,7 @@ function main() {
   ok('部署密钥就位');
 
   /* 2. 检测本地修改 */
-  step(2, 5, '检测本地修改…');
+  step(2, 6, '检测本地修改…');
   const st = run(['-c', 'core.quotepath=false', 'status', '--porcelain']);
   if (st.code !== 0) return fail('无法读取仓库状态', st.out, '把错误详情发给维护 AI。');
   const changed = st.out.split('\n').filter((l) => l.trim());
@@ -195,9 +223,16 @@ function main() {
     ok('没有未提交的修改');
   }
 
-  /* 3. 提交 */
+  /* 3. 打版本戳 + 提交（有改动才打戳，避免空推送也改写 HTML） */
   let committed = false;
-  step(3, 5, changed.length ? '提交修改（commit）…' : '提交修改（无需提交）');
+  let stamp = null;
+  step(3, 6, changed.length ? '更新版本戳并提交（commit）…' : '提交修改（无需提交）');
+  if (changed.length) {
+    stamp = stampVersions();
+    if (stamp.touched.length) {
+      ok('版本戳 ?v=' + stamp.v + ' 已写入 ' + stamp.touched.length + ' 个页面（防缓存混乱）');
+    }
+  }
   if (changed.length && !DRY_RUN) {
     const add = run(['add', '-A']);
     if (add.code !== 0) return fail('暂存修改失败（git add）', add.out, '把错误详情发给维护 AI。');
@@ -219,7 +254,7 @@ function main() {
   }
 
   /* 4. 与远程比对 */
-  step(4, 5, '与远程仓库比对…');
+  step(4, 6, '与远程仓库比对…');
   const head = run(['rev-parse', 'HEAD']).out.trim();
   const ls = run(sshArgs().concat(['ls-remote', REMOTE, BRANCH]), NET_TIMEOUT);
   if (ls.timedOut) return fail('网络异常（连接 GitHub 超时）', '', NET_ADVICE);
@@ -244,7 +279,7 @@ function main() {
   }
 
   /* 5. 推送（冲突时自动 rebase 一次后重试） */
-  step(5, 5, '推送到 GitHub（SSH）…');
+  step(5, 6, '推送到 GitHub（SSH）…');
   console.log('  （包含大文件时可能需要几分钟，请勿关闭窗口）');
   let push = run(sshArgs().concat(['push', REMOTE, 'HEAD:' + BRANCH]), PUSH_TIMEOUT);
   if (push.timedOut) {
@@ -281,14 +316,43 @@ function main() {
     ]);
   }
 
+  /* 6. 线上验收：轮询直到 Pages 真的端出新版本（不再凭感觉刷新） */
+  step(6, 6, '等待 GitHub Pages 重建并验收线上版本…');
+  const marker = stamp && stamp.touched.length ? '?v=' + stamp.v : null;
+  let liveOk = false;
+  if (marker && typeof fetch === 'function') {
+    const deadline = Date.now() + 4 * 60 * 1000;
+    while (Date.now() < deadline && !liveOk) {
+      try {
+        const r = await fetch(SITE_URL + '?_=' + Date.now(), { cache: 'no-store' });
+        const html = await r.text();
+        if (html.includes(marker)) {
+          const css = await fetch(SITE_URL + 'css/style.css' + marker, { cache: 'no-store' });
+          liveOk = css.ok;
+        }
+      } catch (_) { /* 网络抖动，下一轮再试 */ }
+      if (!liveOk) {
+        process.stdout.write('  Pages 重建中，15 秒后再看…\r');
+        await new Promise((res) => setTimeout(res, 15000));
+      }
+    }
+    console.log('                                              ');
+  }
+  if (liveOk) {
+    ok('线上已端出新版本（首页与新样式均 200）');
+  } else if (marker) {
+    console.log('  [提醒] 4 分钟内未等到线上新版本。推送本身已成功——');
+    console.log('  若 10 分钟后仍无变化，运行: node tools/pages-build-admin.js rebuild');
+  }
+
   console.log('\n' + LINE);
-  console.log('  [成功] 推送完成，网站更新已上线流程启动！');
+  console.log('  [成功] 推送完成' + (liveOk ? '，线上已确认是新版本！' : '，上线流程已启动！'));
   console.log(LINE);
   console.log('  提交: ' + head2.slice(0, 7) + (committed ? '（本次新提交）' : ''));
   console.log('  远程: ' + REMOTE + '  分支: ' + BRANCH);
   console.log('  网站: ' + SITE_URL);
-  console.log('\n  GitHub Pages 约 1 分钟后自动重建完成，刷新即可看到更新。');
-  console.log('  若 2 分钟后线上仍未变化，请运行: node tools/pages-build-admin.js');
+  console.log('\n  本次起所有页面引用已带版本戳，访客不会再看到新旧混排。');
+  console.log('  你自己这次刷新请按一次 Ctrl + F5（清掉手里最后一批旧缓存）。');
 }
 
 main();

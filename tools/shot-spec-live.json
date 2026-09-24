@@ -1,0 +1,6 @@
+[
+  { "url": "https://koyome.github.io/", "theme": "light", "w": 1280, "h": 860, "wait": 5000, "name": "live-home" },
+  { "url": "https://koyome.github.io/entry.html?id=t2", "theme": "dark", "w": 1280, "h": 860, "wait": 5000, "name": "live-t2" },
+  { "url": "https://koyome.github.io/guestbook.html", "theme": "dark", "w": 1280, "h": 860, "wait": 5000, "name": "live-guestbook" },
+  { "url": "https://koyome.github.io/catalog.html", "theme": "light", "w": 1280, "h": 860, "wait": 5000, "name": "live-catalog" }
+]
