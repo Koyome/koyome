@@ -28,7 +28,6 @@
 
       home_eyebrow: 'WELCOME',
       home_fig: 'FIG. 01 — KOYOME',
-      home_fig2: 'FIG. 02 — THE ANGEL',
       home_fig_note_ph: 'double-click to add a caption note…',
 
       sec_catalog: 'Catalog', sec_catalog_en: 'INDEX',
@@ -156,7 +155,6 @@
 
       home_eyebrow: '歡迎',
       home_fig: '圖 01 — KOYOME',
-      home_fig2: '圖 02 — 天使',
       home_fig_note_ph: '雙擊為這幅小像添一句註腳……',
 
       sec_catalog: '目錄', sec_catalog_en: 'INDEX',
