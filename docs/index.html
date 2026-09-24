@@ -104,7 +104,12 @@
     </div>
 
     <figure class="portrait">
-      <img id="portraitImg" class="portrait-cutout" src="assets/avatar_cutout.webp" alt="Koyome" fetchpriority="high" decoding="async" />
+      <img id="portraitImg" class="portrait-cutout" src="assets/avatar_cutout.webp" data-dark-src="assets/avatar_cutout_dark.webp" alt="Koyome" fetchpriority="high" decoding="async" />
+      <script>/* dark-mode asset swap must happen before first paint — iOS Safari
+          cannot be trusted to repaint filter changes on this animated img */
+        if(document.documentElement.dataset.theme==='dark'){
+          document.getElementById('portraitImg').src='assets/avatar_cutout_dark.webp';
+        }</script>
       <figcaption data-i18n="home_fig">FIG. 01 — KOYOME</figcaption>
       <div class="portrait-note" id="portraitNote" hidden></div>
     </figure>

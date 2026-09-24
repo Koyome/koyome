@@ -1249,7 +1249,11 @@ img { max-width: 100%; display: block; }
 }
 [data-theme="dark"] .portrait-cutout {
   mix-blend-mode: normal;
-  filter: invert(0.92) drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
+  /* NO invert() here — iOS WebKit keeps a stale composited layer when a
+     filter changes on an animated, blend-moded element after a theme flip
+     (portrait turned blue + blurry on dark->light). Dark mode instead swaps
+     the <img> src to a pre-baked *_dark.webp (see header.js / entry.js). */
+  filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.55));
 }
 @media (prefers-reduced-motion: reduce) { .portrait-cutout { animation: none; } }
 
@@ -1283,7 +1287,8 @@ img { max-width: 100%; display: block; }
 .gb-chapel img { width: 100%; display: block; }
 .gb-chapel-star { position: absolute; inset: 0; }
 [data-theme="dark"] .gb-chapel { mix-blend-mode: normal; opacity: 0.42; }
-[data-theme="dark"] .gb-chapel img:first-child { filter: invert(0.92); }
+/* building layer: no runtime invert (iOS stale-layer bug) — dark mode swaps
+   to the pre-baked deco_chapel_dark.webp via data-dark-src */
 [data-theme="dark"] .gb-chapel-star {
   mix-blend-mode: screen;
   filter: brightness(1.55) drop-shadow(0 0 10px rgba(212, 96, 79, 0.75)) drop-shadow(0 0 26px rgba(212, 96, 79, 0.4));
@@ -1304,7 +1309,9 @@ img { max-width: 100%; display: block; }
 [data-theme="dark"] .cat-stars {
   mix-blend-mode: normal;
   opacity: 0.4;
-  filter: invert(0.92) drop-shadow(0 0 9px rgba(235, 233, 229, 0.28));
+  /* no runtime invert — src swaps to deco_constellation_dark.webp; the
+     stellar sheen below is just a halo, safe to toggle */
+  filter: drop-shadow(0 0 9px rgba(235, 233, 229, 0.28));
 }
 
 /* (the pencil angel was retired by the owner — R19c) */

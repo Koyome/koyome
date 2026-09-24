@@ -71,7 +71,13 @@
     const body = $('entryBody');
     if (!body || !body.firstChild) return;
     const img = document.createElement('img');
-    img.src = 'assets/figure_tanya_rifle.webp';
+    /* dark mode uses the pre-baked variant, never a runtime invert filter
+       (iOS WebKit stale-composited-layer bug — see style.css) */
+    img.dataset.darkSrc = 'assets/figure_tanya_rifle_dark.webp';
+    img.dataset.lightSrc = 'assets/figure_tanya_rifle.webp';
+    img.src = document.documentElement.dataset.theme === 'dark'
+      ? img.dataset.darkSrc
+      : img.dataset.lightSrc;
     img.alt = '';
     img.setAttribute('aria-hidden', 'true');
     img.decoding = 'async';
@@ -97,7 +103,7 @@
     /* double-click the title or the description to edit in place */
     const h1 = $('entryHead').querySelector('[data-etitle]');
     bindInlineText(h1, () => loc(entry, 'title') || '', async (v) => {
-      const field = window.I18N.lang === 'zh' ? 'titleZh' : 'title';
+      const field = window.I18N.isZh ? 'titleZh' : 'title';
       await putContent({ [field]: v });
       entry[field] = v;
       document.title = `${v} · Koyome`;
@@ -106,7 +112,7 @@
 
     const dp = $('entryHead').querySelector('[data-edesc]');
     if (dp) bindInlineText(dp, () => loc(entry, 'desc') || '', async (v) => {
-      const field = window.I18N.lang === 'zh' ? 'descZh' : 'desc';
+      const field = window.I18N.isZh ? 'descZh' : 'desc';
       await putContent({ [field]: v });
       entry[field] = v;
       return v;
@@ -294,7 +300,7 @@
       wrap.querySelectorAll('[data-captext]').forEach((el) => {
         const index = parseInt(el.closest('[data-cap]').dataset.cap, 10);
         bindInlineText(el, () => loc(entry.media[index], 'caption') || '', async (v) => {
-          const field = window.I18N.lang === 'zh' ? 'captionZh' : 'caption';
+          const field = window.I18N.isZh ? 'captionZh' : 'caption';
           const r = await fetch(
             `api/media?id=${encodeURIComponent(entry.id)}&index=${index}`, {
               method: 'PUT',
@@ -431,7 +437,7 @@
         return loc(entry.media[idx], 'caption') || '';
       }, async (v) => {
         const idx = parseInt(capWrap.dataset.cap, 10);
-        const field = window.I18N.lang === 'zh' ? 'captionZh' : 'caption';
+        const field = window.I18N.isZh ? 'captionZh' : 'caption';
         const r = await fetch(
           `api/media?id=${encodeURIComponent(entry.id)}&index=${idx}`, {
             method: 'PUT',

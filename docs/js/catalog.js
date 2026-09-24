@@ -100,7 +100,7 @@
         const v = input.value.trim();
         if (!save || !v || v === current) { paintTitle(span, current || t('untitled')); return; }
 
-        const field = window.I18N.lang === 'zh' ? 'titleZh' : 'title';
+        const field = window.I18N.isZh ? 'titleZh' : 'title';
         status.textContent = '…';
         fetch('api/content?id=' + encodeURIComponent(item.id), {
           method: 'PUT',

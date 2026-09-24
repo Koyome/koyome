@@ -105,8 +105,12 @@
   /* ---------- localization helper ---------- */
   function loc(item, field) {
     if (!item) return '';
-    const zh = global.I18N && global.I18N.lang === 'zh';
-    if (zh && item[field + 'Zh']) return item[field + 'Zh'];
+    const lang = global.I18N && global.I18N.lang;
+    const zhVal = item[field + 'Zh'];
+    if (lang === 'zh' && zhVal) return zhVal;
+    /* 简体中文 derives from the 繁體中文 field at runtime — the *Zh fields
+       stay the single Chinese source of truth, nothing is duplicated */
+    if (lang === 'zhcn') return zhVal ? global.I18N.t2s(zhVal) : (item[field] || '');
     return item[field] || '';
   }
 

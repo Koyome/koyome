@@ -29,6 +29,8 @@
         <button type="button" data-lang="en">EN</button>
         <span class="sep">·</span>
         <button type="button" data-lang="zh">繁中</button>
+        <span class="sep">·</span>
+        <button type="button" data-lang="zhcn">简体</button>
       </div>
     </div>
     <div class="header-right">
@@ -70,13 +72,41 @@
   /* ---------- night / day toggle ---------- */
   const LS_THEME = 'koyome_theme';
   const themeBtn = document.getElementById('themeBtn');
+
+  /* Theme-aware cutout swap. iOS WebKit does NOT reliably repaint an
+     element that combines an ongoing transform animation (compositor
+     layer) + mix-blend-mode + a filter that changes when [data-theme]
+     flips — the old filter stays baked into the stale layer (portrait
+     turned blue + blurry after dark->light). So themed images never use
+     a runtime invert(); dark mode swaps src to a pre-baked *_dark.webp
+     instead. Any <img data-dark-src="..."> participates automatically. */
+  function swapCutouts() {
+    const dark = document.documentElement.dataset.theme === 'dark';
+    document.querySelectorAll('img[data-dark-src]').forEach((img) => {
+      /* explicit data-light-src wins — a dynamically inserted img may
+         already carry the dark variant as its src (see entry.js t2) */
+      if (!img.dataset.lightSrc) img.dataset.lightSrc = img.getAttribute('src');
+      img.src = dark ? img.dataset.darkSrc : img.dataset.lightSrc;
+    });
+  }
+  window.KoyomeSwapCutouts = swapCutouts;
+
   function setTheme(mode) {
     const dark = mode === 'dark';
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
     try { localStorage.setItem(LS_THEME, dark ? 'dark' : 'light'); } catch (_) { /* ignore */ }
+    swapCutouts();
   }
   themeBtn.addEventListener('click', () => {
     setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
+
+  /* initial pass (covers every static <img data-dark-src> on the page)
+     + preload the dark variants so the first toggle never flashes */
+  swapCutouts();
+  document.querySelectorAll('img[data-dark-src]').forEach((img) => {
+    const pre = new Image();
+    pre.src = img.dataset.darkSrc;
   });
 
   const menu = document.getElementById('menu');

@@ -123,7 +123,7 @@
         note.classList.remove('editing');
         const v = input.value.trim();
         if (!save || v === current) { show(current); return; }
-        const field = window.I18N.lang === 'zh' ? 'figNoteZh' : 'figNote';
+        const field = window.I18N.isZh ? 'figNoteZh' : 'figNote';
         try {
           const r = await fetch('api/profile', {
             method: 'POST',

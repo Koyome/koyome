@@ -1,8 +1,24 @@
 # Koyome.me — 项目交接文档（AI Handover）
 
 > 写给下一个接管本项目的 AI（或人类开发者）：**读完这一份，即拥有继续开发的全部上下文。**
-> 最后更新：2026-09-24（第二十轮：一键推送加固——版本戳防缓存混排 + 线上验收轮询）**本轮未推送，由用户一键脚本自行上线**
-> 仓库 HEAD：`6a916d1`（线上已同步）｜ ⚠️ 常驻推送授权**已于 2026-09-23 取消**：AI 推送前必须逐次征得用户同意（§4.3）
+> 最后更新：2026-09-24（第二十一轮：iOS 主题切换人像 bug 结构性修复 + 新增简体中文模式）**本轮未推送，由用户一键脚本自行上线**
+> 仓库状态：本地 HEAD = 本轮提交（见 `git log`）；**远端 main 仍在 `6a916d1`——R20（推送加固）、R21（本轮）两轮改动均在本地，待用户一键脚本推送** ｜ ⚠️ 常驻推送授权**已于 2026-09-23 取消**：AI 推送前必须逐次征得用户同意（§4.3）
+
+---
+
+## 0.19 第二十一轮速览（2026-09-24）
+
+- **iOS 主题切换人像变蓝+模糊——根因定位与结构性修复**：用户报 iPhone 夜间→日间切换后首页人像泛蓝且模糊（安卓正常）。根因：**iOS WebKit 对同时具备「进行中的 transform 动画（合成层）+ mix-blend-mode + 随 `[data-theme]` 切换的 filter」三要素的元素，主题翻转时不正确重绘**——暗→亮时暗态的 `invert(0.92)` 残留在旧合成层（泛蓝），重光栅化比例错误（模糊）。修复原则：**主题相关元素一律不用运行时 invert()，暗态改用预烘焙反色素材 + JS 换 src**：
+  - `tools/make-dark-cutout.py`：按 CSS `invert(0.92)` 公式（`out = 234.6 − 0.84·c`）逐像素烘焙暗色版，alpha 不动，视觉与旧运行时 invert 完全一致。已生成 4 张：`avatar_cutout_dark.webp` / `figure_tanya_rifle_dark.webp` / `deco_chapel_dark.webp` / `deco_constellation_dark.webp`（重跑脚本即可再生成）。
+  - 换图机制：**任何 `<img data-dark-src="...">` 自动参与**。header.js `swapCutouts()`（setTheme 调用 + 每页加载初扫 + 预加载暗色版防首切闪白）；index.html 人像带内联首帧守卫（防暗态刷新闪浅色图）；entry.js t2 人像插入时按当前主题选 src，且显式写 `data-light-src`（动态 img 若在暗态创建，其 src 属性已是暗色版，没有 data-light-src 会把暗图误认为亮图——坑）。
+  - CSS 三处 `invert(0.92)` 全删（`.portrait-cutout`、`.gb-chapel` 建筑层、`.cat-stars`）；chapel 星光层的 brightness+红晕、cat-stars 的淡白光晕保留（纯光环、无 invert，不在此 bug 类别）。
+  - **教训：`mix-blend-mode` + `filter:invert()` + 持续 CSS 动画的三件套在 iOS 上不要碰；主题相关图像颜色一律烘焙进素材。**
+- **新增简体中文模式（第三语言，localStorage 值 `zhcn`）**：
+  - UI 字典：生成管线 `tools/build-zhcn.py`——zhconv（locale `zh-cn`，含 zh2CN 大陆词汇层：網路→网络、軟體→软件级）机转整个 zh 字典 + curated 覆盖表（储存→保存、送出→发送、影片→视频、音讯→音频、自订→自定义、汇入→导入、「」→“”等）→ 174 键 `zhcn` 字典已嵌入 i18n.js（`_html:'zh-Hans'`）。**改繁体 UI 文案后重跑 build-zhcn.py 再手动同步 zhcn 块**（脚本只读 zh 块输出到 `tools/_zhcn_block.txt`，不自动改写 i18n.js）。
+  - **内容层零复制**：用户内容的 `*Zh` 字段仍是唯一中文真源；简体模式下 data.js `loc()` 对 zhVal 走运行时 `I18N.t2s()`——i18n.js 内嵌 zhconv 同源映射（4707 单字 + 1519 不规则词组 ≈29KB），最大正向匹配与 zhconv 一致。`tools/inject-t2s.py` 幂等注入/重注入；`tools/gen-t2s-cases.py` + `tools/test-t2s.js` 用 Python zhconv 输出做对拍（18 例全过）。
+  - **大坑：zh2Hans 表含 CJK 扩展区 astral 字符（JS 中 2 个 UTF-16 码元）——k+v 连排打包串必须 `Array.from` 按码点迭代；按码元 i+=2 会让首个 astral 之后的全部映射错位（表现=部分常用字转换错误）。**
+  - 切换：header 语言组三个按钮 `EN · 繁中 · 简体`；新增 `I18N.isZh` getter（zh||zhcn）——站长内联编辑一律写 *Zh 字段，9 处 `lang==='zh'` 判断已改 isZh（main/catalog/hobbies×3/entry×4，data.js loc 除外——它需要区分 zh/zhcn）。
+- **验证**：jsdom 静态回归扩至 **47 项**（三语循环 + zhcn 断言：html lang=zh-Hans/简体标题「电台」/三按钮/暗色素材存在/全站无 invert(0.92)/t2s 对拍）全绿。**本轮代码未推送**（用户一键脚本自行上线，§4.3）。
 
 ---
 

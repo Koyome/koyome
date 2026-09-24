@@ -52,7 +52,7 @@ server.listen(8899, async () => {
   };
 
   try {
-    for (const lang of ['en', 'zh']) {
+    for (const lang of ['en', 'zh', 'zhcn']) {
       /* home */
       let dom = await load(BASE, 'index.html', lang);
       await new Promise((r) => setTimeout(r, 1500));
@@ -60,6 +60,13 @@ server.listen(8899, async () => {
       check(`home ${lang} name`, d.getElementById('homeName').textContent.includes('Koyome'), d.getElementById('homeName').textContent);
       check(`home ${lang} tagline`, (d.getElementById('homeTagline').textContent || '').length > 3, d.getElementById('homeTagline').textContent.slice(0, 30));
       check(`home ${lang} sigil`, d.querySelectorAll('.sigil-svg polygon').length === 2);
+      check(`home ${lang} lang-switch has 3 buttons`,
+        d.querySelectorAll('.lang-switch button').length === 3);
+      check(`home ${lang} html lang attr`,
+        d.documentElement.lang === (lang === 'zhcn' ? 'zh-Hans' : lang === 'zh' ? 'zh-Hant' : 'en'),
+        d.documentElement.lang);
+      check(`home ${lang} portrait has dark variant`,
+        d.getElementById('portraitImg').dataset.darkSrc === 'assets/avatar_cutout_dark.webp');
       dom.window.close();
 
       /* catalog */
@@ -78,8 +85,8 @@ server.listen(8899, async () => {
       await new Promise((r) => setTimeout(r, 1500));
       d = dom.window.document;
       const h1 = d.querySelector('h1');
-      check(`entry ${lang} title`, h1 && (lang === 'en' ? h1.textContent === 'Night Radio' : h1.textContent === '電台'), h1 && h1.textContent);
-      check(`entry ${lang} body`, d.body.textContent.includes(lang === 'en' ? 'playlist' : '歌單'));
+      check(`entry ${lang} title`, h1 && (lang === 'en' ? h1.textContent === 'Night Radio' : lang === 'zh' ? h1.textContent === '電台' : h1.textContent === '电台'), h1 && h1.textContent);
+      check(`entry ${lang} body`, d.body.textContent.includes(lang === 'en' ? 'playlist' : lang === 'zh' ? '歌單' : '歌单'));
       dom.window.close();
 
       /* image entry: relative asset path must resolve */
@@ -105,6 +112,17 @@ server.listen(8899, async () => {
       check(`admin ${lang} profile filled`, d.getElementById('pName').value === 'Koyome');
       dom.window.close();
     }
+
+    /* file-level invariants for R21 (iOS theme fix + 简体中文) */
+    const css = fs.readFileSync(path.join(PUB, 'css', 'style.css'), 'utf8');
+    check('css has no runtime invert(0.92) anywhere', !css.includes('invert(0.92)'));
+    for (const a of ['avatar_cutout_dark.webp', 'figure_tanya_rifle_dark.webp',
+      'deco_chapel_dark.webp', 'deco_constellation_dark.webp']) {
+      check('dark asset exists: ' + a, fs.existsSync(path.join(PUB, 'assets', a)));
+    }
+    const i18nSrc = fs.readFileSync(path.join(PUB, 'js', 'i18n.js'), 'utf8');
+    check('i18n has zhcn dict', i18nSrc.includes('zhcn: {'));
+    check('i18n exposes t2s + isZh', i18nSrc.includes('t2s,') && i18nSrc.includes('isZh'));
 
     /* guestbook POST fallback → localStorage, no error */
     const dom = await load(BASE, 'guestbook.html', 'en');

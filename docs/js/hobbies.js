@@ -255,7 +255,7 @@
     if (canEdit) {
       bindInlineText(introEl,
         () => loc(doc, 'intro') || '',
-        (v) => { doc[window.I18N.lang === 'zh' ? 'introZh' : 'intro'] = v; },
+        (v) => { doc[window.I18N.isZh ? 'introZh' : 'intro'] = v; },
         true, t('hob_intro_fallback'));
 
       doc.sections.forEach((sec) => {
@@ -266,11 +266,11 @@
           if (!it) return;
           bindInlineText(row.querySelector('[data-hname]'),
             () => loc(it, 'name') || '',
-            (v) => { it[window.I18N.lang === 'zh' ? 'nameZh' : 'name'] = v; },
+            (v) => { it[window.I18N.isZh ? 'nameZh' : 'name'] = v; },
             false, t('hob_name_ph'));
           bindInlineText(row.querySelector('[data-htext]'),
             () => loc(it, 'text') || '',
-            (v) => { it[window.I18N.lang === 'zh' ? 'textZh' : 'text'] = v; },
+            (v) => { it[window.I18N.isZh ? 'textZh' : 'text'] = v; },
             true, t('hob_text_ph'));
         });
       });
