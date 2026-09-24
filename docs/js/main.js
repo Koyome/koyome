@@ -74,7 +74,21 @@
 
     if (profile.avatar) {
       const img = document.getElementById('portraitImg');
-      img.src = profile.avatar;
+      /* theme-aware: assigning src blindly here clobbers the dark variant
+         that header.js' swapCutouts() just installed (dark-mode page load
+         ended up showing the light asset = dark ink on dark paper).
+         Keep data-light-src in sync, and only keep the dark swap when the
+         baked *_dark variant actually pairs with this avatar — a custom
+         owner upload has no baked variant, so the swap is dropped. */
+      const derivedDark = profile.avatar.replace(/(\.\w+)$/, '_dark$1');
+      if (img.dataset.darkSrc && img.dataset.darkSrc !== derivedDark) {
+        img.removeAttribute('data-dark-src');
+        delete img.dataset.darkSrc;
+      }
+      img.dataset.lightSrc = profile.avatar;
+      img.src = (document.documentElement.dataset.theme === 'dark' && img.dataset.darkSrc)
+        ? img.dataset.darkSrc
+        : profile.avatar;
       img.alt = name;
     }
 

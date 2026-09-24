@@ -35,11 +35,12 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(file).pipe(res);
 });
 
-const load = (base, u, lang) => JSDOM.fromURL(base + '/' + u, {
+const load = (base, u, lang, theme) => JSDOM.fromURL(base + '/' + u, {
   runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true,
   beforeParse(w) {
     w.fetch = (a, o) => fetch(new URL(a, base).toString(), o);
     try { w.localStorage.setItem('koyome_lang', lang); } catch (e) { }
+    if (theme) { try { w.localStorage.setItem('koyome_theme', theme); } catch (e) { } }
   },
 });
 
@@ -110,6 +111,22 @@ server.listen(8899, async () => {
       d = dom.window.document;
       check(`admin ${lang} library`, d.querySelectorAll('.admin-item').length >= 4, d.querySelectorAll('.admin-item').length + ' items');
       check(`admin ${lang} profile filled`, d.getElementById('pName').value === 'Koyome');
+      dom.window.close();
+    }
+
+    /* R22: home loaded while theme=dark — the portrait must END UP on the
+       dark variant after ALL scripts settle (main.js' profile load used to
+       clobber the header.js swap and leave the light asset on dark paper) */
+    {
+      const dom = await load(BASE, 'index.html', 'en', 'dark');
+      await new Promise((r) => setTimeout(r, 1500));
+      const d = dom.window.document;
+      const src = d.getElementById('portraitImg').getAttribute('src');
+      check('home dark load: portrait on dark variant', src === 'assets/avatar_cutout_dark.webp', src);
+      d.getElementById('themeBtn').click();
+      await new Promise((r) => setTimeout(r, 300));
+      const src2 = d.getElementById('portraitImg').getAttribute('src');
+      check('home dark->light: portrait back on light variant', src2 === 'assets/avatar_cutout.webp', src2);
       dom.window.close();
     }
 

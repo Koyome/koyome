@@ -1154,6 +1154,7 @@
     const DPR = MOBILE ? 1 : Math.min(window.devicePixelRatio || 1, 2);
 
     let W = 0, H = 0, farStars = [], glowStars = [], threads = [], meteors = [];
+    let band = null;   /* milky way: one soft diagonal river, per seed */
     let colStar = '#7d8798', colLine = 'rgba(110,118,132,0.32)', colMeteor = '#9e2b25';
     /* mood: day = sparse & whisper-quiet, night = dense & bright */
     let mood = { density: 22000, alpha: 0.72, meteorEvery: [6, 12], meteorAlpha: 0.8 };
@@ -1234,19 +1235,45 @@
       cv.width = Math.round(W * DPR);
       cv.height = Math.round(H * DPR);
       ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      /* the milky way: a real band is BOTH a soft glow and a thicker
+         crowd of stars along the same line, so geometry comes first
+         and the star seeding below leans on it. A gentle tilt through
+         the upper sky reads as "overhead"; per-seed, re-rolled on
+         resize like everything else. */
+      const diag = Math.hypot(W, H);
+      band = {
+        ang: (24 + Math.random() * 10) * Math.PI / 180,
+        cx: W * (0.40 + Math.random() * 0.20),
+        cy: H * (0.28 + Math.random() * 0.20),
+        w: diag * (0.15 + Math.random() * 0.07),
+        len: diag * 1.5,
+      };
       const n = Math.round((W * H) / mood.density);
       farStars = [];
       glowStars = [];
       for (let i = 0; i < n; i++) {
         const s = {
-          x: Math.random() * W,
-          y: Math.random() * H,
           ph: Math.random() * Math.PI * 2,
           sp: 0.25 + Math.random() * 1.1,
           /* per-star brightness seat & sway — no two stars breathe alike */
           base: 0.5 + Math.random() * 0.3,
           amp: 0.16 + Math.random() * 0.24,
         };
+        /* ~45% of stars gather along the band (gaussian-ish offset
+           across its axis — dense core, thinning shoulders); the rest
+           keep the uniform sky honest */
+        if (Math.random() < 0.45) {
+          const t = (Math.random() - 0.5) * band.len;
+          const off = (Math.random() + Math.random() + Math.random() - 1.5) / 1.5 * band.w * 0.72;
+          s.x = band.cx + Math.cos(band.ang) * t - Math.sin(band.ang) * off;
+          s.y = band.cy + Math.sin(band.ang) * t + Math.cos(band.ang) * off;
+          if (s.x < -20 || s.x > W + 20 || s.y < -20 || s.y > H + 20) {
+            s.x = Math.random() * W; s.y = Math.random() * H;
+          }
+        } else {
+          s.x = Math.random() * W;
+          s.y = Math.random() * H;
+        }
         if (Math.random() < 0.68) {
           /* quiet backdrop stars: mostly pin-pricks, a few chunkier;
              each keeps its own resting brightness baked into the sky */
@@ -1292,6 +1319,42 @@
       g.globalAlpha = dark ? 0.055 : 0.02;
       g.fillStyle = wash;
       g.fillRect(0, 0, W, H * 0.62);
+      /* the milky way veil, painted BEFORE the stars: three nested
+         perpendicular gradients (wide shoulders → brighter inner arm
+         drifting slightly off-axis) plus a few soft cloud clumps, so
+         the light pools and thins like real star clouds instead of a
+         ruled stripe. All static — baked here once, zero frame cost. */
+      if (band) {
+        const bandA = (dark ? 0.085 : 0.03) * mood.alpha;
+        g.save();
+        g.translate(band.cx, band.cy);
+        g.rotate(band.ang);
+        [
+          { w: band.w * 2.6, a: 0.32, dy: 0 },
+          { w: band.w * 1.5, a: 0.5, dy: 0 },
+          { w: band.w * 0.8, a: 0.7, dy: -band.w * 0.14 },
+        ].forEach((L) => {
+          const grad = g.createLinearGradient(0, L.dy - L.w / 2, 0, L.dy + L.w / 2);
+          grad.addColorStop(0, 'transparent');
+          grad.addColorStop(0.5, colStar);
+          grad.addColorStop(1, 'transparent');
+          g.globalAlpha = bandA * L.a;
+          g.fillStyle = grad;
+          g.fillRect(-band.len / 2, L.dy - L.w / 2, band.len, L.w);
+        });
+        for (let i = 0; i < 7; i++) {
+          const t = (Math.random() - 0.5) * band.len * 0.8;
+          const off = (Math.random() - 0.5) * band.w * 0.4;
+          const r = band.w * (0.25 + Math.random() * 0.45);
+          const rg = g.createRadialGradient(t, off, 0, t, off, r);
+          rg.addColorStop(0, colStar);
+          rg.addColorStop(1, 'transparent');
+          g.globalAlpha = bandA * (0.2 + Math.random() * 0.28);
+          g.fillStyle = rg;
+          g.fillRect(t - r, off - r, r * 2, r * 2);
+        }
+        g.restore();
+      }
       g.strokeStyle = colLine;
       g.lineWidth = 0.6;
       g.globalAlpha = mood.alpha * 0.8;
