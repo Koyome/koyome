@@ -172,6 +172,167 @@
     render();
   }
 
+  /* ---------- five-axis anime ratings (anime section only) ----------
+     Each anime item carries an optional ratings array
+     [animation, character, story, pacing, sound] — 0..10, half steps.
+     The owner drags the polygon's nodes (one axis follows the pointer)
+     or its edges (both ends follow); visitors get the same chart
+     read-only, and only once at least one axis is rated. */
+  const RATE_DIMS = ['animation', 'character', 'story', 'pacing', 'sound'];
+  const RATE_MAX = 10, RATE_STEP = 0.5;
+  const RC = { x: 130, y: 88, r: 58, label: 79 };   /* geometry, viewBox 260×188 */
+
+  function ratingsOf(it) {
+    const r = Array.isArray(it.ratings) ? it.ratings : [];
+    return [0, 1, 2, 3, 4].map((i) => {
+      const v = Math.round(Number(r[i]) * 2) / 2;
+      return Number.isFinite(v) ? Math.max(0, Math.min(RATE_MAX, v)) : 0;
+    });
+  }
+  const axisAngle = (i) => (-90 + i * 72) * Math.PI / 180;
+  const axisPoint = (i, v) => ({
+    x: +(RC.x + Math.cos(axisAngle(i)) * RC.r * (v / RATE_MAX)).toFixed(1),
+    y: +(RC.y + Math.sin(axisAngle(i)) * RC.r * (v / RATE_MAX)).toFixed(1),
+  });
+  const polyPoints = (vals) =>
+    vals.map((v, i) => { const p = axisPoint(i, v); return p.x + ',' + p.y; }).join(' ');
+
+  function renderRadar(it) {
+    const vals = ratingsOf(it);
+    const rated = vals.some((v) => v > 0);
+    if (!canEdit && !rated) return '';   /* visitors never see an empty ghost */
+    const gid = 'hrGrad-' + it.id;
+    /* grid every 2 points + a dashed benchmark line at half scale (5) */
+    const rings = [2, 4, 5, 6, 8, 10].map((k) =>
+      `<polygon class="hr-ring${k === RATE_MAX ? ' outer' : k === 5 ? ' mid' : ''}" points="${polyPoints([k, k, k, k, k])}"/>`).join('');
+    const spokes = [0, 1, 2, 3, 4].map((i) => {
+      const p = axisPoint(i, RATE_MAX);
+      return `<line class="hr-spoke" x1="${RC.x}" y1="${RC.y}" x2="${p.x}" y2="${p.y}"/>`;
+    }).join('');
+    const vticks = [0, 1, 2, 3, 4].map((i) => {
+      const p = axisPoint(i, RATE_MAX);
+      return `<circle class="hr-vtick" cx="${p.x}" cy="${p.y}" r="1.4"/>`;
+    }).join('');
+    const labels = RATE_DIMS.map((d, i) => {
+      const a = axisAngle(i);
+      const x = RC.x + Math.cos(a) * RC.label, y = RC.y + Math.sin(a) * RC.label + 3;
+      const anchor = Math.abs(Math.cos(a)) < 0.3 ? 'middle' : (Math.cos(a) > 0 ? 'start' : 'end');
+      return `<text class="hr-dim" data-rlab="${i}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}">${esc(t('hob_dim_' + d))}</text>`;
+    }).join('');
+    const dots = vals.map((v, i) => {
+      const p = axisPoint(i, v);
+      return canEdit
+        ? `<g class="hr-pt"><circle class="hr-hit" data-rnode="${i}" cx="${p.x}" cy="${p.y}" r="15"/>` +
+          `<circle class="hr-dot" data-rdot="${i}" cx="${p.x}" cy="${p.y}" r="3.4" pointer-events="none"/></g>`
+        : `<circle class="hr-dot" data-rdot="${i}" cx="${p.x}" cy="${p.y}" r="3.4"/>`;
+    }).join('');
+    const edges = canEdit ? vals.map((v, i) => {
+      const a = axisPoint(i, v), b = axisPoint((i + 1) % 5, vals[(i + 1) % 5]);
+      return `<line class="hr-ehit" data-redge="${i}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`;
+    }).join('') : '';
+    const avg = vals.reduce((s, v) => s + v, 0) / RATE_DIMS.length;
+    return `
+    <div class="hob-radar${canEdit ? ' can' : ''}${rated ? '' : ' unrated'}" data-hrate="${esc(it.id)}">
+      <div class="hr-cap">${esc(t('hob_rate'))}</div>
+      <svg viewBox="0 0 260 188" role="img" aria-label="${esc(t('hob_rate'))}">
+        <defs><radialGradient id="${gid}" cx="50%" cy="50%" r="68%">
+          <stop offset="0%" class="hr-g0"/><stop offset="100%" class="hr-g1"/>
+        </radialGradient></defs>
+        ${rings}${spokes}${vticks}
+        <polygon class="hr-poly" fill="url(#${gid})" points="${polyPoints(vals)}"/>
+        ${edges}${dots}${labels}
+        <text class="hr-val" x="${RC.x}" y="184" text-anchor="middle">${rated ? esc(t('hob_avg') + ' ' + avg.toFixed(1)) : ''}</text>
+      </svg>
+    </div>`;
+  }
+
+  /* in-place redraw during a drag — no re-render, pointer capture survives */
+  function updateRadar(box, vals, active) {
+    box.querySelector('.hr-poly').setAttribute('points', polyPoints(vals));
+    vals.forEach((v, i) => {
+      const p = axisPoint(i, v);
+      ['[data-rdot="' + i + '"]', '[data-rnode="' + i + '"]'].forEach((sel) => {
+        const el = box.querySelector(sel);
+        if (el) { el.setAttribute('cx', p.x); el.setAttribute('cy', p.y); }
+      });
+      const eh = box.querySelector('[data-redge="' + i + '"]');
+      if (eh) {
+        const q = axisPoint((i + 1) % 5, vals[(i + 1) % 5]);
+        eh.setAttribute('x1', p.x); eh.setAttribute('y1', p.y);
+        eh.setAttribute('x2', q.x); eh.setAttribute('y2', q.y);
+      }
+    });
+    const out = box.querySelector('.hr-val');
+    box.querySelectorAll('[data-rlab]').forEach((el) => el.classList.remove('on'));
+    if (active && active.kind === 'node') {
+      out.textContent = t('hob_dim_' + RATE_DIMS[active.i]) + ' ' + vals[active.i].toFixed(1);
+      const lab = box.querySelector('[data-rlab="' + active.i + '"]');
+      if (lab) lab.classList.add('on');
+    } else if (active && active.kind === 'edge') {
+      out.textContent = vals[active.a].toFixed(1) + ' · ' + vals[active.b].toFixed(1);
+      [active.a, active.b].forEach((i) => {
+        const lab = box.querySelector('[data-rlab="' + i + '"]');
+        if (lab) lab.classList.add('on');
+      });
+    } else {
+      const any = vals.some((v) => v > 0);
+      const avg = vals.reduce((s, v) => s + v, 0) / RATE_DIMS.length;
+      out.textContent = any ? t('hob_avg') + ' ' + avg.toFixed(1) : '';
+    }
+  }
+
+  function bindRadar(box) {
+    const sec = doc.sections.find((s) => s.id === 'anime');
+    const it = sec && sec.items.find((x) => x.id === box.dataset.hrate);
+    if (!it) return;
+    const svg = box.querySelector('svg');
+    const vals = ratingsOf(it);
+    let drag = null;   /* { kind:'node', i } | { kind:'edge', a, b } */
+
+    const toLocal = (e) => {
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    };
+    /* pointer → value on axis i: projection onto the axis direction,
+       snapped to half steps, clamped inside the grid */
+    const axisVal = (p, i) => {
+      const a = axisAngle(i);
+      const proj = ((p.x - RC.x) * Math.cos(a) + (p.y - RC.y) * Math.sin(a)) / RC.r * RATE_MAX;
+      return Math.max(0, Math.min(RATE_MAX, Math.round(proj / RATE_STEP) * RATE_STEP));
+    };
+    const applyDrag = (e) => {
+      const p = toLocal(e);
+      if (drag.kind === 'node') vals[drag.i] = axisVal(p, drag.i);
+      else { vals[drag.a] = axisVal(p, drag.a); vals[drag.b] = axisVal(p, drag.b); }
+      updateRadar(box, vals, drag);
+    };
+    svg.addEventListener('pointerdown', (e) => {
+      const n = e.target.closest('[data-rnode]');
+      const eg = e.target.closest('[data-redge]');
+      if (!n && !eg) return;
+      e.preventDefault();
+      try { svg.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+      drag = n
+        ? { kind: 'node', i: +n.dataset.rnode }
+        : { kind: 'edge', a: +eg.dataset.redge, b: (+eg.dataset.redge + 1) % RATE_DIMS.length };
+      box.classList.add('dragging');
+      applyDrag(e);
+    });
+    svg.addEventListener('pointermove', (e) => { if (drag) applyDrag(e); });
+    const end = async () => {
+      if (!drag) return;
+      drag = null;
+      box.classList.remove('dragging');
+      it.ratings = vals.slice();
+      updateRadar(box, vals, null);
+      await persist(true);
+    };
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+    updateRadar(box, vals, null);
+  }
+
   /* ---------- rendering ---------- */
   function renderFigure(sec, it) {
     if (it.src) {
@@ -213,6 +374,7 @@
             <span class="hflow-num">${String(i + 1).padStart(2, '0')}</span>
             <div class="hflow-name${name ? '' : ' is-empty'}" data-hname>${name ? esc(name) : (canEdit ? esc(t('hob_name_ph')) : '')}</div>
             <div class="hflow-text${text ? '' : ' is-empty'}" data-htext>${text ? esc(text) : (canEdit ? esc(t('hob_text_ph')) : '')}</div>
+            ${sec.id === 'anime' ? renderRadar(it) : ''}
             ${canEdit ? `<button type="button" class="hflow-del" data-hdel="${esc(sec.id)}|${esc(it.id)}">${esc(t('del'))} ✕</button>` : ''}
           </div>
         </div>`;
@@ -324,6 +486,9 @@
           render();
         });
       });
+
+      /* anime ratings radar — drag to score */
+      document.querySelectorAll('.hob-radar.can').forEach(bindRadar);
     }
 
     observeReveals(document);

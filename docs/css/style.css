@@ -1074,6 +1074,32 @@ img { max-width: 100%; display: block; }
 }
 .hflow-add:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 
+/* ---------- five-axis anime ratings radar (anime section) ----------
+   same dialect as the travel maps & the home compass: hairline grid,
+   mono micro-labels, accent ink for the value shape. The owner drags
+   the nodes (one axis) or the edges (both ends); visitors read only. */
+.hob-radar { margin-top: 18px; width: min(252px, 100%); }
+.hob-radar svg { width: 100%; height: auto; display: block; overflow: visible; }
+.hr-cap { font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.3em; color: var(--muted); margin-bottom: 4px; }
+.hr-ring { fill: none; stroke: var(--line); stroke-width: 0.7; }
+.hr-ring.mid { stroke: var(--accent); stroke-opacity: 0.32; stroke-width: 0.7; stroke-dasharray: 3 4; }
+.hr-ring.outer { stroke: var(--muted); stroke-width: 0.9; }
+.hr-spoke { stroke: var(--line); stroke-width: 0.7; }
+.hr-vtick { fill: var(--muted); }
+.hr-g0 { stop-color: var(--accent); stop-opacity: 0.2; }
+.hr-g1 { stop-color: var(--accent); stop-opacity: 0.05; }
+.hr-poly { stroke: var(--accent); stroke-width: 1.2; stroke-linejoin: round; }
+.hob-radar.unrated .hr-poly { fill: var(--accent); fill-opacity: 0.05; stroke-opacity: 0.55; stroke-dasharray: 3 4; }
+.hr-dot { fill: var(--panel); stroke: var(--accent); stroke-width: 1.4; transition: r 0.15s ease; }
+.hr-pt:hover .hr-dot { r: 4.8; }
+.hr-dim { font-family: var(--mono); font-size: 8px; letter-spacing: 0.12em; fill: var(--muted); }
+.hr-dim.on { fill: var(--accent); }
+.hr-val { font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em; fill: var(--ink); }
+.hr-hit { fill: transparent; cursor: grab; touch-action: none; }
+.hr-ehit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: grab; touch-action: none; }
+.hob-radar.dragging .hr-hit, .hob-radar.dragging .hr-ehit { cursor: grabbing; }
+@media (prefers-reduced-motion: reduce) { .hr-dot { transition: none; } }
+
 /* a small bridge between the two rivers */
 .hob-river { display: flex; justify-content: center; padding: 30px 0 0; }
 .hob-river span {

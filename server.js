@@ -386,6 +386,14 @@ const server = http.createServer(async (req, res) => {
             text: str(it.text, 3000),
             textZh: str(it.textZh, 3000),
             src: /^assets\/[\w.\-\u4e00-\u9fa5]+$/i.test(String(it.src || '')) ? String(it.src) : '',
+            /* five-axis anime ratings [animation, character, story, pacing,
+               sound] — 0..10 in half steps; absent = unrated (key dropped) */
+            ...(Array.isArray(it.ratings) ? {
+              ratings: [0, 1, 2, 3, 4].map((i) => {
+                const v = Math.round(Number(it.ratings[i]) * 2) / 2;
+                return Number.isFinite(v) ? Math.max(0, Math.min(10, v)) : 0;
+              }),
+            } : {}),
           })),
         })),
         /* chibi decoration slots scattered around the page */
