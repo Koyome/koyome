@@ -180,7 +180,7 @@
     "date": "2026-09-10",
     "featured": true,
     "desc": "Travel Photo.",
-    "descZh": "精選照片",
+    "descZh": "精選照片 点击对应地标自动跳转对应图片",
     "src": "assets/opt/1789827413545_C22FA9D2AC86DC60465FB447FBE77D74.jpg",
     "media": [
       {
