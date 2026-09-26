@@ -1,0 +1,94 @@
+/* ============================================================
+   kstage.css — shell for the interactive canvas installations
+   (docs/components/kstage.js).
+
+   The canvas paints itself; this file only supplies:
+     • the box (aspect ratio + responsive height)
+     • the colour tokens the canvas reads (--ks-*) in day / night
+     • the no-JS / no-canvas fallback image
+     • the hover + keyboard affordances
+
+   Colour tokens follow the site's low-saturation palette; the
+   "cyber" feel comes from the cool secondary (--ks-cool) and the
+   glow amount, not from saturated neon.
+   ============================================================ */
+
+.kstage {
+  --ks-ink: #3b3a38;          /* primary line */
+  --ks-dim: #7c7a75;          /* secondary line / readouts */
+  --ks-faint: rgba(59, 58, 56, 0.085); /* grid, hairlines */
+  --ks-accent: #9e2b25;       /* signal red */
+  --ks-cool: #4d6f79;         /* cool secondary (cyber) */
+  --ks-paper: #e4e2df;        /* page background, for washes */
+  --ks-lit: #f4f2ef;          /* surface facing the key light */
+  --ks-shade: #9a9892;        /* surface turned away from it */
+  --ks-glow: 0.34;            /* 0..1 — glow strength (paper = low) */
+
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: transparent;
+  touch-action: none;         /* pointer drags must not scroll the page */
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-theme="dark"] .kstage {
+  --ks-ink: #ebe9e5;
+  --ks-dim: #8f8c86;
+  --ks-faint: rgba(235, 233, 229, 0.10);
+  --ks-accent: #d4604f;
+  --ks-cool: #7fb3c2;
+  --ks-paper: #121110;
+  --ks-lit: #dbe0e6;
+  --ks-shade: #26241f;
+  --ks-glow: 1;
+}
+
+/* shape variants ------------------------------------------------ */
+.kstage[data-ratio="wide"]  { aspect-ratio: 16 / 9; }
+.kstage[data-ratio="tall"]  { aspect-ratio: 3 / 4; }
+.kstage[data-ratio="golden"]{ aspect-ratio: 1.618 / 1; }
+
+/* the canvas fills the box; JS sizes its backing store to DPR */
+.kstage-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  cursor: grab;
+}
+.kstage-canvas:active { cursor: grabbing; }
+.kstage-canvas:focus-visible {
+  outline: 1px solid var(--ks-accent);
+  outline-offset: -1px;
+}
+
+/* fallback: shown before JS boots, and left in place if the
+   canvas cannot be created (or JS is off) */
+.kstage-fb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.kstage.is-live .kstage-fb { display: none; }
+
+/* one-line affordance under the frame (HTML, not canvas, so it
+   is readable by screen readers and translatable) */
+.kstage-hint {
+  margin: 6px 0 0;
+  font: 400 10px/1.5 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted, #8b8985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kstage-canvas { cursor: default; }
+}

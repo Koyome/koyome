@@ -6,7 +6,11 @@
   <title data-i18n="title_home">Koyome · a quiet corner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%23c9c7c2' stroke-width='1.5'/><circle cx='16' cy='16' r='4' fill='%239e2b25'/></svg>" />
   <script>try{document.documentElement.dataset.theme=localStorage.getItem("koyome_theme")==="dark"?"dark":"light"}catch(_){document.documentElement.dataset.theme="light"}</script>
-  <link rel="stylesheet" href="css/style.css?v=202609261137" />
+  <!-- kstage.css first: it only holds the canvas box + its default colour
+       tokens, and style.css must be able to re-point those tokens at the
+       site's own variables (see .sigil-orrery in css/style.css). -->
+  <link rel="stylesheet" href="components/kstage.css?v=202609261816" />
+  <link rel="stylesheet" href="css/style.css?v=202609261958" />
 </head>
 <body data-page="home" data-title-key="title_home">
 
@@ -224,39 +228,20 @@
     </div>
   </section>
 
-  <!-- Hexagram sigil — the old friend, back on the homepage -->
-  <section class="home-sigil" aria-hidden="true">
+  <!-- Armillary sphere (浑天仪) — the kstage orrery, taking the hexagram's
+       place. The canvas rig is heavy, so js/main.js injects the script only
+       once this section is a screen away; until then (and if the canvas
+       cannot start at all) the box keeps a faint hairline ring.
+       data-opts strips the instrument chrome (grid, scan line, corner
+       brackets, the thin paper wash and the readouts) so what is left is
+       only the drawing, sitting on the page's own paper. The caption
+       below-right is owner-editable (double-click). -->
+  <section class="home-sigil">
     <span class="sigil-rule"></span>
+    <div class="sigil-block">
     <div class="sigil">
-      <svg class="sigil-svg" viewBox="0 0 400 400" fill="none">
-        <g class="sigil-spin-a">
-          <circle cx="200" cy="200" r="186" stroke="var(--sigil-dash)" stroke-width="1" stroke-dasharray="1.5 9"/>
-        </g>
-        <circle cx="200" cy="200" r="150" stroke="var(--sigil-ring)" stroke-width="1"/>
-        <!-- chords weaving the six nodes together -->
-        <g class="sigil-chords" stroke="var(--sigil-chord)" stroke-width="0.7" opacity="0.9">
-          <line x1="200" y1="50" x2="329.9" y2="275"/>
-          <line x1="200" y1="50" x2="70.1" y2="275"/>
-          <line x1="200" y1="350" x2="329.9" y2="125"/>
-          <line x1="200" y1="350" x2="70.1" y2="125"/>
-          <line x1="329.9" y1="125" x2="70.1" y2="275"/>
-          <line x1="70.1" y1="125" x2="329.9" y2="275"/>
-        </g>
-        <g class="sigil-spin-b">
-          <polygon points="200,50 329.9,275 70.1,275" stroke="var(--sigil-tri)" stroke-width="1.1"/>
-          <circle cx="200" cy="50" r="4" fill="var(--sigil-node)"/>
-          <circle cx="329.9" cy="275" r="4" fill="var(--sigil-node)"/>
-          <circle cx="70.1" cy="275" r="4" fill="var(--sigil-node)"/>
-        </g>
-        <g class="sigil-spin-c">
-          <polygon points="200,350 329.9,125 70.1,125" stroke="var(--sigil-tri)" stroke-width="1.1"/>
-          <circle cx="200" cy="350" r="4" fill="var(--sigil-node)"/>
-          <circle cx="329.9" cy="125" r="4" fill="var(--sigil-node)"/>
-          <circle cx="70.1" cy="125" r="4" fill="var(--sigil-node)"/>
-        </g>
-        <circle class="sigil-pulse" cx="200" cy="200" r="4" fill="var(--accent)"/>
-      </svg>
-      <span class="sigil-name flicker" id="sigilName">Koyome</span>
+      <div class="kstage sigil-orrery" data-kstage="orrery"
+           data-opts="grid:0,scan:0,wash:0,brackets:0,hud:0"></div>
       <span class="twinkle" style="left:12%; top:18%; animation-delay:0s;"></span>
       <span class="twinkle" style="left:86%; top:26%; animation-delay:1.4s;"></span>
       <span class="twinkle" style="left:8%; top:66%; animation-delay:2.6s;"></span>
@@ -264,6 +249,20 @@
       <span class="twinkle" style="left:26%; top:88%; animation-delay:3.4s;"></span>
       <span class="twinkle" style="left:68%; top:8%; animation-delay:2s;"></span>
     </div>
+    <!-- member pins: locate + lock + follow a lab member in one click
+         (wired in js/main.js; they call the orrery's number-key path) -->
+    <div class="sigil-pins" id="sigilPins" role="group" aria-label="定位成员">
+      <button type="button" data-member="1">001 冈部</button>
+      <button type="button" data-member="2">002 桶子</button>
+      <button type="button" data-member="3">003 真由理</button>
+      <button type="button" data-member="4">004 红莉栖</button>
+      <button type="button" data-member="5">008 铃羽</button>
+    </div>
+    <!-- bottom-right of the block: a caption the owner can edit in place
+         (double-click). Empty = hidden for visitors. -->
+    <div class="sigil-note" id="sigilNote" hidden></div>
+    </div>
+    <span class="sigil-name flicker" id="sigilName">Koyome</span>
     <span class="sigil-rule"></span>
   </section>
 
@@ -271,10 +270,10 @@
     <span data-i18n="footer">© 2026 KOYOME. ALL RIGHTS RESERVED.</span> &nbsp;·&nbsp; <span class="addr">KOYOME.ME</span>
   </footer>
 
-  <script src="js/i18n.js?v=202609261137"></script>
-  <script src="js/header.js?v=202609261137"></script>
-  <script src="js/data.js?v=202609261137"></script>
-  <script src="js/deco.js?v=202609261137"></script>
-  <script src="js/main.js?v=202609261137"></script>
+  <script src="js/i18n.js?v=202609261958"></script>
+  <script src="js/header.js?v=202609261958"></script>
+  <script src="js/data.js?v=202609261958"></script>
+  <script src="js/deco.js?v=202609261958"></script>
+  <script src="js/main.js?v=202609261958"></script>
 </body>
 </html>

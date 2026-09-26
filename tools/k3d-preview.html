@@ -1,0 +1,252 @@
+<!doctype html>
+<!-- R26 local demo of the CSS 3D models. tools/ only - never deployed. -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R26 · CSS 3D 模型</title>
+<link rel="stylesheet" href="../docs/components/k3d.css">
+<style>
+  :root { --bg: #e4e2df; --panel: #ebe9e6; --ink: #3b3a38; --muted: #8b8985;
+          --line: #c9c7c2; --accent: #9e2b25; }
+  html[data-theme="dark"] { --bg: #121110; --panel: #1c1a18; --ink: #ebe9e5;
+          --muted: #a3a09a; --line: #3c3a36; --accent: #d4604f; }
+  body { margin: 0; padding: 34px 24px 60px; background: var(--bg); color: var(--ink);
+         font-family: Georgia, "Songti SC", serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  .top { display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid
+         var(--line); padding-bottom: 12px; }
+  h1 { font-size: 19px; font-weight: normal; letter-spacing: 0.06em; margin: 0; }
+  .sub { font-family: ui-monospace, Consolas, monospace; font-size: 10.5px;
+         letter-spacing: 0.22em; color: var(--muted); }
+  .btn { margin-left: auto; background: none; border: 1px solid var(--line);
+         color: var(--muted); font-family: ui-monospace, Consolas, monospace;
+         font-size: 10.5px; letter-spacing: 0.2em; padding: 7px 13px; cursor: pointer; }
+  .btn:hover { color: var(--accent); border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          gap: 22px; margin-top: 26px; }
+  .cell { border: 1px solid var(--line); background: var(--panel); padding: 18px 0 10px; }
+  .cell h2 { margin: 14px 0 2px; font-size: 13.5px; font-weight: normal;
+             text-align: center; letter-spacing: 0.05em; }
+  .cell .en { font-family: ui-monospace, Consolas, monospace; font-size: 9px;
+              letter-spacing: 0.2em; color: var(--muted); text-align: center; }
+  .k3d { margin: 0 auto; }
+  .note { margin-top: 34px; font-size: 12.5px; line-height: 2; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>R26 · 3D 模型（纯 CSS，无库无 JS）</h1>
+    <span class="sub">CSS 3D / GPU COMPOSITED</span>
+    <button class="btn" id="themeBtn">切换夜间 / NIGHT</button>
+  </div>
+  <div class="grid">
+    <div class="cell">
+      <div class="k3d k3d--crystal" aria-hidden="true">
+        <div class="k3d-scene">
+<i class="f0"></i>
+<i class="f1"></i>
+<i class="f2"></i>
+<i class="f3"></i>
+<i class="f4"></i>
+<i class="f5"></i>
+<i class="f6"></i>
+<i class="f7"></i>
+<i class="f8"></i>
+<i class="f9"></i>
+<i class="f10"></i>
+<i class="f11"></i>
+<i class="f12"></i>
+<i class="f13"></i>
+<i class="f14"></i>
+<i class="f15"></i>
+<i class="f16"></i>
+<i class="f17"></i>
+<i class="f18"></i>
+<i class="f19"></i>
+        </div>
+      </div>
+      <h2>晶体二十面体</h2>
+      <div class="en">CRYSTAL</div>
+    </div>
+    <div class="cell">
+      <div class="k3d k3d--torus" aria-hidden="true">
+        <div class="k3d-scene">
+<i class="r0"></i>
+<i class="r1"></i>
+<i class="r2"></i>
+<i class="r3"></i>
+<i class="r4"></i>
+<i class="r5"></i>
+<i class="r6"></i>
+<i class="r7"></i>
+<i class="r8"></i>
+<i class="r9"></i>
+<i class="r10"></i>
+<i class="r11"></i>
+<i class="r12"></i>
+<i class="r13"></i>
+<i class="r14"></i>
+<i class="r15"></i>
+<i class="r16"></i>
+<i class="r17"></i>
+<i class="r18"></i>
+<i class="r19"></i>
+<i class="r20"></i>
+<i class="r21"></i>
+<i class="r22"></i>
+<i class="r23"></i>
+<i class="r24"></i>
+<i class="r25"></i>
+<i class="r26"></i>
+<i class="r27"></i>
+<i class="r28"></i>
+<i class="r29"></i>
+<i class="r30"></i>
+<i class="r31"></i>
+<i class="r32"></i>
+<i class="r33"></i>
+<i class="r34"></i>
+<i class="r35"></i>
+<i class="r36"></i>
+<i class="r37"></i>
+<i class="r38"></i>
+<i class="r39"></i>
+<i class="r40"></i>
+<i class="r41"></i>
+<i class="r42"></i>
+<i class="r43"></i>
+        </div>
+      </div>
+      <h2>环面线圈</h2>
+      <div class="en">TORUS</div>
+    </div>
+    <div class="cell">
+      <div class="k3d k3d--cube" aria-hidden="true">
+        <div class="k3d-scene">
+<i class="p0"></i>
+<i class="p1"></i>
+<i class="p2"></i>
+<i class="p3"></i>
+<i class="p4"></i>
+<i class="p5"></i>
+<i class="e0"></i>
+<i class="e1"></i>
+<i class="e2"></i>
+<i class="e3"></i>
+<i class="e4"></i>
+<i class="e5"></i>
+<i class="e6"></i>
+<i class="e7"></i>
+<i class="e8"></i>
+<i class="e9"></i>
+<i class="e10"></i>
+<i class="e11"></i>
+<i class="v0"></i>
+<i class="v1"></i>
+<i class="v2"></i>
+<i class="v3"></i>
+<i class="v4"></i>
+<i class="v5"></i>
+<i class="v6"></i>
+<i class="v7"></i>
+        </div>
+      </div>
+      <h2>玻璃立方</h2>
+      <div class="en">CUBE</div>
+    </div>
+    <div class="cell">
+      <div class="k3d k3d--helix" aria-hidden="true">
+        <div class="k3d-scene">
+<i class="s0"></i>
+<i class="s1"></i>
+<i class="s2"></i>
+<i class="s3"></i>
+<i class="s4"></i>
+<i class="s5"></i>
+<i class="s6"></i>
+<i class="s7"></i>
+<i class="s8"></i>
+<i class="s9"></i>
+<i class="s10"></i>
+<i class="s11"></i>
+<i class="s12"></i>
+<i class="s13"></i>
+<i class="s14"></i>
+<i class="s15"></i>
+<i class="s16"></i>
+<i class="s17"></i>
+<i class="s18"></i>
+<i class="s19"></i>
+<i class="s20"></i>
+<i class="s21"></i>
+<i class="s22"></i>
+<i class="s23"></i>
+<i class="s24"></i>
+<i class="s25"></i>
+<i class="s26"></i>
+<i class="s27"></i>
+<i class="s28"></i>
+<i class="s29"></i>
+<i class="s30"></i>
+<i class="s31"></i>
+<i class="s32"></i>
+<i class="s33"></i>
+<i class="s34"></i>
+<i class="s35"></i>
+<i class="s36"></i>
+<i class="s37"></i>
+<i class="s38"></i>
+<i class="s39"></i>
+<i class="s40"></i>
+<i class="s41"></i>
+<i class="s42"></i>
+<i class="s43"></i>
+<i class="s44"></i>
+<i class="s45"></i>
+<i class="s46"></i>
+<i class="s47"></i>
+<i class="s48"></i>
+<i class="s49"></i>
+<i class="s50"></i>
+<i class="s51"></i>
+<i class="s52"></i>
+<i class="s53"></i>
+<i class="s54"></i>
+<i class="s55"></i>
+<i class="s56"></i>
+<i class="s57"></i>
+<i class="s58"></i>
+<i class="s59"></i>
+<i class="s60"></i>
+<i class="s61"></i>
+<i class="s62"></i>
+<i class="s63"></i>
+<i class="s64"></i>
+<i class="s65"></i>
+<i class="s66"></i>
+<i class="s67"></i>
+        </div>
+      </div>
+      <h2>双螺旋</h2>
+      <div class="en">HELIX</div>
+    </div>
+  </div>
+  <p class="note">
+    每个模型只有一个动画属性在跑：场景的 rotateY（合成层，不触发重排/重绘）。面片朝向、法线光照、
+    深度淡出全部在生成期烘焙成 matrix3d 与渐变，运行时零计算。<br>
+    <code>prefers-reduced-motion: reduce</code> 时整体静止在一个构图角度（这些是真实页面里的内联 DOM，
+    媒体查询能生效，不像 &lt;img&gt; 里的 SVG）。<br>
+    引入方式：把 <code>docs/components/k3d.css</code> 挂上，再从 <code>docs/components/k3d.html</code>
+    拷一个 <code>&lt;div class="k3d k3d--xxx"&gt;</code> 块即可；配色跟随 <code>--ink / --line / --accent</code>。
+  </p>
+</div>
+<script>
+document.getElementById('themeBtn').onclick = () => {
+  const d = document.documentElement;
+  d.dataset.theme = d.dataset.theme === 'dark' ? 'light' : 'dark';
+};
+</script>
+</body>
+</html>

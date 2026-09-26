@@ -29,6 +29,7 @@
       home_eyebrow: 'WELCOME',
       home_fig: 'FIG. 01 — KOYOME',
       home_fig_note_ph: 'double-click to add a caption note…',
+      home_arm_note_ph: 'double-click to add a note beside the sphere…',
 
       sec_catalog: 'Catalog', sec_catalog_en: 'INDEX',
       catalog_intro: 'Everything I have kept so far, grouped by category. Click any title to open its own page.',
@@ -159,6 +160,7 @@
       home_eyebrow: '歡迎',
       home_fig: '圖 01 — KOYOME',
       home_fig_note_ph: '雙擊為這幅小像添一句註腳……',
+      home_arm_note_ph: '雙擊為這座渾天儀添一句註腳……',
 
       sec_catalog: '目錄', sec_catalog_en: 'INDEX',
       catalog_intro: '目前收藏的一切，依分類整理。點開任一標題，進入它自己的頁面。',
@@ -296,6 +298,7 @@
       home_eyebrow: '欢迎',
       home_fig: '图 01 — KOYOME',
       home_fig_note_ph: '双击为这幅小像添一句注脚……',
+      home_arm_note_ph: '双击为这座浑天仪添一句注脚……',
       sec_catalog: '目录',
       sec_catalog_en: 'INDEX',
       catalog_intro: '目前收藏的一切，依分类整理。点开任一标题，进入它自己的页面。',

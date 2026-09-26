@@ -1,0 +1,50 @@
+<!--
+  kstage — copy-paste mounts for the three interactive installations.
+  Pair with kstage.css + kstage.js (both in this folder).
+
+  1. one stylesheet link in <head>
+  2. one <script> before </body>
+  3. drop a mount point wherever the installation should live
+
+  Everything else (canvas sizing, DPR, day/night, pause when off-screen,
+  reduced-motion, the no-JS fallback image) is handled by the script.
+-->
+
+<link rel="stylesheet" href="components/kstage.css">
+
+<!-- the mount point ------------------------------------------------------
+     data-kstage : orrery | lunar | prism
+     data-ratio  : (optional) wide 16:9 | tall 3:4 | golden 1.618:1
+     data-fallback: a static image shown if JS / canvas is unavailable
+     ------------------------------------------------------------------ -->
+<div class="kstage" data-kstage="orrery" data-fallback="assets/deco_armillary.svg"></div>
+<p class="kstage-hint">drag = spin · wheel = zoom · click a planet = lock</p>
+
+<div class="kstage" data-kstage="lunar" data-ratio="wide" data-fallback="assets/deco_phases.svg"></div>
+<p class="kstage-hint">drag ←→ = scrub the month · click a marker = jump</p>
+
+<div class="kstage" data-kstage="prism" data-fallback="assets/deco_atlas.svg"></div>
+<p class="kstage-hint">drag = rotate · double-click = explode</p>
+
+<script src="components/kstage.js"></script>
+
+<!--
+  Notes for whoever wires this up next
+  ─────────────────────────────────────
+  • Paths above assume the page sits in docs/ (index.html, hobbies.html …).
+    From a sub-folder, prefix with ../ — the site is strictly relative-path.
+  • The script mounts on DOMContentLoaded (or immediately if the document is
+    already parsed). To mount late, call window.KStage.mount(rootElement).
+  • Colour tokens live in kstage.css under .kstage / [data-theme="dark"] .kstage:
+    --ks-ink, --ks-dim, --ks-faint, --ks-accent, --ks-cool, --ks-paper,
+    --ks-lit, --ks-shade, --ks-glow. Override them per-section with an inline
+    style or a wrapper class if one installation needs a different mood.
+  • data-opts="grid:0,scan:0,wash:0,brackets:0,hud:0" switches off pieces of
+    the instrument chrome for that one mount only (global OPTS stays intact).
+    The home page bottom sphere uses all five — it wants to read as a
+    drawing on the page, not as a panel.
+  • Each canvas is focusable (tabindex=0) and responds to arrow keys, so it is
+    keyboard-reachable; the .kstage-hint paragraph is real text and is the
+    place to put translated copy.
+  • Nothing here touches docs/assets or docs/data.
+-->

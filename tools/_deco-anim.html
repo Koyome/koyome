@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- R26 scratch page: inline a deco SVG, pause every animation, step it to
+     explicit timestamps and read back the computed transforms. Served by
+     tools/probe-anim.js, never deployed. -->
+<html lang="en">
+<head><meta charset="utf-8"><title>animation diag</title></head>
+<body style="margin:0">
+<div id="host"></div>
+<script>
+function mx(str) {
+  if (!str || str === 'none') return [1, 0, 0, 1, 0, 0];
+  const n = str.match(/matrix\(([^)]+)\)/);
+  if (!n) return null;
+  return n[1].split(',').map(Number);
+}
+
+window.diag = async function (name, steps) {
+  const host = document.getElementById('host');
+  const txt = await (await fetch('/assets/' + name + '.svg')).text();
+  host.innerHTML = txt;
+  const svg = host.querySelector('svg');
+  await new Promise((r) => setTimeout(r, 300));
+
+  const nodes = [...svg.querySelectorAll('[class]')].filter((e) => /k-/.test(e.getAttribute('class')));
+  const recs = nodes.map((el) => {
+    const anims = el.getAnimations ? el.getAnimations() : [];
+    return { el, anims, cls: el.getAttribute('class') };
+  });
+  recs.forEach((r) => r.anims.forEach((a) => a.pause()));
+
+  const out = [];
+  for (const r of recs) {
+    if (!r.anims.length) continue;
+    const dur = r.anims.map((a) => a.effect.getComputedTiming().duration).filter((d) => d && d !== Infinity)[0];
+    if (!dur) continue;
+    const samples = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = (i % steps) * dur / steps;
+      r.anims.forEach((a) => { try { a.currentTime = t; } catch (e) {} });
+      const cs = getComputedStyle(r.el);
+      const m = mx(cs.transform);
+      const op = parseFloat(cs.opacity);
+      samples.push({ t: +t.toFixed(1), m, op: +op.toFixed(3) });
+    }
+    out.push({ cls: r.cls, dur, samples });
+  }
+  return { name, count: out.length, data: out };
+};
+</script>
+</body>
+</html>

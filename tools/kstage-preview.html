@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>暦 · KOYOME 观测台 — 六件可交互装置</title>
+<link rel="stylesheet" href="../docs/components/kstage.css">
+<style>
+  :root{
+    --bg:#e4e2df; --ink:#3b3a38; --muted:#8b8985; --line:#c9c7c2; --accent:#9e2b25;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
+    --serif: Georgia, "Songti SC", "STSong", "SimSun", serif;
+    --sz: 440px;
+  }
+  [data-theme="dark"]{
+    --bg:#121110; --ink:#ebe9e5; --muted:#8f8c86; --line:#3c3a36; --accent:#d4604f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:400 14px/1.7 var(--mono);padding:30px 24px 70px;
+       -webkit-font-smoothing:antialiased}
+
+  /* ---------- 抬头 ---------- */
+  .masthead{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;
+            border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
+  .seal{font:600 40px/1 var(--serif);color:var(--accent)}
+  .word{font:600 22px/1 var(--mono);letter-spacing:.34em;margin-left:2px}
+  .masthead h1{font:600 15px/1.4 var(--mono);letter-spacing:.16em;margin:0 0 2px}
+  .masthead .sub{margin:0;color:var(--muted);font-size:11px;letter-spacing:.14em}
+  .mh-txt{flex:1;min-width:220px}
+
+  /* ---------- 控制台 ---------- */
+  .console{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;
+           border:1px solid var(--line);padding:12px 14px;margin-bottom:24px;
+           background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0))}
+  [data-theme="dark"] .console{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0))}
+  .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .grp>b{font:600 10px/1 var(--mono);letter-spacing:.18em;color:var(--muted);margin-right:2px}
+  button{font:400 11px/1 var(--mono);letter-spacing:.1em;
+         background:transparent;color:var(--ink);border:1px solid var(--line);
+         padding:6px 11px;cursor:pointer;transition:border-color .15s,color .15s}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+  .fps{margin-left:auto;color:var(--muted);font-size:11px;letter-spacing:.1em;white-space:nowrap}
+  .fps b{color:var(--accent);font-weight:600}
+
+  /* ---------- 装置阵列 ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:30px}
+  figure{margin:0}
+  figcaption{font-size:10px;letter-spacing:.2em;color:var(--muted);margin-bottom:9px}
+  figcaption b{color:var(--accent);font-weight:600;margin-right:6px}
+  .wrap{max-width:var(--sz)}
+  .hint{margin:8px 0 0;color:var(--muted);font-size:11px;line-height:1.9;letter-spacing:.03em}
+  .hint kbd{font:inherit;border:1px solid var(--line);padding:0 4px;color:var(--ink)}
+
+  /* ---------- 说明 ---------- */
+  .note{margin-top:38px;color:var(--muted);font-size:11.5px;line-height:2;max-width:74ch}
+  .note b{color:var(--ink);font-weight:600}
+  .foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
+        color:var(--muted);font-size:10.5px;letter-spacing:.16em}
+</style>
+</head>
+<body>
+
+  <header class="masthead">
+    <div><span class="seal">暦</span><span class="word">KOYOME</span></div>
+    <div class="mh-txt">
+      <h1>观测台 · INSTRUMENT SUITE</h1>
+      <p class="sub">六件可交互 canvas 装置 · 统一主光 · 纯线稿 · 零依赖 · 中文界面</p>
+    </div>
+  </header>
+
+  <div class="console">
+    <div class="grp">
+      <b>主题</b>
+      <button data-act="theme" type="button">日间 / 夜间</button>
+    </div>
+    <div class="grp">
+      <b>时间</b>
+      <button data-set="time" data-val="0" type="button">静止</button>
+      <button data-set="time" data-val="0.5" type="button">×0.5</button>
+      <button data-set="time" data-val="1" aria-pressed="true" type="button">×1</button>
+      <button data-set="time" data-val="2" type="button">×2</button>
+      <button data-set="time" data-val="4" type="button">×4</button>
+    </div>
+    <div class="grp">
+      <b>图层</b>
+      <button data-toggle="grid" aria-pressed="true" type="button">网格</button>
+      <button data-toggle="scan" aria-pressed="true" type="button">扫描线</button>
+      <button data-toggle="grain" aria-pressed="true" type="button">颗粒</button>
+      <button data-toggle="hud" aria-pressed="true" type="button">HUD</button>
+      <button data-toggle="spin" aria-pressed="true" type="button">自动巡航</button>
+    </div>
+    <div class="grp">
+      <b>操作</b>
+      <button data-act="reset" type="button">复位全部</button>
+      <button data-act="png" type="button">导出 PNG</button>
+    </div>
+    <span class="fps">帧率 <b id="fps">—</b> fps · <span id="cnt">6</span> 台在线</span>
+  </div>
+
+  <div class="grid">
+    <figure class="wrap">
+      <figcaption><b>01</b> 浑天仪 ORRERY</figcaption>
+      <div class="kstage" data-kstage="orrery" data-fallback="../docs/assets/deco_armillary_still.svg"></div>
+      <p class="hint">拖拽旋转 · 点击星体锁定 · <kbd>1</kbd>–<kbd>5</kbd> 成员 · <kbd>F</kbd> 跟随 · <kbd>R</kbd> 复位</p>
+    </figure>
+
+    <figure class="wrap">
+      <figcaption><b>02</b> 月相台 LUNAR</figcaption>
+      <div class="kstage" data-kstage="lunar" data-fallback="../docs/assets/deco_phases_still.svg"></div>
+      <p class="hint">横拖擦洗一个月 · 纵拖天平动 · 点击月面暂停 · <kbd>N</kbd> 下一相位</p>
+    </figure>
+
+    <figure class="wrap">
+      <figcaption><b>03</b> 多面体 PRISM</figcaption>
+      <div class="kstage" data-kstage="prism" data-fallback="../docs/assets/deco_atlas.svg"></div>
+      <p class="hint">拖拽旋转 · 双击爆开 · <kbd>M</kbd> 换立体 · <kbd>空格</kbd> 自转</p>
+    </figure>
+
+    <figure class="wrap">
+      <figcaption><b>04</b> 行星观测 GLOBE</figcaption>
+      <div class="kstage" data-kstage="globe" data-fallback="../docs/assets/deco_rosette.svg"></div>
+      <p class="hint">拖拽转动 · 点击图钉飞过去 · <kbd>空格</kbd> 自转 · <kbd>R</kbd> 复位</p>
+    </figure>
+
+    <figure class="wrap">
+      <figcaption><b>05</b> 变动率计量仪 DIVERGENCE</figcaption>
+      <div class="kstage" data-kstage="meter" data-fallback="../docs/assets/deco_resonance.svg"></div>
+      <p class="hint">拖拽旋转 · <kbd>1</kbd>–<kbd>5</kbd> 著名世界线 · <kbd>N</kbd> 随机 · 点管进位</p>
+    </figure>
+
+    <figure class="wrap">
+      <figcaption><b>06</b> 实验室成员 LAB</figcaption>
+      <div class="kstage" data-kstage="lab" data-fallback="../docs/assets/deco_atlas.svg"></div>
+      <p class="hint">拖拽旋转 · <kbd>1</kbd>/<kbd>2</kbd> 换人 · <kbd>P</kbd> 换姿势 · <kbd>空格</kbd> 转台</p>
+    </figure>
+  </div>
+
+  <p class="note">
+    <b>共用的一套画面语法：</b>所有受光面共用同一盏主光；发光一律用叠描边伪造（绝不用
+    <code>shadowBlur</code>——它每帧都要重新光栅化，帧率直接塌掉）；噪点是确定性点阵，不是滤镜。<br>
+    <b>性能与体面：</b>整页只有一个 <code>requestAnimationFrame</code>，六台装置共用一条时钟；
+    标签页隐藏或画布滚出视口立刻停画；连续掉帧自动降画质；
+    <code>prefers-reduced-motion</code> 下时钟冻结，但拖拽、擦洗、拾取依然可用。<br>
+    <b>关于「暦」：</b>右下角那枚朱红小印是站名的汉字写法，与全站红色 accent 同源；
+    每组读数旁的 KS-01… 是装置序列号。
+  </p>
+
+  <p class="foot">暦 · KOYOME — COMPONENTS / KSTAGE — CANVAS ONLY · NO DEPENDENCIES</p>
+
+<script src="../docs/components/kstage.js"></script>
+<script>
+(function () {
+  var doc = document.documentElement;
+
+  /* ---- 主题 ---- */
+  document.querySelector('[data-act="theme"]').addEventListener('click', function () {
+    var d = doc.getAttribute('data-theme') === 'dark' ? 'day' : 'dark';
+    doc.setAttribute('data-theme', d);
+    try { localStorage.setItem('koyome_theme', d); } catch (e) { /* file:// 下存不了也无所谓 */ }
+  });
+  try {
+    var saved = localStorage.getItem('koyome_theme');
+    if (saved) doc.setAttribute('data-theme', saved);
+  } catch (e2) { /* noop */ }
+
+  /* ---- 时间倍速 ---- */
+  var timeBtns = [].slice.call(document.querySelectorAll('[data-set="time"]'));
+  timeBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      window.KStage.set('time', parseFloat(b.getAttribute('data-val')));
+      timeBtns.forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+    });
+  });
+
+  /* ---- 图层开关 ---- */
+  [].slice.call(document.querySelectorAll('[data-toggle]')).forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-toggle');
+      var on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      window.KStage.set(k, on);
+    });
+  });
+
+  /* ---- 复位 ---- */
+  document.querySelector('[data-act="reset"]').addEventListener('click', function () {
+    window.KStage.all().forEach(function (s) {
+      if (s.impl.key) s.impl.key('r', s);
+      s.dirty = true; s.kick();
+    });
+  });
+
+  /* ---- 导出一张拼版 PNG ---- */
+  document.querySelector('[data-act="png"]').addEventListener('click', function () {
+    var list = window.KStage.all();
+    if (!list.length) return;
+    var cols = 3, rows = Math.ceil(list.length / cols);
+    var cell = 480, pad = 30, head = 104;
+    var cv = document.createElement('canvas');
+    cv.width = cols * cell + pad * (cols + 1);
+    cv.height = head + rows * (cell + pad + 26) + pad;
+    var x = cv.getContext('2d');
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue('--bg').trim() || '#e4e2df';
+    var ink = cs.getPropertyValue('--ink').trim() || '#3b3a38';
+    var acc = cs.getPropertyValue('--accent').trim() || '#9e2b25';
+    var dim = cs.getPropertyValue('--muted').trim() || '#8b8985';
+    var MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "PingFang SC", "Microsoft YaHei", monospace';
+    x.fillStyle = bg; x.fillRect(0, 0, cv.width, cv.height);
+
+    x.fillStyle = acc; x.font = '600 44px Georgia, "Songti SC", serif';
+    x.fillText('暦', pad, head * 0.66);
+    x.fillStyle = ink; x.font = '600 20px ' + MONO;
+    x.fillText('KOYOME', pad + 58, head * 0.6);
+    x.fillStyle = dim; x.font = '400 11px ' + MONO;
+    x.fillText('观测台 INSTRUMENT SUITE · ' + new Date().toLocaleString('zh-CN'), pad + 58, head * 0.82);
+    x.strokeStyle = dim; x.globalAlpha = 0.5; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(pad, head - 8); x.lineTo(cv.width - pad, head - 8); x.stroke();
+    x.globalAlpha = 1;
+
+    list.forEach(function (s, i) {
+      var cx = pad + (i % cols) * (cell + pad);
+      var cy = head + Math.floor(i / cols) * (cell + pad + 26);
+      x.fillStyle = acc; x.font = '600 12px ' + MONO;
+      x.fillText(s.impl.title || '', cx, cy - 10);
+      if (s.impl.sub) { x.fillStyle = dim; x.font = '400 10px ' + MONO; x.fillText(s.impl.sub, cx + 150, cy - 10); }
+      try { x.drawImage(s.canvas, cx, cy, cell, cell); } catch (e) { /* 画布还没就绪 */ }
+      x.strokeStyle = dim; x.globalAlpha = 0.45; x.lineWidth = 1;
+      x.strokeRect(cx, cy, cell, cell);
+      x.globalAlpha = 1;
+    });
+
+    var a = document.createElement('a');
+    a.download = 'koyome-kstage-sheet.png';
+    a.href = cv.toDataURL('image/png');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  });
+
+  /* ---- 帧率 ---- */
+  var el = document.getElementById('fps'), n = 0, t0 = performance.now();
+  (function tick() {
+    n++;
+    var dt = performance.now() - t0;
+    if (dt > 500) { el.textContent = Math.round(1000 * n / dt); n = 0; t0 = performance.now(); }
+    requestAnimationFrame(tick);
+  })();
+  document.getElementById('cnt').textContent = window.KStage.all().length;
+})();
+</script>
+</body>
+</html>

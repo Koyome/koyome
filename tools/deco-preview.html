@@ -1,0 +1,166 @@
+<!doctype html>
+<!-- R24 local preview for the new decorative line-art set.
+     tools/ only — never copied into docs/ and never deployed to GitHub Pages. -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R24 线条图预览 · deco line-art</title>
+<style>
+  :root {
+    --bg: #e4e2df; --bg-deep: #dcdad6; --panel: #ebe9e6;
+    --ink: #3b3a38; --muted: #8b8985; --line: #c9c7c2; --accent: #9e2b25;
+    --serif: Georgia, "Times New Roman", "Songti SC", "STSong", serif;
+    --mono: "SFMono-Regular", ui-monospace, Consolas, "Courier New", monospace;
+  }
+  html[data-theme="dark"] {
+    --bg: #121110; --bg-deep: #1a1817; --panel: #1c1a18;
+    --ink: #ebe9e5; --muted: #a3a09a; --line: #3c3a36; --accent: #d4604f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 28px 70px; background: var(--bg); color: var(--ink);
+    font-family: var(--serif);
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  .top { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+         border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  h1 { font-size: 20px; font-weight: normal; letter-spacing: 0.08em; margin: 0; }
+  .sub { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.22em;
+         color: var(--muted); }
+  .btn {
+    margin-left: auto; font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.2em; color: var(--muted); background: transparent;
+    border: 1px solid var(--line); padding: 7px 14px; cursor: pointer;
+  }
+  .btn:hover { color: var(--accent); border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 26px; margin-top: 30px; }
+  .card { border: 1px solid var(--line); background: var(--bg-deep); padding: 14px; }
+  .card h2 { margin: 0 0 2px; font-size: 14px; font-weight: normal; letter-spacing: 0.05em; }
+  .card .en { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.18em;
+              color: var(--muted); }
+  .card .mo { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em;
+              color: var(--accent); opacity: 0.75; margin-top: 3px; }
+  .plate { position: relative; margin-top: 12px; aspect-ratio: 1/1;
+           background: var(--panel); overflow: hidden; }
+  .plate img.full { position: absolute; inset: 6%; width: 88%; height: 88%;
+                    mix-blend-mode: multiply; }
+  html[data-theme="dark"] .plate img.full { mix-blend-mode: normal; opacity: 0.9; }
+  .card .tag { position: absolute; left: 10px; bottom: 8px; font-family: var(--mono);
+               font-size: 9px; letter-spacing: 0.2em; color: var(--muted); }
+  /* — surface mode: how it would actually sit on a page (upper-right corner) — */
+  .surfaces { margin-top: 46px; }
+  .surfaces h3 { font-size: 13px; font-weight: normal; letter-spacing: 0.1em;
+                 color: var(--muted); border-bottom: 1px solid var(--line);
+                 padding-bottom: 8px; }
+  .frame { position: relative; border: 1px solid var(--line); background: var(--panel);
+           padding: 34px 30px; margin-top: 18px; min-height: 260px; overflow: hidden; }
+  .frame .kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.4em;
+                   color: var(--accent); }
+  .frame h4 { font-family: var(--serif); font-style: italic; font-size: 28px;
+              font-weight: normal; margin: 10px 0 8px; }
+  .frame p { margin: 0; font-size: 13.5px; line-height: 2; color: var(--muted);
+             max-width: 46ch; }
+  .frame .rule { width: 120px; height: 1px; background: var(--line); margin-top: 22px; }
+  .deco-abs { position: absolute; top: 14px; right: 14px; width: 285px;
+              opacity: 0.17; z-index: 0; pointer-events: none; mix-blend-mode: multiply; }
+  html[data-theme="dark"] .deco-abs { mix-blend-mode: normal; opacity: 0.4; }
+  .rowsel { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .rowsel button { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em;
+                   background: transparent; border: 1px solid var(--line);
+                   color: var(--muted); padding: 5px 10px; cursor: pointer; }
+  .rowsel button.on { color: var(--accent); border-color: var(--accent); }
+  .note { margin-top: 40px; font-size: 12.5px; line-height: 2; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>R24 · 线条图稿预览</h1>
+    <span class="sub">DECO LINE-ART / R24</span>
+    <button class="btn" id="stillBtn">静态帧 / STILL</button>
+    <button class="btn" id="themeBtn">切换夜间 / NIGHT</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="surfaces">
+    <h3>实际悬浮态 —— 模仿现有 deco 的用法（右上角 / 17% 不透明度）</h3>
+    <div class="rowsel" id="rowsel"></div>
+    <div class="frame" id="frame">
+      <span class="kicker">SECTION 04</span>
+      <h4>Notes from the quiet hours</h4>
+      <p>这里是一段示例正文，用来判断线稿在真实页面里是否会干扰阅读。线条应退到纸面后面，只留下一点呼吸感。</p>
+      <div class="rule"></div>
+      <img class="deco-abs" id="decoAbs" alt="" aria-hidden="true">
+    </div>
+  </div>
+
+  <p class="note">
+    每个设计出四个文件：<code>deco_x.svg</code>（日间动画）、<code>deco_x_dark.svg</code>（夜间动画，预烘焙换色不用滤镜反色）、
+    <code>deco_x_still.svg</code> / <code>deco_x_still_dark.svg</code>（剥离 CSS 后的无动画静帧）。<br>
+    动画只使用 transform / opacity，元素自带静帧基准值，所以去掉 CSS 后仍是同一张构图；SVG 内部还写了
+    <code>@media (prefers-reduced-motion: reduce)</code> 兜底。<b>但实测 Chromium 不会把 prefers-reduced-motion 传进
+    <code>&lt;img&gt;</code> 引用的 SVG 文档</b>（内联 SVG 才生效），因此接入页面时应由 JS 判断
+    <code>matchMedia('(prefers-reduced-motion: reduce)')</code> 切换到 <code>_still</code> 版本。<br>
+    质感体系：全图只有一个光源（左上），每根线都吃同一道渐变；环体有真实厚度 + 受光边/暗边；纸面上有一道压印投影；
+    金属带是多段各向异性渐变；颗粒由确定性微点构成（不用任何滤镜，避免逐帧重绘）。<br>
+    三维模型（晶体二十面体 / 环面线圈 / 玻璃立方 / 双螺旋，纯 CSS3D 无库）见
+    <a href="k3d-preview.html" style="color:var(--accent)">tools/k3d-preview.html</a>。<br>
+    本预览页仅在本地 tools/ 目录，不会被推送上线。
+  </p>
+</div>
+
+<script>
+const SETS = [
+  ['deco_armillary', '浑仪 / 天球环', 'ARMILLARY', '光沿金属上游走 88/64s · 天体差速 27/96/132s · 游标 320s'],
+  ['deco_bloom', '生命之花（精简）', 'SEED OF LIFE', '静态 · 单光源 + 斜面 + 微颗粒'],
+  ['deco_phases', '月相序列', 'MOON PHASES', '朔望 48s · 半影过渡 · 边缘光 · 序列刻度'],
+  ['deco_resonance', '共振玫瑰 / 声环', 'INTERFERENCE ROSE', '静态'],
+  ['deco_rosette', '星芒玫瑰窗（精简）', 'ROSE WINDOW', '静态 · 单光源 + 铸造颗粒'],
+  ['deco_atlas', '正射投影地球仪', 'ORTHOGRAPHIC GLOBE', '静态 · 隐藏线剔除 · 大圆航线'],
+];
+let still = false;
+const STILLS = ['deco_armillary', 'deco_phases'];   // only these have motion to strip
+const file = (n) => '../docs/assets/' + n + ((still && STILLS.indexOf(n) >= 0) ? '_still' : '')
+  + (document.documentElement.dataset.theme === 'dark' ? '_dark' : '') + '.svg';
+
+const grid = document.getElementById('grid');
+const rowsel = document.getElementById('rowsel');
+const absImg = document.getElementById('decoAbs');
+
+function render() {
+  grid.innerHTML = SETS.map(([n, zh, en, note]) => `
+    <div class="card">
+      <h2>${zh}</h2>
+      <div class="en">${en}</div>
+      <div class="mo">${note}</div>
+      <div class="plate">
+        <img class="full" src="${file(n)}" alt="${en}">
+        <span class="tag">${n}${still && STILLS.indexOf(n) >= 0 ? '_still' : ''}</span>
+      </div>
+    </div>`).join('');
+  rowsel.innerHTML = SETS.map(([n, zh], i) =>
+    `<button data-n="${n}" class="${n === current ? 'on' : ''}">${zh}</button>`).join('');
+  rowsel.querySelectorAll('button').forEach((b) => {
+    b.onclick = () => { current = b.dataset.n; render(); };
+  });
+  absImg.src = file(current);
+}
+let current = 'deco_armillary';
+render();
+
+document.getElementById('themeBtn').onclick = () => {
+  const d = document.documentElement;
+  d.dataset.theme = d.dataset.theme === 'dark' ? 'light' : 'dark';
+  render();
+};
+document.getElementById('stillBtn').onclick = (e) => {
+  still = !still;
+  e.target.style.color = still ? 'var(--accent)' : '';
+  render();
+};
+</script>
+</body>
+</html>

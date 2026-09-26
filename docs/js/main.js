@@ -96,6 +96,7 @@
        live in profile.json (figNote / figNoteZh), so the owner can
        retune them anytime; hidden entirely when empty (visitors) */
     renderPortraitNote(profile);
+    renderSigilNote(profile);
 
     document.title = name + t('home_title_suffix');
   }
@@ -151,6 +152,68 @@
       };
       input.addEventListener('keydown', (ev) => {
         if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+        if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+      });
+      input.addEventListener('blur', () => finish(true));
+    });
+  }
+
+  /* ---------- Caption beside the armillary sphere ----------
+     Exactly the contract of the portrait note: the words live in
+     profile.json (armNote / armNoteZh), the owner rewrites them in place
+     with a double-click, and while it is empty visitors see nothing. */
+  async function renderSigilNote(profile) {
+    const note = document.getElementById('sigilNote');
+    if (!note) return;
+    const text = loc(profile, 'armNote');
+    let owner = false;
+    try { owner = await apiAvailable(); } catch (_) { owner = false; }
+
+    const show = (v) => {
+      note.textContent = v;
+      note.hidden = !v && !owner;
+      note.classList.toggle('is-empty', !v);
+      if (!v && owner) note.textContent = t('home_arm_note_ph');
+    };
+    show(text);
+    if (!owner) return;
+
+    note.classList.add('editable');
+    note.title = t('caption_edit_hint');
+    note.addEventListener('dblclick', () => {
+      if (note.classList.contains('editing')) return;
+      note.classList.add('editing');
+      const current = loc(profile, 'armNote') || '';
+      const input = document.createElement('textarea');
+      input.className = 't-edit';
+      input.value = current;
+      input.rows = Math.min(6, current.split('\n').length + 1);
+      note.textContent = '';
+      note.appendChild(input);
+      input.focus();
+      input.select();
+      let done = false;
+      const finish = async (save) => {
+        if (done) return;
+        done = true;
+        note.classList.remove('editing');
+        const v = input.value.trim();
+        if (!save || v === current) { show(current); return; }
+        const field = window.I18N.isZh ? 'armNoteZh' : 'armNote';
+        try {
+          const r = await fetch('api/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: v }),
+          });
+          if (!r.ok) throw new Error('fail');
+          profile[field] = v;
+          show(v);
+        } catch (_) { show(current); }
+      };
+      input.addEventListener('keydown', (ev) => {
+        /* Enter alone = a new line (the note wraps); Ctrl/Cmd+Enter saves */
+        if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); finish(true); }
         if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
       });
       input.addEventListener('blur', () => finish(true));
@@ -227,7 +290,95 @@
     observeReveals([...strip.querySelectorAll('.reveal-row')]);
   }
 
-  render();
-  renderCatalog();
-  renderHobbies();
+  /* load the kstage rig exactly once — shared by the lazy arm and the
+     member pins (a click on a pin must never hit a half-loaded stage) */
+  var sigilInjected = false;
+  function injectKstage() {
+    if (sigilInjected || window.KStage) return;
+    sigilInjected = true;
+    var s = document.createElement('script');
+    s.src = 'components/kstage.js?v=202609261816';
+    s.async = true;
+    document.body.appendChild(s);
+  }
+
+  /* ---------- Bottom sigil: the armillary sphere (浑天仪) ----------
+     The canvas rig (components/kstage.js) is ~130 KB — far too much to
+     put in the first paint of the home page. So: reserve the box in HTML
+     (aspect-ratio, no layout shift) and inject the script only once the
+     sigil is one screen away. The script mounts itself on load — it
+     scans for [data-kstage] — and hides the placeholder ring by adding
+     .is-live. No IntersectionObserver (old browser): just load it.
+     No canvas / no JS: the hairline placeholder ring stays, nothing
+     breaks. */
+  function mountSigilOrrery() {
+    var host = document.querySelector('.sigil-orrery');
+    if (!host || window.KStage) return;
+
+    if (!('IntersectionObserver' in window)) { injectKstage(); return; }
+    var io = new IntersectionObserver(function (es) {
+      if (!es[0].isIntersecting) return;
+      io.disconnect();                            /* one-shot */
+      injectKstage();
+    }, { rootMargin: '400px 0px' });
+    io.observe(host);
+  }
+
+  /* ---------- Member pins beside the sphere ----------
+     001-008 buttons: locate + lock + follow that member in one click
+     (they call the same number-key path the canvas uses). Clicking the
+     active member again releases the lock. */
+  function wireOrreryPins() {
+    var row = document.getElementById('sigilPins');
+    if (!row) return;
+
+    var apply = function (btn) {
+      var el = document.querySelector('.sigil-orrery');
+      var st = window.KStage && el && el.__kstage;
+      if (!st) return false;
+      if (btn.classList.contains('on')) {
+        st.impl.key('Escape', st);              /* release the lock */
+        row.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+      } else {
+        st.impl.key(btn.dataset.member, st);    /* lock + follow */
+        row.querySelectorAll('button').forEach(function (x) {
+          x.classList.toggle('on', x === btn);
+        });
+      }
+      st.dirty = true; st.kick();
+      if (st.canvas && st.canvas.focus) st.canvas.focus({ preventScroll: true });
+      return true;
+    };
+
+    row.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button[data-member]');
+      if (!btn) return;
+      if (apply(btn)) return;
+      /* the rig may still be on its way (lazy-loaded) — inject now and
+         retry once it is live */
+      injectKstage();
+      var tries = 0;
+      var t2 = setInterval(function () {
+        if (apply(btn)) clearInterval(t2);
+        else if (++tries > 50) clearInterval(t2);
+      }, 100);
+    });
+  }
+
+  /* Arm the armillary only once the page has its real height. Watching it
+     any earlier is a trap: the catalog and hobbies strips are still empty,
+     the document is short, the sigil falls inside the observer margin and
+     the 130 KB rig loads right away — exactly what lazy loading exists to
+     avoid. The timeout is the safety net: if an API hangs, the sphere
+     still arrives. armSigil is one-shot, so whichever wins, wins once. */
+  var sigilArmed = false;
+  function armSigil() {
+    if (sigilArmed) return;
+    sigilArmed = true;
+    mountSigilOrrery();
+  }
+
+  Promise.all([render(), renderCatalog(), renderHobbies()]).then(armSigil, armSigil);
+  setTimeout(armSigil, 1200);
+  wireOrreryPins();
 })();

@@ -60,7 +60,12 @@ server.listen(8899, async () => {
       let d = dom.window.document;
       check(`home ${lang} name`, d.getElementById('homeName').textContent.includes('Koyome'), d.getElementById('homeName').textContent);
       check(`home ${lang} tagline`, (d.getElementById('homeTagline').textContent || '').length > 3, d.getElementById('homeTagline').textContent.slice(0, 30));
-      check(`home ${lang} sigil`, d.querySelectorAll('.sigil-svg polygon').length === 2);
+      /* the hexagram gave way to the armillary sphere: the mount point is
+         in the HTML (the canvas itself only appears once the lazy script
+         lands, and jsdom has no canvas anyway) */
+      const arm = d.querySelector('.sigil-orrery[data-kstage="orrery"]');
+      check(`home ${lang} armillary mount`, !!arm);
+      check(`home ${lang} hexagram gone`, d.querySelectorAll('.sigil-svg polygon').length === 0);
       check(`home ${lang} lang-switch has 3 buttons`,
         d.querySelectorAll('.lang-switch button').length === 3);
       check(`home ${lang} html lang attr`,
@@ -140,6 +145,16 @@ server.listen(8899, async () => {
     const i18nSrc = fs.readFileSync(path.join(PUB, 'js', 'i18n.js'), 'utf8');
     check('i18n has zhcn dict', i18nSrc.includes('zhcn: {'));
     check('i18n exposes t2s + isZh', i18nSrc.includes('t2s,') && i18nSrc.includes('isZh'));
+
+    /* armillary sphere: the canvas rig must stay out of the first paint,
+       and its stylesheet has to load BEFORE style.css (so style.css can
+       re-point the --ks-* tokens at the site's own variables) */
+    const homeHtml = fs.readFileSync(path.join(PUB, 'index.html'), 'utf8');
+    check('home keeps kstage.js out of the first paint',
+      !/<script[^>]+src="[^"]*kstage\.js/.test(homeHtml));
+    check('home loads kstage.css before style.css',
+      homeHtml.indexOf('href="components/kstage.css') > 0 &&
+      homeHtml.indexOf('href="components/kstage.css') < homeHtml.indexOf('href="css/style.css'));
 
     /* guestbook POST fallback → localStorage, no error */
     const dom = await load(BASE, 'guestbook.html', 'en');

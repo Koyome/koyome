@@ -1,0 +1,78 @@
+<!doctype html>
+<!-- R25 scratch page: rasterise the deco SVGs and report ink coverage, accent
+     share and bounding box. Served by tools/probe-deco.js, never deployed. -->
+<html lang="en">
+<head><meta charset="utf-8"><title>deco check</title></head>
+<body style="margin:0;background:#fff">
+<script>
+const FILES = ['deco_armillary', 'deco_bloom', 'deco_phases', 'deco_resonance',
+               'deco_rosette', 'deco_armillary_dark', 'deco_bloom_dark',
+               'deco_phases_dark', 'deco_resonance_dark', 'deco_rosette_dark',
+               'deco_armillary_still', 'deco_phases_still',
+               'deco_atlas', 'deco_atlas_dark'];
+window.runCheck = function () {
+  return Promise.all(FILES.map((n) => new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const S = 400;
+      const c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      const g = c.getContext('2d');
+      g.clearRect(0, 0, S, S);
+      g.drawImage(img, 0, 0, S, S);
+      const d = g.getImageData(0, 0, S, S).data;
+      let ink = 0, minX = 1e9, minY = 1e9, maxX = -1, maxY = -1, red = 0;
+      const tones = new Set();
+      for (let p = 0; p < d.length; p += 4) {
+        if (d[p + 3] > 12) {
+          /* luminance + alpha: a shaded render shows many, flat line art few */
+          tones.add(((d[p] * 3 + d[p + 1] * 6 + d[p + 2]) / 9 | 0) + ':' + (d[p + 3] >> 4));
+          const i = p / 4, x = i % S, y = (i / S) | 0;
+          ink++;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+          const r0 = d[p], g0 = d[p + 1], b0 = d[p + 2];
+          if (r0 - Math.max(g0, b0) > 24) red++;
+        }
+      }
+      res({ name: n, cov: +(100 * ink / (S * S)).toFixed(2),
+            accentPct: +(100 * red / Math.max(ink, 1)).toFixed(2),
+            tones: tones.size, box: [minX, minY, maxX, maxY] });
+    };
+    img.onerror = () => res({ name: n, error: 'load failed' });
+    img.src = '/assets/' + n + '.svg';
+  })));
+};
+/* per-moon ink in the STILL phases frame must rise monotonically new -> full */
+window.runPhases = function () {
+  const S = 400, K = S / 800;   // the drawing is an 800 viewBox scaled to 400
+  const cx = 400, cy = 486, orb = 250, R = 42;
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = S; c.height = S;
+      const g = c.getContext('2d');
+      g.drawImage(img, 0, 0, S, S);
+      const out = [];
+      for (let i = 0; i < 9; i++) {
+        const th = (180 - i * 22.5) * Math.PI / 180;
+        const mx = cx + orb * Math.cos(th), my = cy - orb * Math.sin(th);
+        const x0 = Math.round((mx - R) * K), y0 = Math.round((my - R) * K);
+        const w = Math.round(2 * R * K), h = w;
+        const d = g.getImageData(x0, y0, w, h).data;
+        let ink = 0;
+        for (let p = 3; p < d.length; p += 4) if (d[p] > 12) ink++;
+        out.push(+(100 * ink / (w * h)).toFixed(2));
+      }
+      res(out);
+    };
+    img.onerror = () => res([]);
+    img.src = '/assets/deco_phases_still.svg';
+  });
+};
+</script>
+</body>
+</html>

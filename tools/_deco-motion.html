@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- R25 scratch page: hold one deco SVG so the probe can screenshot it twice
+     and prove the internal animation runs while referenced through <img>. -->
+<html lang="en">
+<head><meta charset="utf-8"><title>deco motion probe</title>
+<style>
+  html,body { margin:0; background:#fff; height:100%; overflow:hidden; }
+  img { display:block; width:400px; height:400px; }
+</style></head>
+<body>
+<img id="m" alt="">
+<script>
+  const n = new URLSearchParams(location.search).get('n') || 'deco_armillary';
+  document.getElementById('m').src = '/assets/' + n + '.svg';
+</script>
+</body>
+</html>
