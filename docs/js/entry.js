@@ -1512,7 +1512,10 @@
        the flip frame was the toggle jank. */
     new MutationObserver(() => {
       clearTimeout(rebakeTimer);
-      rebakeTimer = setTimeout(themeColors, 70);
+      rebakeTimer = setTimeout(() => {
+        themeColors();
+        if (RM) drawStatic();   /* reduced motion: nothing else will repaint */
+      }, 70);
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     let resizeTimer = null;
     window.addEventListener('resize', () => {
@@ -1529,18 +1532,9 @@
         seed();
       }, 180);
     }, { passive: true });
-    document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
-    /* phones: freeze the sky while the finger is on the glass */
-    if (MOBILE) {
-      window.addEventListener('scroll', () => {
-        scrolling = true;
-        clearTimeout(scrollTimer);
-        scrollTimer = setTimeout(() => { scrolling = false; }, 160);
-      }, { passive: true });
-    }
-
-    if (RM) {
-      /* one calm frame, no motion */
+    /* one calm frame, no motion — re-used by the reduced-motion path AND
+       after a theme flip there (no rAF loop is running to repaint for us) */
+    function drawStatic() {
       ctx.clearRect(0, 0, W, H);
       ctx.drawImage(sky, 0, 0, sky.width, sky.height, 0, 0, W, H);
       if (sprites) {
@@ -1552,6 +1546,20 @@
         });
         ctx.globalAlpha = 1;
       }
+    }
+
+    document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
+    /* phones: freeze the sky while the finger is on the glass */
+    if (MOBILE) {
+      window.addEventListener('scroll', () => {
+        scrolling = true;
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => { scrolling = false; }, 160);
+      }, { passive: true });
+    }
+
+    if (RM) {
+      drawStatic();
       return;
     }
     requestAnimationFrame(tick);
