@@ -47,6 +47,8 @@ const DEFAULT_PROFILE = {
   taglineZh: '歡迎——就把這裡當成自己的家。',
   intro: "Koyome here — this is my own small corner of the internet.\n\nI keep the words worth re-reading, the pictures worth looking at twice, and the videos I don't want to forget. Nothing here is finished, and nothing here is in a hurry.\n\nHave a look around — stay as long as you like.",
   introZh: '我是 Koyome，這裡是我在網路上的一小塊地。\n\n值得重讀的文字、值得多看兩眼的畫面，還有不想忘記的影片，我都放在這裡。這裡的東西都還沒完成，也沒有任何東西在趕路。\n\n隨便逛逛——想待多久都可以。',
+  armNote: '',
+  armNoteZh: '',
   avatar: '/assets/avatar.jpg',
 };
 
@@ -348,6 +350,8 @@ const server = http.createServer(async (req, res) => {
         introZh: body.introZh != null ? str(body.introZh, 20000) : current.introZh,
         figNote: body.figNote != null ? str(body.figNote, 200) : current.figNote,
         figNoteZh: body.figNoteZh != null ? str(body.figNoteZh, 200) : current.figNoteZh,
+        armNote: body.armNote != null ? str(body.armNote, 1000) : current.armNote,
+        armNoteZh: body.armNoteZh != null ? str(body.armNoteZh, 1000) : current.armNoteZh,
         avatar: current.avatar,
       };
       if (body.avatarFile) {
