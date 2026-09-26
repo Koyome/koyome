@@ -370,8 +370,9 @@ img { max-width: 100%; display: block; }
    it must still scroll the page — no grab-to-spin on phones. Without the
    pointer-events rule the canvas' touch-action:none would trap the swipe. */
 @media (hover: none), (pointer: coarse) {
-  .sigil-orrery { touch-action: pan-y; }
-  .sigil-orrery .kstage-canvas { pointer-events: none; }
+  /* 触屏：竖滑仍滚页（pan-y），横拖旋转、双指捏合缩放、点按复位键
+     全部交给画布——touch-action 不继承，画布必须自己也声明 */
+  .sigil-orrery, .sigil-orrery .kstage-canvas { touch-action: pan-y; }
 }
 
 /* ---- member pins: one click to locate / lock / follow ---- */

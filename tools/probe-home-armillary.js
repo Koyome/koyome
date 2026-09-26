@@ -329,19 +329,55 @@ const ok = (c, msg) => { console.log((c ? 'ok   ' : 'FAIL ') + msg); if (!c) bad
       const el = document.querySelector('.sigil-orrery');
       const c = el.querySelector('canvas');
       const b = el.getBoundingClientRect();
+      const n = document.getElementById('sigilNote');
+      const nb = n.getBoundingClientRect();
       return { sw: document.documentElement.scrollWidth, iw: window.innerWidth,
                w: Math.round(b.width), left: Math.round(b.left),
                live: el.classList.contains('is-live'),
                hoverNone: matchMedia('(hover: none), (pointer: coarse)').matches,
                pe: c ? getComputedStyle(c).pointerEvents : 'n/a',
-               ta: getComputedStyle(el).touchAction };
+               ta: c ? getComputedStyle(c).touchAction : 'n/a',
+               taBox: getComputedStyle(el).touchAction,
+               noteHidden: n.hidden, noteText: (n.textContent || '').trim().length,
+               noteVisible: nb.height > 0 && nb.top < window.innerHeight + nb.height,
+               cx: Math.round(b.left + b.width / 2), cy: Math.round(b.top + b.height / 2),
+               dist0: el.__kstage ? el.__kstage.impl.debug().dist : 0 };
     })()`);
     ok(ph.hoverNone, 'phone: touch really is being emulated (hover:none matched)');
     ok(ph.sw <= ph.iw + 1, `phone: no horizontal scroll (${ph.sw} <= ${ph.iw})`);
     ok(ph.left >= 0 && ph.left + ph.w <= ph.iw + 1, `phone: sphere inside the viewport (${ph.left}..${ph.left + ph.w} of ${ph.iw})`);
     ok(ph.live, 'phone: sphere still boots');
-    ok(ph.pe === 'none' && ph.ta === 'pan-y',
-      `phone: swipe over it still scrolls the page (pointer-events ${ph.pe}, touch-action ${ph.ta})`);
+    ok(ph.pe !== 'none' && ph.ta === 'pan-y' && ph.taBox === 'pan-y',
+      `phone: canvas takes touches, vertical swipe still scrolls (pointer-events ${ph.pe}, touch-action ${ph.ta})`);
+    ok(!ph.noteHidden && ph.noteText > 0,
+      `phone: the caption is rendered, never display-locked (${ph.noteText} chars)`);
+
+    /* pinch out (fingers spread) must zoom the model in — dist shrinks */
+    const touch = (type, points) => send(ws, 'Input.dispatchTouchEvent', { type, touchPoints: points }, sid);
+    const spread = async (gap) => touch('touchMove', [
+      { x: ph.cx - gap / 2, y: ph.cy, id: 1 }, { x: ph.cx + gap / 2, y: ph.cy, id: 2 }]);
+    await touch('touchStart', [{ x: ph.cx - 40, y: ph.cy, id: 1 }]);
+    await touch('touchStart', [{ x: ph.cx - 40, y: ph.cy, id: 1 }, { x: ph.cx + 40, y: ph.cy, id: 2 }]);
+    for (const g of [96, 116, 140, 168, 200]) { await spread(g); await sleep(40); }
+    await touch('touchEnd', []);
+    await sleep(120);
+    const pinch = await ev(`(() => { const s = document.querySelector('.sigil-orrery').__kstage;
+      return { dist: s.impl.debug().dist, pinching: !!s._pinch }; })()`);
+    ok(pinch.dist < ph.dist0 - 0.15,
+      `phone: two-finger pinch zooms the model (dist ${ph.dist0.toFixed(2)} -> ${pinch.dist.toFixed(2)})`);
+    ok(!pinch.pinching, 'phone: pinch state released after both fingers lift');
+
+    /* and a tap on the reset button brings it home again */
+    const trb = await ev(`(() => { const r = document.querySelector('.sigil-orrery').getBoundingClientRect();
+      const rb = document.querySelector('.sigil-orrery').__kstage._rb;
+      return rb ? { x: Math.round(r.left + rb[0]), y: Math.round(r.top + rb[1]) } : null; })()`);
+    ok(!!trb, 'phone: reset button is drawn on the small canvas too');
+    await touch('touchStart', [{ x: trb.x, y: trb.y, id: 1 }]);
+    await sleep(60);
+    await touch('touchEnd', []);
+    await sleep(150);
+    const trst = await ev(`document.querySelector('.sigil-orrery').__kstage.impl.debug().dist`);
+    ok(Math.abs(trst - 3.4) < 0.05, `phone: tapping the reset button restores the view (dist ${trst.toFixed(2)})`);
 
     /* ================= reduced motion ================= */
     await metrics(1440, 1000, false);

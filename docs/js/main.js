@@ -170,10 +170,11 @@
     try { owner = await apiAvailable(); } catch (_) { owner = false; }
 
     const show = (v) => {
-      note.textContent = v;
-      note.hidden = !v && !owner;
+      /* 简介区域始终渲染：空内容时显示占位提示（owner 可双击编辑），
+         移动端/游客视角也不再整块消失 */
+      note.hidden = false;
       note.classList.toggle('is-empty', !v);
-      if (!v && owner) note.textContent = t('home_arm_note_ph');
+      note.textContent = v || t('home_arm_note_ph');
     };
     show(text);
     if (!owner) return;
@@ -297,7 +298,7 @@
     if (sigilInjected || window.KStage) return;
     sigilInjected = true;
     var s = document.createElement('script');
-    s.src = 'components/kstage.js?v=202609261816';
+    s.src = 'components/kstage.js?v=202609261820';
     s.async = true;
     document.body.appendChild(s);
   }

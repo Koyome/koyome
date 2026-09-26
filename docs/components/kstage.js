@@ -450,11 +450,42 @@
     this.p.sx = l[0]; this.p.sy = l[1]; this.p.moved = 0; this.p.t0 = performance.now();
     this.p.vx = 0; this.p.vy = 0;
     if (this.canvas.setPointerCapture) { try { this.canvas.setPointerCapture(e.pointerId); } catch (err) { /* noop */ } }
-    if (this.impl.grab) this.impl.grab(l[0], l[1], this);
+    /* 多指跟踪：第二根手指落下时从拖拽切换成捏合缩放 */
+    if (!this.ptrs) { this.ptrs = {}; this.ptrN = 0; }
+    if (!this.ptrs[e.pointerId]) this.ptrN++;
+    this.ptrs[e.pointerId] = l;
+    if (this.ptrN === 2) {
+      if (this.impl.release) this.impl.release(0, 0, this);
+      this.p.down = false; this.p.moved = 999;
+      this._pinch = true;
+      this.pinchD = this._ptrGap();
+    } else if (this.ptrN > 2) {
+      this._pinch = true;
+    }
+    if (!this._pinch && this.impl.grab) this.impl.grab(l[0], l[1], this);
     this.dirty = true; this.kick();
+  };
+  Stage.prototype._ptrGap = function () {
+    var ids = Object.keys(this.ptrs);
+    if (ids.length < 2) return 0;
+    var a = this.ptrs[ids[0]], b = this.ptrs[ids[1]];
+    var dx = a[0] - b[0], dy = a[1] - b[1];
+    var d = Math.sqrt(dx * dx + dy * dy);
+    return d > 1 ? d : 1;
   };
   Stage.prototype.onMove = function (e) {
     var l = this.local(e);
+    if (this.ptrs && this.ptrs[e.pointerId]) this.ptrs[e.pointerId] = l;
+    /* 捏合缩放：两指间距变化率 → zoom（语义同 wheel，正=拉远） */
+    if (this._pinch && this.ptrN >= 2 && this.impl.zoom) {
+      var d = this._ptrGap();
+      if (this.pinchD > 0 && d !== this.pinchD) {
+        this.impl.zoom((this.pinchD - d) / this.pinchD * 2.2, this);
+        this.pinchD = d;
+        this.dirty = true; this.kick();
+      }
+      return;
+    }
     var dx = l[0] - this.p.x, dy = l[1] - this.p.y;
     this.p.x = l[0]; this.p.y = l[1];
     if (this.p.down) {
@@ -467,6 +498,16 @@
     this.dirty = true; this.kick();
   };
   Stage.prototype.onUp = function (e) {
+    /* 捏合期间（或刚结束）不做点按/双击判定，避免误触复位键或 dbl */
+    if (this.ptrs && this.ptrs[e.pointerId]) {
+      delete this.ptrs[e.pointerId]; this.ptrN--;
+    }
+    if (this._pinch) {
+      if (this.ptrN <= 0) { this.ptrN = 0; this._pinch = false; this.pinchD = 0; }
+      this.p.down = false;
+      this.dirty = true; this.kick();
+      return;
+    }
     if (!this.p.down) return;
     this.p.down = false;
     var quick = performance.now() - this.p.t0 < 420 && this.p.moved < 6;
